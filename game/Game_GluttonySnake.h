@@ -1,0 +1,3 @@
+#ifndef GAME_GLUTTONYSNAKE_H
+#define GAME_GLUTTONYSNAKE_H
+#endif

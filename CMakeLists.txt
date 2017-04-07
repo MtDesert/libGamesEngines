@@ -1,16 +1,16 @@
-cmake_minimum_required(VERSION 3.2)
+cmake_minimum_required(VERSION 2.8)
 project(GamesEngines)
 include_directories(../../libCpp11)
 include(../../CompileScripts/CMakeLists.txt)
-
+aux_source_directory(game SRC_LIST)
 add_library(${PROJECT_NAME} SHARED ${SRC_LIST})
 
 if(${TARGET_SYSTEM_NAME} STREQUAL Linux)
 add_executable(GamesGLUT ./executable/GamesGLUT.cpp)
-add_executable(GamesGLEW ./executable/GamesGLEW.cpp)
 add_executable(GamesGLFW ./executable/GamesGLFW.cpp)
+add_executable(GamesX11 ./executable/GamesX11.cpp)
 
 target_link_libraries(GamesGLUT ${PROJECT_NAME} glut GL)
-target_link_libraries(GamesGLEW ${PROJECT_NAME} GLEW GL)
 target_link_libraries(GamesGLFW ${PROJECT_NAME} glfw GL)
+target_link_libraries(GamesX11 ${PROJECT_NAME} X11)
 endif()

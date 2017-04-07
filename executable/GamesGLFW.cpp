@@ -3,6 +3,9 @@
 #include<string.h>
 #include<string>
 using namespace std;
+#include"Game.h"
+
+Game game;
 
 static int monitorsCount=0;
 static GLFWmonitor** monitors=NULL;
@@ -103,13 +106,35 @@ void monitorFun(GLFWmonitor *monitor,int event){
 		printf("Monitor connect???\n");
 	}
 }
+
 void windowPosFun(GLFWwindow *window,int xpos,int ypos){printf("pos %d,%d\n",xpos,ypos);}
 void windowSizeFun(GLFWwindow *window,int width,int height){printf("size %d,%d\n",width,height);}
 void windowCloseFun(GLFWwindow *window){printf("windowCloseFun()\n");}
 void windowRefreshFun(GLFWwindow *window){printf("windowRefreshFun()\n");}
-void windowFocusFun(GLFWwindow *window,int focused){}
-void windowIconifyFun(GLFWwindow *window,int iconified){}
-void frameBufferSizeFun(GLFWwindow *window,int width,int height){}
+void windowFocusFun(GLFWwindow *window,int focused){printf("windowFocusFun()\n");}
+void windowIconifyFun(GLFWwindow *window,int iconified){printf("windowIconifyFun()\n");}
+void frameBufferSizeFun(GLFWwindow *window,int width,int height){printf("frameBufferSizeFun()\n");}
+
+void keyCallback(int key,bool pressed){
+	switch(key){
+		case GLFW_KEY_UP:game.keyboard_Up(pressed);break;
+		case GLFW_KEY_DOWN:game.keyboard_Down(pressed);break;
+		case GLFW_KEY_LEFT:game.keyboard_Left(pressed);break;
+		case GLFW_KEY_RIGHT:game.keyboard_Right(pressed);break;
+	}
+}
+void glfwKeyCallback(GLFWwindow *window,int key,int scancode,int action,int mods){
+	//printf("key==%d scancode==%d action==%d mods==%d\n",key,scancode,action,mods);
+	switch(action){
+		case GLFW_PRESS:keyCallback(key,true);break;
+		case GLFW_RELEASE:keyCallback(key,false);break;
+		default:;
+	}
+	switch(mods){
+		case GLFW_MOD_ALT:case GLFW_MOD_CONTROL:case GLFW_MOD_SHIFT:case GLFW_MOD_SUPER:break;
+		default:;
+	}
+}
 
 int main(int argc,char* argv[])
 {
@@ -159,6 +184,8 @@ int main(int argc,char* argv[])
 		glfwSetWindowFocusCallback(window,windowFocusFun);
 		glfwSetWindowIconifyCallback(window,windowIconifyFun);
 		glfwSetFramebufferSizeCallback(window,frameBufferSizeFun);
+		//input callback
+		glfwSetKeyCallback(window,glfwKeyCallback);
 		
 		printf("%s\n",string_InputMethod_Cursor(glfwGetInputMode(window,GLFW_CURSOR)).data());
 		printf("%.8X\n",glfwGetInputMode(window,GLFW_STICKY_KEYS));

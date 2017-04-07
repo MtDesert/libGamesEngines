@@ -1,13 +1,33 @@
 #include <GL/glut.h>
+#include<stdio.h>
+#include"Game.h"
+
+Game game;
 
 void glutTimerFunction(unsigned int time,void (*callback)(int),int value){}
 void glutIdleFunction(){}
 
 //input-keyboard
-void glutKeyboardFunction(unsigned char key,int x,int y){}
-void glutKeyboardUpFunction(unsigned char key,int x,int y){}
-void glutSpecialFunction(int key,int x,int y){}
-void glutSpecialUpFunction(int key,int x,int y){}
+void keyboardFunction(unsigned char key,bool pressed){
+	if('A'<=key&&key<='Z')game.keyboard_bigLetter(key);
+	else if('a'<=key&&key<='z')game.keyboard_smallLetter(key);
+}
+void glutKeyboardFunction(unsigned char key,int x,int y){keyboardFunction(key,true);}
+void glutKeyboardUpFunction(unsigned char key,int x,int y){keyboardFunction(key,false);}
+
+//input-special key
+void specialFunction(int key,bool pressed){
+	switch(key){
+		case GLUT_KEY_UP:game.keyboard_Up(pressed);break;
+		case GLUT_KEY_DOWN:game.keyboard_Down(pressed);break;
+		case GLUT_KEY_LEFT:game.keyboard_Left(pressed);break;
+		case GLUT_KEY_RIGHT:game.keyboard_Right(pressed);break;
+		default:;//do nothing
+	}
+}
+void glutSpecialFunction(int key,int x,int y){specialFunction(key,true);}
+void glutSpecialUpFunction(int key,int x,int y){specialFunction(key,false);}
+
 //input-mouse
 void glutMouseFunction(int button,int state,int x,int y){
 	switch(button){
