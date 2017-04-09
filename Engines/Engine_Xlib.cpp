@@ -14,13 +14,12 @@ Engine_Xlib::Engine_Xlib()
 void Engine_Xlib::initial()
 {
 	display=XOpenDisplay(nullptr);
-	window=XCreateSimpleWindow(display,DefaultRootWindow(display),
-							   x,y,width,height,borderWidth,0xFFFFFFFF,0xFF000000);
+	window=XCreateSimpleWindow(display,DefaultRootWindow(display),x,y,width,height,borderWidth,0xFFFFFFFF,0xFF000000);
 	gc=XCreateGC(display,window,0,&xgcValues);
 	XMapWindow(display,window);
 	XSelectInput(display,window,0x01FFFFFF);
 	XSetForeground(display,gc,0xFFFF0000);
-	game->startTicks();
+	//game->startTicks();
 }
 Window Engine_Xlib::getWindow()const{return window;}
 void Engine_Xlib::eventLoop()
@@ -34,14 +33,14 @@ void Engine_Xlib::eventLoop()
 		if(XPending(display)<=0)
 		{
 			game->goTicks();
-			if(game->needRedraw)
+			/*if(game->needRedraw)
 			{
 				game->needRedraw=false;
 				XClearWindow(display,window);
 				++ii;
 				XDrawLine(display,window,gc,0,0,ii,ii);
 				XFlush(display);
-			}
+			}*/
 			continue;
 		}
 		XNextEvent(display,&xEvent);
