@@ -1,8 +1,6 @@
 #ifndef GAME_H
 #define GAME_H
 
-#include<sys/time.h>
-
 #include"TimeSlice.h"
 #include"GameScene.h"
 #include"List.h"
@@ -16,6 +14,7 @@ class Game:public TimeSlice
 {
 public:
 	Game();
+	static Game* newGame();
 
 	//keyboard(模拟键盘输入)
 	virtual void keyboard_Up(bool);
