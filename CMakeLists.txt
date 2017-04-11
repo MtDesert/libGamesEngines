@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 2.8)
 project(GamesEngines)
 include_directories(../../libCpp11)
 include(../../CompileScripts/CMakeLists.txt)
-aux_source_directory(game SRC_LIST)
 add_library(${PROJECT_NAME} SHARED ${SRC_LIST})
 
 if(${TARGET_SYSTEM_NAME} STREQUAL Linux)

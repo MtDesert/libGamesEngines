@@ -117,10 +117,10 @@ void frameBufferSizeFun(GLFWwindow *window,int width,int height){printf("frameBu
 
 void keyCallback(int key,bool pressed){
 	switch(key){
-		case GLFW_KEY_UP:game.keyboard_Up(pressed);break;
+		/*case GLFW_KEY_UP:game.keyboard_Up(pressed);break;
 		case GLFW_KEY_DOWN:game.keyboard_Down(pressed);break;
 		case GLFW_KEY_LEFT:game.keyboard_Left(pressed);break;
-		case GLFW_KEY_RIGHT:game.keyboard_Right(pressed);break;
+		case GLFW_KEY_RIGHT:game.keyboard_Right(pressed);break;*/
 	}
 }
 void glfwKeyCallback(GLFWwindow *window,int key,int scancode,int action,int mods){

@@ -1,10 +1,9 @@
 #ifndef GAMESCENE_H
 #define GAMESCENE_H
 
-#include"typedef.h"
-#include"TimeSlice.h"
+#include"GameObject.h"
 
-class GameScene:public TimeSlice
+class GameScene:public GameObject
 {
 public:
 	GameScene();

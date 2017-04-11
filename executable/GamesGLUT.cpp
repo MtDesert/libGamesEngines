@@ -21,15 +21,36 @@ void glutKeyboardFunction(unsigned char key,int x,int y){keyboardFunction(key,tr
 void glutKeyboardUpFunction(unsigned char key,int x,int y){keyboardFunction(key,false);}
 
 //input-special key
+#define CASE(num) case GLUT_KEY_F##num:k=Game::Keyboard_F##num;break;
 void specialFunction(int key,bool pressed){
+	Game::KeyboardKey k=Game::Amount_KeyboardKey;
 	switch(key){
-		case GLUT_KEY_UP:game->keyboard_Up(pressed);break;
-		case GLUT_KEY_DOWN:game->keyboard_Down(pressed);break;
-		case GLUT_KEY_LEFT:game->keyboard_Left(pressed);break;
-		case GLUT_KEY_RIGHT:game->keyboard_Right(pressed);break;
+		case GLUT_KEY_UP:k=Game::Keyboard_Up;break;
+		case GLUT_KEY_DOWN:k=Game::Keyboard_Down;break;
+		case GLUT_KEY_LEFT:k=Game::Keyboard_Left;break;
+		case GLUT_KEY_RIGHT:k=Game::Keyboard_Right;break;
+		CASE(1)
+		CASE(2)
+		CASE(3)
+		CASE(4)
+		CASE(5)
+		CASE(6)
+		CASE(7)
+		CASE(8)
+		CASE(9)
+		CASE(10)
+		CASE(11)
+		CASE(12)
+		case GLUT_KEY_PAGE_UP:k=Game::Keyboard_PageUp;break;
+		case GLUT_KEY_PAGE_DOWN:k=Game::Keyboard_PageDown;break;
+		case GLUT_KEY_HOME:k=Game::Keyboard_Home;break;
+		case GLUT_KEY_END:k=Game::Keyboard_End;break;
+		case GLUT_KEY_INSERT:k=Game::Keyboard_Insert;break;
 		default:;//do nothing
 	}
+	game->keyboardKey(k,pressed);
 }
+#undef CASE
 void glutSpecialFunction(int key,int x,int y){specialFunction(key,true);}
 void glutSpecialUpFunction(int key,int x,int y){specialFunction(key,false);}
 
