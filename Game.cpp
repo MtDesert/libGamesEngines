@@ -3,7 +3,7 @@
 using namespace std;
 
 Game::Game():currentScene(nullptr){}
-Game* Game::newGame(){return new Game();}
+//Game* Game::newGame(){return new Game();}
 
 void Game::keyboard_Up(bool pressed){cout<<"Up"<<endl;}
 void Game::keyboard_Down(bool pressed){cout<<"Down"<<endl;}
@@ -34,6 +34,8 @@ void Game::joystick_L1(bool pressed){cout<<"Joystick:L1"<<endl;}
 void Game::joystick_L2(bool pressed){cout<<"Joystick:L2"<<endl;}
 void Game::joystick_R1(bool pressed){cout<<"Joystick:R1"<<endl;}
 void Game::joystick_R2(bool pressed){cout<<"Joystick:R2"<<endl;}
+
+void Game::render(){}
 
 void Game::addTimeSlice(uint usec){
 	if(currentScene){//默认添加给当前场景

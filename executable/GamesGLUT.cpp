@@ -82,7 +82,7 @@ void glutVisibilityFunction(int state){
 void glutDisplayFunction()
 {
 	glClear (GL_COLOR_BUFFER_BIT);
-	glClearColor(1,0,0,1);
+	glClearColor(0,0,0,1);
 	glFlush();
 }
 void glutOverlayDisplayFunction(){}

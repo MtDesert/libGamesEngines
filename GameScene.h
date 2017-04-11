@@ -8,7 +8,5 @@ class GameScene:public TimeSlice
 {
 public:
 	GameScene();
-protected:
 };
-
 #endif

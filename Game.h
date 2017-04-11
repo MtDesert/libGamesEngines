@@ -21,14 +21,14 @@ public:
 	virtual void keyboard_Down(bool);
 	virtual void keyboard_Left(bool);
 	virtual void keyboard_Right(bool);
-	void keyboard_bigLetter(unsigned char);
-	void keyboard_smallLetter(unsigned char);
+	virtual void keyboard_bigLetter(unsigned char);
+	virtual void keyboard_smallLetter(unsigned char);
 
 	//mouse(模拟鼠标输入)
-	void mouse_Move(int x,int y);
-	void mouse_LeftButton(int x,int y,bool);
-	void mouse_MiddleButton(int x,int y,bool);
-	void mouse_RightButton(int x,int y,bool);
+	virtual void mouse_Move(int x,int y);
+	virtual void mouse_LeftButton(int x,int y,bool);
+	virtual void mouse_MiddleButton(int x,int y,bool);
+	virtual void mouse_RightButton(int x,int y,bool);
 
 	//joystick(模拟手柄输入)
 #define GAME_JOYSTICK(key) virtual void joystick_##key(bool pressed);
@@ -48,6 +48,9 @@ public:
 	GAME_JOYSTICK(L2)
 	GAME_JOYSTICK(R1)
 	GAME_JOYSTICK(R2)
+
+	//模拟屏幕输出
+	virtual void render();
 	
 	//RAM(内存管理,主要是存储成员变量)
 	List<GameScene*> allScenes;
