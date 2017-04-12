@@ -14,10 +14,6 @@ public:
 	Game();
 	static Game* newGame();
 
-	//keyboard(模拟键盘输入)
-	virtual void keyboard_bigLetter(unsigned char);
-	virtual void keyboard_smallLetter(unsigned char);
-
 	//模拟屏幕输出
 	virtual void render();
 };

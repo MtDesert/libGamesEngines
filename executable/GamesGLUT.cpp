@@ -1,6 +1,7 @@
 #include"Game.h"
 #include<GL/glut.h>
 #include<stdio.h>
+#include<ctype.h>
 
 Game *game=nullptr;
 
@@ -14,8 +15,38 @@ void glutIdleFunction(){}
 
 //input-keyboard
 void keyboardFunction(unsigned char key,bool pressed){
-	if('A'<=key&&key<='Z')game->keyboard_bigLetter(key);
-	else if('a'<=key&&key<='z')game->keyboard_smallLetter(key);
+	if(isdigit(key)){
+		game->keyboardKey((Game::KeyboardKey)(Game::Keyboard_0+key-'0'),pressed);
+	}else if(isupper(key)){
+		game->keyboardKey((Game::KeyboardKey)(Game::Keyboard_A+key-'A'),pressed);
+	}else if(islower(key)){
+		game->keyboardKey((Game::KeyboardKey)(Game::Keyboard_A+key-'a'),pressed);
+	}else if(ispunct(key)){
+		switch(key){
+			case '`':case '~':game->keyboardKey(Game::Keyboard_QuoteLeft,pressed);break;
+			case '-':case '_':game->keyboardKey(Game::Keyboard_Minus,pressed);break;
+			case '=':case '+':game->keyboardKey(Game::Keyboard_Equal,pressed);break;
+			case '\\':case '|':game->keyboardKey(Game::Keyboard_BacksLash,pressed);break;
+			case '!':game->keyboardKey(Game::Keyboard_1,pressed);break;
+			case '@':game->keyboardKey(Game::Keyboard_2,pressed);break;
+			case '#':game->keyboardKey(Game::Keyboard_3,pressed);break;
+			case '$':game->keyboardKey(Game::Keyboard_4,pressed);break;
+			case '%':game->keyboardKey(Game::Keyboard_5,pressed);break;
+			case '^':game->keyboardKey(Game::Keyboard_6,pressed);break;
+			case '&':game->keyboardKey(Game::Keyboard_7,pressed);break;
+			case '*':game->keyboardKey(Game::Keyboard_8,pressed);break;
+			case '(':game->keyboardKey(Game::Keyboard_9,pressed);break;
+			case ')':game->keyboardKey(Game::Keyboard_0,pressed);break;
+			default:printf("keyboardFunction: unknown puncture %d\n",key);
+		}
+	}else{
+		switch(key){
+			case 0x08:game->keyboardKey(Game::Keyboard_Backspace,pressed);break;
+			case 0x1B:game->keyboardKey(Game::Keyboard_Esc,pressed);break;
+			case 0x7F:game->keyboardKey(Game::Keyboard_Delete,pressed);break;
+			default:printf("keyboardFunction: unknown key %d\n",key);
+		}
+	}
 }
 void glutKeyboardFunction(unsigned char key,int x,int y){keyboardFunction(key,true);}
 void glutKeyboardUpFunction(unsigned char key,int x,int y){keyboardFunction(key,false);}
@@ -46,7 +77,7 @@ void specialFunction(int key,bool pressed){
 		case GLUT_KEY_HOME:k=Game::Keyboard_Home;break;
 		case GLUT_KEY_END:k=Game::Keyboard_End;break;
 		case GLUT_KEY_INSERT:k=Game::Keyboard_Insert;break;
-		default:;//do nothing
+		default:printf("specialFunction: unknown key %d\n",key);//do nothing
 	}
 	game->keyboardKey(k,pressed);
 }
@@ -57,19 +88,20 @@ void glutSpecialUpFunction(int key,int x,int y){specialFunction(key,false);}
 //input-mouse
 void glutMouseFunction(int button,int state,int x,int y){
 	switch(button){
-		case GLUT_LEFT_BUTTON:break;
-		case GLUT_MIDDLE_BUTTON:break;
-		case GLUT_RIGHT_BUTTON:break;
-		default:;
-	}
-	switch(state){
-		case GLUT_UP:break;
-		case GLUT_DOWN:break;
-		default:;
+		case GLUT_LEFT_BUTTON:game->mouseKey(Game::Mouse_LeftButton,state==GLUT_DOWN);break;
+		case GLUT_MIDDLE_BUTTON:game->mouseKey(Game::Mouse_MiddleButton,state==GLUT_DOWN);break;
+		case GLUT_RIGHT_BUTTON:game->mouseKey(Game::Mouse_RightButton,state==GLUT_DOWN);break;
+		case 3:game->mouseWheel(1);break;//mouse wheel roll frontward
+		case 4:game->mouseWheel(-1);break;//mouse wheel roll backward
+		default:printf("unknown mouse button: %d\n",button);
 	}
 }
-void glutMotionFunction(int x,int y){}
-void glutPassiveMotionFunction(int x,int y){}
+void glutMotionFunction(int x,int y){
+	game->mouseMove(x,y);
+}
+void glutPassiveMotionFunction(int x,int y){
+	game->mouseMove(x,y);
+}
 //input-joystick
 void glutJoystickFunction(unsigned int buttonMask,int x, int y, int z){
 	if(buttonMask&GLUT_JOYSTICK_BUTTON_A){}
@@ -82,17 +114,17 @@ void glutSpaceballMotionFunction(int x,int y,int z){}
 void glutSpaceballRotateFunction(int x,int y,int z){}
 void glutSpaceballButtonFunction(int button,int state){}
 //input-others
-void glutButtonBoxFunction(int button,int state){}
-void glutDialsFunction(int dial, int value){}
-void glutTabletMotionFunction(int x,int y){}
-void glutTabletButtonFunction(int button, int state,int x, int y){}
+void glutButtonBoxFunction(int button,int state){printf("glutButtonBoxFunction\n");}
+void glutDialsFunction(int dial, int value){printf("glutDialsFunction\n");}
+void glutTabletMotionFunction(int x,int y){printf("glutTabletMotionFunction\n");}
+void glutTabletButtonFunction(int button, int state,int x, int y){printf("glutTabletButtonFunction\n");}
 
-void glutMenuStateFunction(int status){}
-void glutMenuStatusFunction(int status,int x,int y){}
-void glutWindowStatusFunction(int status){}
+void glutMenuStateFunction(int status){printf("glutMenuStateFunction\n");}
+void glutMenuStatusFunction(int status,int x,int y){printf("glutMenuStatusFunction\n");}
+void glutWindowStatusFunction(int status){printf("glutWindowStatusFunction\n");}
 
 //event
-void glutReshapeFunction(int width,int height){}
+void glutReshapeFunction(int width,int height){printf("glutReshapeFunction\n");}
 void glutVisibilityFunction(int state){
 	switch(state){
 		case GLUT_VISIBLE:break;

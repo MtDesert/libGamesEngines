@@ -25,6 +25,7 @@
 
 //这是所有的键盘按键,根据需求可能有更多的按键
 #define KEYBOARD_ALLKEY(MACRO)\
+	MACRO(Esc)\
 	MACRO(F1)\
 	MACRO(F2)\
 	MACRO(F3)\
@@ -37,6 +38,16 @@
 	MACRO(F10)\
 	MACRO(F11)\
 	MACRO(F12)\
+	MACRO(PrintScreen)\
+	MACRO(ScrollLock)\
+	MACRO(Pause)\
+	MACRO(QuoteLeft)\
+	MACRO(0) MACRO(1) MACRO(2) MACRO(3) MACRO(4) MACRO(5) MACRO(6) MACRO(7) MACRO(8) MACRO(9)\
+	MACRO(Minus) MACRO(Equal) MACRO(BacksLash) MACRO(Backspace)\
+	MACRO(A) MACRO(B) MACRO(C) MACRO(D) MACRO(E) MACRO(F) MACRO(G)\
+	MACRO(H) MACRO(I) MACRO(J) MACRO(K) MACRO(L) MACRO(M) MACRO(N)\
+	MACRO(O) MACRO(P) MACRO(Q) MACRO(R) MACRO(S) MACRO(T)\
+	MACRO(U) MACRO(V) MACRO(W) MACRO(X) MACRO(Y) MACRO(Z)\
 	MACRO(Up)\
 	MACRO(Down)\
 	MACRO(Left)\
@@ -46,6 +57,7 @@
 	MACRO(Home)\
 	MACRO(End)\
 	MACRO(Insert)\
+	MACRO(Delete)\
 
 #define MOUSE_ALLKEY(MACRO)\
 	MACRO(LeftButton)\
