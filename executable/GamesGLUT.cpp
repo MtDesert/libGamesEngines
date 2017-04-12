@@ -1,9 +1,9 @@
 #include"Game.h"
 #include<GL/glut.h>
 #include<stdio.h>
-#include<ctype.h>
 
 Game *game=nullptr;
+const Keyboard keyboard;
 
 void glutTimerFunction(int value){
 	if(value==0){
@@ -15,51 +15,25 @@ void glutIdleFunction(){}
 
 //input-keyboard
 void keyboardFunction(unsigned char key,bool pressed){
-	if(isdigit(key)){
-		game->keyboardKey((Game::KeyboardKey)(Game::Keyboard_0+key-'0'),pressed);
-	}else if(isupper(key)){
-		game->keyboardKey((Game::KeyboardKey)(Game::Keyboard_A+key-'A'),pressed);
-	}else if(islower(key)){
-		game->keyboardKey((Game::KeyboardKey)(Game::Keyboard_A+key-'a'),pressed);
-	}else if(ispunct(key)){
-		switch(key){
-			case '`':case '~':game->keyboardKey(Game::Keyboard_QuoteLeft,pressed);break;
-			case '-':case '_':game->keyboardKey(Game::Keyboard_Minus,pressed);break;
-			case '=':case '+':game->keyboardKey(Game::Keyboard_Equal,pressed);break;
-			case '\\':case '|':game->keyboardKey(Game::Keyboard_BacksLash,pressed);break;
-			case '!':game->keyboardKey(Game::Keyboard_1,pressed);break;
-			case '@':game->keyboardKey(Game::Keyboard_2,pressed);break;
-			case '#':game->keyboardKey(Game::Keyboard_3,pressed);break;
-			case '$':game->keyboardKey(Game::Keyboard_4,pressed);break;
-			case '%':game->keyboardKey(Game::Keyboard_5,pressed);break;
-			case '^':game->keyboardKey(Game::Keyboard_6,pressed);break;
-			case '&':game->keyboardKey(Game::Keyboard_7,pressed);break;
-			case '*':game->keyboardKey(Game::Keyboard_8,pressed);break;
-			case '(':game->keyboardKey(Game::Keyboard_9,pressed);break;
-			case ')':game->keyboardKey(Game::Keyboard_0,pressed);break;
-			default:printf("keyboardFunction: unknown puncture %d\n",key);
-		}
+	auto k=keyboard.asciiKey[key];
+	if(k<Keyboard::Amount_KeyboardKey){
+		game->keyboardKey(k,pressed);
 	}else{
-		switch(key){
-			case 0x08:game->keyboardKey(Game::Keyboard_Backspace,pressed);break;
-			case 0x1B:game->keyboardKey(Game::Keyboard_Esc,pressed);break;
-			case 0x7F:game->keyboardKey(Game::Keyboard_Delete,pressed);break;
-			default:printf("keyboardFunction: unknown key %d\n",key);
-		}
+		printf("keyboardFunction: unknown %d\n",key);
 	}
 }
 void glutKeyboardFunction(unsigned char key,int x,int y){keyboardFunction(key,true);}
 void glutKeyboardUpFunction(unsigned char key,int x,int y){keyboardFunction(key,false);}
 
 //input-special key
-#define CASE(num) case GLUT_KEY_F##num:k=Game::Keyboard_F##num;break;
+#define CASE(num) case GLUT_KEY_F##num:k=Keyboard::Keyboard_F##num;break;
 void specialFunction(int key,bool pressed){
-	Game::KeyboardKey k=Game::Amount_KeyboardKey;
+	Keyboard::KeyboardKey k=Keyboard::Amount_KeyboardKey;
 	switch(key){
-		case GLUT_KEY_UP:k=Game::Keyboard_Up;break;
-		case GLUT_KEY_DOWN:k=Game::Keyboard_Down;break;
-		case GLUT_KEY_LEFT:k=Game::Keyboard_Left;break;
-		case GLUT_KEY_RIGHT:k=Game::Keyboard_Right;break;
+		case GLUT_KEY_UP:k=Keyboard::Keyboard_Up;break;
+		case GLUT_KEY_DOWN:k=Keyboard::Keyboard_Down;break;
+		case GLUT_KEY_LEFT:k=Keyboard::Keyboard_Left;break;
+		case GLUT_KEY_RIGHT:k=Keyboard::Keyboard_Right;break;
 		CASE(1)
 		CASE(2)
 		CASE(3)
@@ -72,12 +46,18 @@ void specialFunction(int key,bool pressed){
 		CASE(10)
 		CASE(11)
 		CASE(12)
-		case GLUT_KEY_PAGE_UP:k=Game::Keyboard_PageUp;break;
-		case GLUT_KEY_PAGE_DOWN:k=Game::Keyboard_PageDown;break;
-		case GLUT_KEY_HOME:k=Game::Keyboard_Home;break;
-		case GLUT_KEY_END:k=Game::Keyboard_End;break;
-		case GLUT_KEY_INSERT:k=Game::Keyboard_Insert;break;
-		default:printf("specialFunction: unknown key %d\n",key);//do nothing
+		case GLUT_KEY_PAGE_UP:k=Keyboard::Keyboard_PageUp;break;
+		case GLUT_KEY_PAGE_DOWN:k=Keyboard::Keyboard_PageDown;break;
+		case GLUT_KEY_HOME:k=Keyboard::Keyboard_Home;break;
+		case GLUT_KEY_END:k=Keyboard::Keyboard_End;break;
+		case GLUT_KEY_INSERT:k=Keyboard::Keyboard_Insert;break;
+		case 0x70:k=Keyboard::Keyboard_ShiftL;break;
+		case 0x71:k=Keyboard::Keyboard_ShiftR;break;
+		case 0x72:k=Keyboard::Keyboard_CtrlL;break;
+		case 0x73:k=Keyboard::Keyboard_CtrlR;break;
+		case 0x74:k=Keyboard::Keyboard_AltL;break;
+		case 0x75:k=Keyboard::Keyboard_AltR;break;
+		default:printf("specialFunction: unknown key %.8X\n",key);//do nothing
 	}
 	game->keyboardKey(k,pressed);
 }

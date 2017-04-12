@@ -15,7 +15,7 @@ void GameObject::joystickKey(JoystickKey key,bool pressed){
 		if(obj)obj->joystickKey(key,pressed);
 	}
 }
-void GameObject::keyboardKey(KeyboardKey key,bool pressed){
+void GameObject::keyboardKey(Keyboard::KeyboardKey key,bool pressed){
 	for(auto obj:subObjects){
 		if(obj)obj->keyboardKey(key,pressed);
 	}

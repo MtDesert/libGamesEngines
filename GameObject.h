@@ -3,6 +3,7 @@
 
 #include"typedef.h"
 #include"List.h"
+#include"Keyboard.h"
 
 //这是所有的手柄按键,根据需求可能有更多的按键
 #define JOYSTICK_ALLKEY(MACRO)\
@@ -22,42 +23,6 @@
 	MACRO(L2)\
 	MACRO(R1)\
 	MACRO(R2)\
-
-//这是所有的键盘按键,根据需求可能有更多的按键
-#define KEYBOARD_ALLKEY(MACRO)\
-	MACRO(Esc)\
-	MACRO(F1)\
-	MACRO(F2)\
-	MACRO(F3)\
-	MACRO(F4)\
-	MACRO(F5)\
-	MACRO(F6)\
-	MACRO(F7)\
-	MACRO(F8)\
-	MACRO(F9)\
-	MACRO(F10)\
-	MACRO(F11)\
-	MACRO(F12)\
-	MACRO(PrintScreen)\
-	MACRO(ScrollLock)\
-	MACRO(Pause)\
-	MACRO(QuoteLeft)\
-	MACRO(0) MACRO(1) MACRO(2) MACRO(3) MACRO(4) MACRO(5) MACRO(6) MACRO(7) MACRO(8) MACRO(9)\
-	MACRO(Minus) MACRO(Equal) MACRO(BacksLash) MACRO(Backspace)\
-	MACRO(A) MACRO(B) MACRO(C) MACRO(D) MACRO(E) MACRO(F) MACRO(G)\
-	MACRO(H) MACRO(I) MACRO(J) MACRO(K) MACRO(L) MACRO(M) MACRO(N)\
-	MACRO(O) MACRO(P) MACRO(Q) MACRO(R) MACRO(S) MACRO(T)\
-	MACRO(U) MACRO(V) MACRO(W) MACRO(X) MACRO(Y) MACRO(Z)\
-	MACRO(Up)\
-	MACRO(Down)\
-	MACRO(Left)\
-	MACRO(Right)\
-	MACRO(PageUp)\
-	MACRO(PageDown)\
-	MACRO(Home)\
-	MACRO(End)\
-	MACRO(Insert)\
-	MACRO(Delete)\
 
 #define MOUSE_ALLKEY(MACRO)\
 	MACRO(LeftButton)\
@@ -81,13 +46,6 @@ public:
 		Amount_JoystickKey
 	};
 
-	//键盘按键枚举
-#define KEYBOARD_ENUM(key) Keyboard_##key,
-	enum KeyboardKey{
-		KEYBOARD_ALLKEY(KEYBOARD_ENUM)
-		Amount_KeyboardKey
-	};
-	
 	//鼠标按键枚举
 #define MOUSE_ENUM(key) Mouse_##key,
 	enum MouseKey{
@@ -101,7 +59,7 @@ public:
 
 	//传递手柄按键事件,如需要响应事件,请在子类重写
 	virtual void joystickKey(JoystickKey key,bool pressed);
-	virtual void keyboardKey(KeyboardKey key,bool pressed);
+	virtual void keyboardKey(Keyboard::KeyboardKey key,bool pressed);
 	virtual void mouseKey(MouseKey key,bool pressed);
 	//鼠标有移动事件和滚轮事件
 	virtual void mouseMove(int x,int y);//鼠标移动
