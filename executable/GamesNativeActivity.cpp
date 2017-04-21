@@ -15,7 +15,7 @@
 #include <android/storage_manager.h>
 #include <android/tts.h>
 #include <android/window.h>
-#include <android_native_app_glue.h>
+#include "android_native_app_glue.h"
 
 #define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "games.engines", __VA_ARGS__))
 #define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, "games.engines", __VA_ARGS__))
@@ -25,14 +25,14 @@ ASensorManager* sensorManager=NULL;
 const ASensor* allSensors[SENSOR_AMOUNT]={NULL};
 ASensorEventQueue* sensorEventQueue=NULL;
 
-struct EngineEGL{
+typedef struct EngineEGL{
 	int animating;
 	EGLDisplay display;
 	EGLSurface surface;
 	EGLContext context;
 	int32_t width;
 	int32_t height;
-};
+}EngineEGL;
 
 static int engine_init_display(struct android_app *app,EngineEGL* engine) {
 	const EGLint attribs[] = {
@@ -78,7 +78,7 @@ static int engine_init_display(struct android_app *app,EngineEGL* engine) {
 //重绘
 static void engine_draw_frame(EngineEGL* engine) {
 	if (engine->display == NULL)return;
-	glClearColor(0,1,0,1);
+	glClearColor(0,0,0.5,1);
 	glClear(GL_COLOR_BUFFER_BIT);
 	eglSwapBuffers(engine->display, engine->surface);
 }
@@ -196,7 +196,7 @@ static void engine_handle_cmd(struct android_app *app, int32_t cmd) {
 	}
 }
 
-extern"C" void android_main(struct android_app* app) {
+void android_main(struct android_app* app) {
 	LOGI("主函数开始启动");
 	EngineEGL engine;
 	app_dummy();//删除此函数可能导致启动失败

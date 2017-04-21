@@ -7,5 +7,7 @@ class GameScene:public GameObject
 {
 public:
 	GameScene();
+
+	virtual void render();
 };
 #endif
