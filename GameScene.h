@@ -8,6 +8,6 @@ class GameScene:public GameObject
 public:
 	GameScene();
 
-	virtual void render();
+	virtual void render()const;
 };
 #endif

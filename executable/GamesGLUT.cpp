@@ -5,11 +5,24 @@
 Game *game=nullptr;
 const Keyboard keyboard;
 
-void glutTimerFunction(int value){
-	if(value==0){
-		game->addTimeSlice(1000);
+enum{
+	TimerCPU,
+	TimerGPU,
+	Timer_Amount
+};
+int timerInterval[Timer_Amount]={1,16};//microsecond
+
+void glutTimerFunction(int timerID){
+	switch(timerID){
+		case TimerCPU:
+			game->addTimeSlice(1000*timerInterval[timerID]);
+		break;
+		case TimerGPU:
+			game->render();
+			glFlush();
+		break;
 	}
-	glutTimerFunc(1,glutTimerFunction,value);
+	glutTimerFunc(timerInterval[timerID],glutTimerFunction,timerID);
 }
 void glutIdleFunction(){}
 
@@ -112,12 +125,7 @@ void glutVisibilityFunction(int state){
 		default:;
 	}
 }
-void glutDisplayFunction()
-{
-	glClear (GL_COLOR_BUFFER_BIT);
-	glClearColor(0,0,0,1);
-	glFlush();
-}
+void glutDisplayFunction(){}
 void glutOverlayDisplayFunction(){}
 void glutEntryFunction(int state){
 	switch(state){
@@ -183,7 +191,8 @@ int main(int argc,char* argv[]){
 	glutInitWindowPosition(100,100);
 	int window=glutCreateWindow("GamesGLUT");
 	//callback
-	glutTimerFunc(1,glutTimerFunction,0);
+	glutTimerFunc(timerInterval[TimerCPU],glutTimerFunction,TimerCPU);
+	glutTimerFunc(timerInterval[TimerGPU],glutTimerFunction,TimerGPU);
 	GAMESGLUT_GLUTFUNC(Idle);
 	//callback-input
 	GAMESGLUT_GLUTFUNC(Keyboard);

@@ -1,4 +1,5 @@
 #include"GameObject.h"
+#include<stdio.h>
 
 GameObject::GameObject():timeSlice(0),minTimeSlice(1000),maxTimeSlice(100000){}
 GameObject::~GameObject(){clearSubObjects();}
@@ -37,16 +38,22 @@ void GameObject::mouseWheel(int angle){
 }
 void GameObject::addTimeSlice(uint usec){
 	timeSlice += usec;
-	if(timeSlice>maxTimeSlice){
+	if(timeSlice>maxTimeSlice){//限制最大时间片
 		timeSlice=maxTimeSlice;
 	}
-	if(timeSlice >= minTimeSlice){
+	if(timeSlice >= minTimeSlice){//试图消耗时间片
 		timeSlice -= minTimeSlice;
 		consumeTimeSlice();
 	}
 	//向下传递
-	for(auto obj:subObjects){
+	for(auto *obj:subObjects){
 		if(obj)obj->addTimeSlice(usec);
 	}
 }
+void GameObject::render()const{
+	for(auto obj:subObjects){
+		if(obj)obj->render();
+	}
+}
+
 void GameObject::consumeTimeSlice(){}

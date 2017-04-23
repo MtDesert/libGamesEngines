@@ -2,4 +2,4 @@
 
 GameScene::GameScene(){}
 
-void GameScene::render(){}
+void GameScene::render()const{}

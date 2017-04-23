@@ -2,6 +2,7 @@
 #define GAME_H
 
 #include"GameObject.h"
+#include"GameScene.h"
 
 /** Game是整个游戏运行的环境，游戏的主要数据都在本类中
 该类主要是内存操作，与现有的游戏（或非游戏）图形环境等只做对接，比如glfw,glut,Qt,SDL,SFML等各种数不清的图形环境
@@ -12,10 +13,12 @@ class Game:public GameObject
 {
 public:
 	Game();
-	static Game* newGame();
+	static Game* newGame();//这个请在子类实现
 
-	//模拟屏幕输出
-	virtual void render();
+	void addTimeSlice(uint usec);
+	void render()const;
+protected:
+	GameScene* findFirstGameScene()const;
 };
 
 #endif
