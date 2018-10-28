@@ -4,7 +4,7 @@
 using namespace std;
 
 Game::Game(){}
-//Game* Game::newGame(){return new Game();}
+Game* Game::newGame(){return new Game();}
 
 void Game::addTimeSlice(uint usec){
 	auto scene=findFirstGameScene();

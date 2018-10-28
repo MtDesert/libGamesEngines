@@ -39,14 +39,14 @@ void glutKeyboardFunction(unsigned char key,int x,int y){keyboardFunction(key,tr
 void glutKeyboardUpFunction(unsigned char key,int x,int y){keyboardFunction(key,false);}
 
 //input-special key
-#define CASE(num) case GLUT_KEY_F##num:k=Keyboard::Keyboard_F##num;break;
+#define CASE(num) case GLUT_KEY_F##num:k=Keyboard::Key_F##num;break;
 void specialFunction(int key,bool pressed){
 	Keyboard::KeyboardKey k=Keyboard::Amount_KeyboardKey;
 	switch(key){
-		case GLUT_KEY_UP:k=Keyboard::Keyboard_Up;break;
-		case GLUT_KEY_DOWN:k=Keyboard::Keyboard_Down;break;
-		case GLUT_KEY_LEFT:k=Keyboard::Keyboard_Left;break;
-		case GLUT_KEY_RIGHT:k=Keyboard::Keyboard_Right;break;
+		case GLUT_KEY_UP:k=Keyboard::Key_Up;break;
+		case GLUT_KEY_DOWN:k=Keyboard::Key_Down;break;
+		case GLUT_KEY_LEFT:k=Keyboard::Key_Left;break;
+		case GLUT_KEY_RIGHT:k=Keyboard::Key_Right;break;
 		CASE(1)
 		CASE(2)
 		CASE(3)
@@ -59,17 +59,17 @@ void specialFunction(int key,bool pressed){
 		CASE(10)
 		CASE(11)
 		CASE(12)
-		case GLUT_KEY_PAGE_UP:k=Keyboard::Keyboard_PageUp;break;
-		case GLUT_KEY_PAGE_DOWN:k=Keyboard::Keyboard_PageDown;break;
-		case GLUT_KEY_HOME:k=Keyboard::Keyboard_Home;break;
-		case GLUT_KEY_END:k=Keyboard::Keyboard_End;break;
-		case GLUT_KEY_INSERT:k=Keyboard::Keyboard_Insert;break;
-		case 0x70:k=Keyboard::Keyboard_ShiftL;break;
-		case 0x71:k=Keyboard::Keyboard_ShiftR;break;
-		case 0x72:k=Keyboard::Keyboard_CtrlL;break;
-		case 0x73:k=Keyboard::Keyboard_CtrlR;break;
-		case 0x74:k=Keyboard::Keyboard_AltL;break;
-		case 0x75:k=Keyboard::Keyboard_AltR;break;
+		case GLUT_KEY_PAGE_UP:k=Keyboard::Key_PageUp;break;
+		case GLUT_KEY_PAGE_DOWN:k=Keyboard::Key_PageDown;break;
+		case GLUT_KEY_HOME:k=Keyboard::Key_Home;break;
+		case GLUT_KEY_END:k=Keyboard::Key_End;break;
+		case GLUT_KEY_INSERT:k=Keyboard::Key_Insert;break;
+		case 0x70:k=Keyboard::Key_ShiftL;break;
+		case 0x71:k=Keyboard::Key_ShiftR;break;
+		case 0x72:k=Keyboard::Key_CtrlL;break;
+		case 0x73:k=Keyboard::Key_CtrlR;break;
+		case 0x74:k=Keyboard::Key_AltL;break;
+		case 0x75:k=Keyboard::Key_AltR;break;
 		default:printf("specialFunction: unknown key %.8X\n",key);//do nothing
 	}
 	game->keyboardKey(k,pressed);
@@ -152,7 +152,7 @@ void printGlutGet(){
 	printf("Stereo: %d\n",glutGet(GLUT_WINDOW_STEREO));
 	printf("Cursor: %d\n",glutGet(GLUT_WINDOW_CURSOR));
 	printf("FormatID: %d\n",glutGet(GLUT_WINDOW_FORMAT_ID));
-	
+
 	printf("\nScreen(W*H)==%d*%d %dmm*%dmm\n",glutGet(GLUT_SCREEN_WIDTH),glutGet(GLUT_SCREEN_HEIGHT),glutGet(GLUT_SCREEN_WIDTH_MM),glutGet(GLUT_SCREEN_HEIGHT_MM));
 	printf("Menu Num Item: %d\n",glutGet(GLUT_MENU_NUM_ITEMS));
 	printf("Display Mode Possible: %d\n",glutGet(GLUT_MENU_NUM_ITEMS));
@@ -212,7 +212,7 @@ int main(int argc,char* argv[]){
 	GAMESGLUT_GLUTFUNC(Dials);
 	GAMESGLUT_GLUTFUNC(TabletMotion);
 	GAMESGLUT_GLUTFUNC(TabletButton);
-	
+
 	GAMESGLUT_GLUTFUNC(MenuState);
 	GAMESGLUT_GLUTFUNC(MenuStatus);
 	GAMESGLUT_GLUTFUNC(WindowStatus);
@@ -222,7 +222,7 @@ int main(int argc,char* argv[]){
 	GAMESGLUT_GLUTFUNC(Display);
 	GAMESGLUT_GLUTFUNC(OverlayDisplay);
 	GAMESGLUT_GLUTFUNC(Entry);
-	
+
 	printGlutGet();
 	printGlutDeviceGet();
 
