@@ -1,16 +1,27 @@
 cmake_minimum_required(VERSION 2.8)
+include(../CompileScripts/CMakeLists.txt)
 project(GamesEngines)
-include_directories(../libCpp11 ../libCpp11/Containers)
 
-#system
+#指定存放源码和头文件的所有路径
+set(paths
+	Cpp11 Cpp11/Containers
+	Image Image/FileStructs Image/ColorSpaces
+	Lua Math
+	Zipper Zipper/FileStructs
+)
+
+foreach(name ${paths})
+	srcInclude(${name})
+endforeach()
+
+#system include
 include_directories(/usr/include/lua5.3)
 include_directories(/usr/include/x86_64-linux-gnu/qt5)
 
-include(../CompileScripts/CMakeLists.txt)
-aux_source_directory(Lua SRC_LIST)
+#output
 add_library(${PROJECT_NAME} SHARED ${SRC_LIST})
 
-set(COMMON_LIBRARIES FireEmblem GamesEngines Cpp11 lua5.2)
+set(COMMON_LIBRARIES ${GAME_NAME} GamesEngines lua5.2 z)
 
 add_executable(GamesGLUT ./executable/GamesGLUT.cpp)
 target_link_libraries(GamesGLUT ${COMMON_LIBRARIES} glut GL)
