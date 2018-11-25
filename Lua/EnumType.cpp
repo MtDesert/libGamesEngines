@@ -1,5 +1,4 @@
 #include "EnumType.h"
-#include<stdlib.h>
 
 EnumType::EnumType():enumArray(nullptr),enumAmount(0){}
 EnumType::~EnumType(){clear();}

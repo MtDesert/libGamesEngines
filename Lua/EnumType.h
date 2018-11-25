@@ -4,7 +4,8 @@
 #include"typedef.h"
 #include<string>
 using namespace std;
-//枚举,用于从其他语言的枚举转换成类似C语言的枚举,相比C语言的枚举,本类可以为每个枚举值存个字符串
+
+//枚举类型,用于从其他语言的枚举转换成类似C语言的枚举,相比C语言的枚举,本类可以为每个枚举值存个字符串
 class EnumType{
 	//成员变量
 	string *enumArray;
