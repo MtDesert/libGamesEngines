@@ -3,6 +3,7 @@
 
 #include"GameObject.h"
 #include"GameScene.h"
+#include"Point.h"
 
 /** Game是整个游戏运行的环境，游戏的主要数据都在本类中
 该类主要是内存操作，与现有的游戏（或非游戏）图形环境等只做对接，比如glfw,glut,Qt,SDL,SFML等各种数不清的图形环境

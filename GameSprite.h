@@ -2,10 +2,26 @@
 #define GAMESPRITE_H
 
 #include"GameObject.h"
+#include"Texture.h"
+#include"ColorRGB.h"
 
-class GameSprite:public GameObject
-{
+/*游戏中的精灵,可以用于表现人物,物体等各种东西*/
+class GameSprite:public GameObject{
 public:
 	GameSprite();
+	~GameSprite();
+
+	//显示内容
+	Texture texture;//精灵的纹理,基本上每个精灵都有纹理,如果2D游戏要变换显示的内容,简单改变此值就好
+	ColorRGBA color;//精灵可以有颜色,可以通过变色来区分(比如棋类游戏可以用颜色区分敌我)
+	//几何变量
+	Point2D<int> position;//位置(用来表现在屏幕上的位置)
+	Point2D<float> anchorPoint;//锚点(百分比)
+	
+	//以下函数有可能子类差异化
+	virtual void render()const;//子类有自己的实现方法
+	virtual Point2D<float> posF()const;//返回精灵的位置,值由成员变量推断
+	virtual Point2D<float> sizeF()const;//返回精灵在屏幕上的尺寸,值由成员变量推断
+	virtual Rectangle<float> rectF()const;//返回精灵在屏幕上的矩形区域,值由成员变量推断
 };
 #endif
