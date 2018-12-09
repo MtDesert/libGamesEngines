@@ -41,8 +41,5 @@ void FontTextureCache::clearCache(){
 		mapTextures.erase(0);
 		kv=mapTextures.data(0);
 	}
-	/*for(auto item:mapTextures){
-		item.second.deleteTexture();
-	}*/
 	mapTextures.clear();
 }

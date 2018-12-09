@@ -1,9 +1,9 @@
 #ifndef GAMESCENE_H
 #define GAMESCENE_H
 
-#include"GameObject.h"
+#include"GameSprite.h"
 
-class GameScene:public GameObject
+class GameScene:public GameSprite
 {
 public:
 	GameScene();

@@ -11,6 +11,11 @@ void GameObject::clearSubObjects(){
 	subObjects.clear();
 }
 
+void GameObject::reset(){
+	for(auto obj:subObjects){
+		if(obj)obj->reset();
+	}
+}
 void GameObject::joystickKey(JoystickKey key,bool pressed){
 	for(auto obj:subObjects){
 		if(obj)obj->joystickKey(key,pressed);

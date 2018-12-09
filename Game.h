@@ -4,6 +4,7 @@
 #include"GameObject.h"
 #include"GameScene.h"
 #include"Point.h"
+#include"FontTextureCache.h"
 
 /** Game是整个游戏运行的环境，游戏的主要数据都在本类中
 该类主要是内存操作，与现有的游戏（或非游戏）图形环境等只做对接，比如glfw,glut,Qt,SDL,SFML等各种数不清的图形环境
@@ -14,11 +15,19 @@ class Game:public GameObject
 {
 public:
 	Game();
-	static Game* newGame();//这个请在子类实现
+	~Game();
+
+	static Game* newGame();//创建游戏,请在子类实现
+	static Game* currentGame();//当前游戏,请在子类实现
+	static Point2D<int> resolution;//分辨率
+	static Point2D<int> mousePos;//鼠标位置
 
 	void addTimeSlice(uint usec);
 	void render()const;
 protected:
+	static Game *game;//运行中的游戏
+
+	FontTextureCache fontTextureCache;//字体数据缓冲
 	GameScene* findFirstGameScene()const;
 };
 

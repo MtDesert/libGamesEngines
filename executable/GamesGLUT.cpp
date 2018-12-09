@@ -184,17 +184,17 @@ void printGlutDeviceGet(){
 #define GAMESGLUT_GLUTFUNC(name) glut##name##Func(glut##name##Function)
 
 int main(int argc,char* argv[]){
-	game=Game::newGame();
+	//glut初始化
 	glutInit(&argc,argv);
 	glutInitDisplayMode(GLUT_SINGLE|GLUT_RGBA);
 	glutInitWindowSize(640,480);
 	glutInitWindowPosition(100,100);
 	int window=glutCreateWindow("GamesGLUT");
-	//callback
+	//计时器回调函数
 	glutTimerFunc(timerInterval[TimerCPU],glutTimerFunction,TimerCPU);
 	glutTimerFunc(timerInterval[TimerGPU],glutTimerFunction,TimerGPU);
 	GAMESGLUT_GLUTFUNC(Idle);
-	//callback-input
+	//主要输入回调
 	GAMESGLUT_GLUTFUNC(Keyboard);
 	GAMESGLUT_GLUTFUNC(KeyboardUp);
 	GAMESGLUT_GLUTFUNC(Special);
@@ -203,11 +203,11 @@ int main(int argc,char* argv[]){
 	GAMESGLUT_GLUTFUNC(Motion);
 	GAMESGLUT_GLUTFUNC(PassiveMotion);
 	glutJoystickFunc(glutJoystickFunction,1);
-	//callback-spaceball
+	//空间球输入回调
 	GAMESGLUT_GLUTFUNC(SpaceballMotion);
 	GAMESGLUT_GLUTFUNC(SpaceballRotate);
 	GAMESGLUT_GLUTFUNC(SpaceballButton);
-	//callback-others
+	//其它回调
 	GAMESGLUT_GLUTFUNC(ButtonBox);
 	GAMESGLUT_GLUTFUNC(Dials);
 	GAMESGLUT_GLUTFUNC(TabletMotion);
@@ -216,17 +216,20 @@ int main(int argc,char* argv[]){
 	GAMESGLUT_GLUTFUNC(MenuState);
 	GAMESGLUT_GLUTFUNC(MenuStatus);
 	GAMESGLUT_GLUTFUNC(WindowStatus);
-	//callback-output
+	//输出回调
 	GAMESGLUT_GLUTFUNC(Reshape);
 	GAMESGLUT_GLUTFUNC(Visibility);
 	GAMESGLUT_GLUTFUNC(Display);
 	GAMESGLUT_GLUTFUNC(OverlayDisplay);
 	GAMESGLUT_GLUTFUNC(Entry);
 
+	//输出调试信息
 	printGlutGet();
 	printGlutDeviceGet();
 
-	//main loop
+	//开始事件循环
+	game=Game::newGame();
+	game->reset();
 	glutMainLoop();
 	glutDestroyWindow(window);
 	delete game;

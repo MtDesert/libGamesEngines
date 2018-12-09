@@ -41,7 +41,7 @@ else()
 	add_library(${PROJECT_NAME} SHARED ${SRC_LIST})
 
 	#设置共用库,给不同平台的可执行文件用
-	set(COMMON_LIBRARIES ${GAME_NAME} GamesEngines lua5.2 z)
+	set(COMMON_LIBRARIES ${GAME_NAME} GamesEngines lua5.3 z)
 
 	#以下为各种可执行文件的编译过程,根据情况选择编译自己需要的可执行文件即可
 	add_executable(GamesGLUT ./executable/GamesGLUT.cpp)

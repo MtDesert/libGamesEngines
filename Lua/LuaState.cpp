@@ -30,6 +30,42 @@ bool LuaState::doFile(const string &filename){
 	return true;
 }
 
+bool LuaState::setGlobalInteger(const string &name,int value){
+	lua_pushinteger(luaState,value);
+	lua_setglobal(luaState,name.data());
+	return true;
+}
+bool LuaState::getGlobalInteger(const string &name,int &value){
+	lua_getglobal(luaState,name.data());
+	if(lua_isinteger(luaState,1)){
+		value=lua_tointeger(luaState,1);
+		lua_pop(luaState,1);
+	}
+	return true;
+}
+bool LuaState::setGlobalString(const string &name, const string &value){
+	lua_pushstring(luaState,value.data());
+	lua_setglobal(luaState,name.data());
+	return true;
+}
+bool LuaState::getGlobalString(const string &name,string &value){
+	lua_getglobal(luaState,name.data());
+	if(lua_isstring(luaState,1)){
+		value=lua_tostring(luaState,1);
+		lua_pop(luaState,1);
+	}else return false;
+	return true;
+}
+bool LuaState::getGlobalTable(const string &name){
+	lua_getglobal(luaState,name.data());
+	return lua_istable(luaState,1);
+}
+bool LuaState::toInteger(int index,int &value){
+	bool b=lua_isinteger(luaState,index);
+	if(b)value=lua_tointeger(luaState,index);
+	return b;
+}
+
 bool LuaState::readEnum(const string &enumName,EnumType &enumType){
 	lua_getglobal(luaState,enumName.data());//获取表名
 	ASSERT(lua_istable(luaState,-1),"\""+enumName+"\" is not a table");//必须是表
@@ -46,6 +82,24 @@ bool LuaState::readEnum(const string &enumName,EnumType &enumType){
 	TABLE_FOREACH(
 		enumType.setEnumName(amount,lua_tostring(luaState,-1));
 		++amount;
+	);
+	return true;
+}
+
+bool LuaState::readTranslationMap(const string &name,TranslationMap &translationMap){
+	lua_getglobal(luaState,name.data());//获取表名
+	ASSERT(lua_istable(luaState,-1),"\""+name+"\" is not a table");//必须是表
+	//统计个数
+	TranslationMap::amountType amount=0;
+	TABLE_FOREACH(
+		ASSERT(lua_isstring(luaState,-2)&&lua_isstring(luaState,-1),
+			"\""+name+"["+lua_tostring(luaState,-2)+"]\" is not string=string");
+		++amount;
+	);
+	//开始添加
+	translationMap.setAmount(amount);
+	TABLE_FOREACH(
+		translationMap.addStringMap(lua_tostring(luaState,-2),lua_tostring(luaState,-1));
 	);
 	return true;
 }
