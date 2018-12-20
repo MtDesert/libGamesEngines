@@ -8,8 +8,16 @@
 #include<string>
 using namespace std;
 
+//对code进行断言,断言失败则会返回错误信息
+#define LUASTATE_ASSERT(code,errStr)\
+if(code);else{\
+errorString=errStr;\
+return false;\
+}
+
 /*基于lua_State工作的类,本类可以操作一个state,并封装常用的操作,
 设计初衷是将一切和Lua交互的部分都放在这里
+基本上每个方法的返回值都是bool类型,如果返回false则代表不成功,需要去查查errorString的内容
 */
 struct LuaState{
 	LuaState();

@@ -3,11 +3,5 @@
 
 #include"GameSprite.h"
 
-class GameScene:public GameSprite
-{
-public:
-	GameScene();
-
-	virtual void render()const;
-};
+class GameScene:public GameSprite{};
 #endif

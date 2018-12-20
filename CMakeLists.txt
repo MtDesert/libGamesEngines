@@ -8,6 +8,7 @@ set(paths
 	Lua #Lua读取游戏配置的模块,用于解读Lua数据并存入C++内存中
 	Math #数学模块,定义数学上常用的概念,可能包含一些常用算法
 	Zipper Zipper/FileStructs #压缩模块,负责解压
+	Text #文本文件处理模块,用于读取各种文本格式
 	Image Image/FileStructs Image/ColorSpaces #图像模块,主要用于图像解码和处理
 	Font #字体处理模块,文字可以当作一种特殊的图像
 	Renderer #渲染模块,主要用于控制显存和绘制

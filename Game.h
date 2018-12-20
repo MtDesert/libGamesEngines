@@ -11,23 +11,28 @@
 可以接受控制设备的输入，但是控制设备是怎么工作的，这是图形库或者系统相关的图形界面程序要去考虑的事情，本类并不考虑，只提供成员函数来接受输入
 */
 
-class Game:public GameObject
-{
+class Game:public GameObject{
 public:
 	Game();
 	~Game();
 
 	static Game* newGame();//创建游戏,请在子类实现
 	static Game* currentGame();//当前游戏,请在子类实现
+	//输入输出变量
 	static Point2D<int> resolution;//分辨率
 	static Point2D<int> mousePos;//鼠标位置
 
+	//翻译
+	bool loadTranslationFile(const string &filename);
+	const char* translate(const string &english)const;//翻译(英文原文),返回译文,翻译失败则返回原文
+	//重写方法
 	void addTimeSlice(uint usec);
 	void render()const;
 protected:
 	static Game *game;//运行中的游戏
-
-	FontTextureCache fontTextureCache;//字体数据缓冲
+	//翻译
+	Map<string,string> translationMap;
+	//字体
 	GameScene* findFirstGameScene()const;
 };
 

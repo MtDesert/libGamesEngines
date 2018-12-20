@@ -18,13 +18,20 @@ void glutTimerFunction(int timerID){
 			game->addTimeSlice(1000*timerInterval[timerID]);
 		break;
 		case TimerGPU:
+			glClear(GL_DEPTH_BUFFER_BIT|GL_ACCUM_BUFFER_BIT|GL_STENCIL_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
+			glClearColor(0,0,0,1);
 			game->render();
 			glFlush();
 		break;
 	}
 	glutTimerFunc(timerInterval[timerID],glutTimerFunction,timerID);
 }
-void glutIdleFunction(){}
+void glutIdleFunction(){
+	int error=glGetError();
+	if(error){
+		printf("GL get error %d\n",error);
+	}
+}
 
 //input-keyboard
 void keyboardFunction(unsigned char key,bool pressed){
@@ -184,10 +191,13 @@ void printGlutDeviceGet(){
 #define GAMESGLUT_GLUTFUNC(name) glut##name##Func(glut##name##Function)
 
 int main(int argc,char* argv[]){
+	//游戏参数初始化
+	int width=640,height=480;
+	Game::resolution=Point2D<int>(width,height);
 	//glut初始化
 	glutInit(&argc,argv);
 	glutInitDisplayMode(GLUT_SINGLE|GLUT_RGBA);
-	glutInitWindowSize(640,480);
+	glutInitWindowSize(Game::resolution.x(),Game::resolution.y());
 	glutInitWindowPosition(100,100);
 	int window=glutCreateWindow("GamesGLUT");
 	//计时器回调函数
@@ -224,8 +234,17 @@ int main(int argc,char* argv[]){
 	GAMESGLUT_GLUTFUNC(Entry);
 
 	//输出调试信息
-	printGlutGet();
-	printGlutDeviceGet();
+	//printGlutGet();
+	//printGlutDeviceGet();
+	//OpenGL初始化
+	glScalef(2.0/width,2.0/height,1);//以原点为缩放源进行缩放,使得整个屏幕的坐标范围变成(-width/2,-height/2 ~ width/2,height/2)
+	glTranslatef(-width/2,-height/2,0);//原本屏幕的坐标范围为(-1,-1 ~ 1,1),此操作将原点移动到左下角,变成(0,0 ~ width,height)
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_TEXTURE_2D);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);//设置混合功能对透明度的处理
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
 	//开始事件循环
 	game=Game::newGame();

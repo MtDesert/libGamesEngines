@@ -16,11 +16,7 @@ return false;\
 }
 
 //对code进行断言,断言失败则会返回错误信息
-#define ASSERT(code,errStr)\
-if(code);else{\
-errorString=errStr;\
-return false;\
-}
+#define ASSERT LUASTATE_ASSERT
 
 LuaState::LuaState():luaState(luaL_newstate()){}
 LuaState::~LuaState(){lua_close(luaState);}
