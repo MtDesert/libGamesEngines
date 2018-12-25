@@ -7,7 +7,7 @@ static Point2D<float> sz;
 static Rectangle<float> rect;
 static GameString gameString;//绘制按钮标题
 
-GameButton::GameButton():buttonSize(160,32),charSize(GameString::defaultCharSize),isPressed(false),bgColor(0xFF000000){
+GameButton::GameButton():buttonSize(160,32),charSize(16,32),isPressed(false),bgColor(0xFF000000){
 	sr.hasFill=false;
 }
 GameButton::~GameButton(){stringCode.memoryFree();}

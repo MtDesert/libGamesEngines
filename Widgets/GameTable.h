@@ -7,7 +7,7 @@
 /*游戏中常用的表,表的作用是用来给玩家查询一些数据
 本类只负责简单画上表格线,以及一些文字数据,不负责存储数据
 */
-template<typename T>
+/*template<typename T>
 class GameTable:public GameMenu<T>{
 protected:
 	//表头
@@ -103,5 +103,5 @@ public:
 			++itr;
 		}
 	}
-};
+};*/
 #endif

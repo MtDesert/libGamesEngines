@@ -3,9 +3,8 @@
 #include"Charset.h"
 
 FontTextureCache GameString::fontTextureCache;
-Point2D<uint> GameString::defaultCharSize(16,32);
 
-GameString::GameString():charSize(defaultCharSize){}
+GameString::GameString():charSize(16,32){}
 GameString::GameString(const string &str):GameString(){
 	setString(str);
 }
@@ -53,6 +52,6 @@ void GameString::render()const{
 			tex.draw(pos,Point2D<GLfloat>(w,charSize.y()));
 			++i;
 		}
-		pos.x()+=w;//确定下一个字的绘制位置*/
+		pos.x()+=w;//确定下一个字的绘制位置
 	}
 }

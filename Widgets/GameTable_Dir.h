@@ -5,7 +5,7 @@
 #include"Directory.h"
 
 /*显示目录内容的表格,有的时候我们需要在游戏中动态加载文件*/
-class GameTable_Dir:public GameTable<DirectoryEntry>{
+/*class GameTable_Dir:public GameTable<DirectoryEntry>{
 protected:
 	//缓冲区域
 	struct ItemBuffer{
@@ -25,6 +25,6 @@ public:
 
 	virtual uint columnAmount()const;//显示文件的属性列数
 	virtual uint columnWidth(uint column)const;//设定各个列宽
-};
+};*/
 
 #endif
