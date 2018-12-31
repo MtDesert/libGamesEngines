@@ -1,6 +1,6 @@
 #include"GameString.h"
-#include"ShapeRenderer.h"
 #include"Charset.h"
+#include"extern.h"
 
 FontTextureCache GameString::fontTextureCache;
 
@@ -32,9 +32,11 @@ uint GameString::stringWidth()const{
 	return ret*charSize.x();
 }
 
-Point2D<GLfloat> GameString::sizeF()const{return Point2D<GLfloat>(stringWidth(),charSize.y());}
+Point2D<GLfloat> GameString::sizeF()const{
+	return Point2D<GLfloat>(stringWidth(),charSize.y());
+}
 void GameString::render()const{
-	ShapeRenderer::setColor(color);
+	shapeRenderer.setColor(color);
 	auto pos=rectF().p0;
 	//开始计算
 	uint8 u8;uint16 u16;

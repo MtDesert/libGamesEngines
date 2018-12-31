@@ -17,7 +17,7 @@ public:
 	//几何变量
 	Point2D<int> position;//位置(用来表现在屏幕上的位置)
 	Point2D<float> anchorPoint;//锚点(百分比)
-	
+
 	//以下函数有可能子类差异化
 	virtual void render()const;//子类有自己的实现方法
 	virtual Point2D<float> posF()const;//返回精灵的位置,值由成员变量推断

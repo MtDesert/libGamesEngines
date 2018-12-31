@@ -16,6 +16,7 @@ public:
 	void addString(const string &str);//添加字符串
 
 	//重写
+	uint rowAmount()const;
 	void render()const;//渲染方法,主要渲染文字
 };
 

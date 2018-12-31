@@ -8,6 +8,7 @@ void GameMenu_String::addString(const string &str){
 	stringCodeList.push_back(Charset::newString(str.data(),Charset::UTF8,Charset::GB2312));
 }
 
+uint GameMenu_String::rowAmount()const{return stringCodeList.size();}
 void GameMenu_String::render()const{
 	GameMenu::render();//先画基类该画的内容
 	point2D=rect.topCenter();

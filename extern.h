@@ -9,6 +9,7 @@
 //如果将经常用的变量放入静态存储区中,可以避免频繁的申请和释放
 #define ALL_EXTERN_VARIABLE(MACRO)\
 MACRO(Point2D<float>,point2D)\
+MACRO(Point2D<float>,size2D)\
 MACRO(Rectangle<float>,rect)\
 MACRO(ShapeRenderer,shapeRenderer)\
 MACRO(GameString,gameString)\
