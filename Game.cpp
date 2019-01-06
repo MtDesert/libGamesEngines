@@ -14,6 +14,8 @@ Game::Game(){
 	cache.bitmapFontGb2312.lv2Chinese.loadFile("fonts/lv2");
 }
 Game::~Game(){
+	//删除控件
+	deleteScene_TableDir();
 	//删除字体
 	FontTextureCache &cache(GameString::fontTextureCache);
 	cache.bitmapFontAscii.charBlock.deleteDataPointer();
@@ -58,6 +60,21 @@ bool Game::loadTranslationFile(const string &filename){
 const char* Game::translate(const string &english)const{
 	auto value=translationMap.value(english);
 	return value ? value->data() : english.data();
+}
+
+GameScene_FileList *Game::showScene_FileList(){
+	if(!sceneFileList){
+		sceneFileList=new GameScene_FileList();
+	}
+	subObjects.push_front(sceneFileList);
+	return sceneFileList;
+}
+void Game::deleteScene_TableDir(){
+	if(sceneFileList){
+		subObjects.remove(sceneFileList);
+		delete sceneFileList;
+	}
+	sceneFileList=nullptr;
 }
 
 void Game::addTimeSlice(uint usec){

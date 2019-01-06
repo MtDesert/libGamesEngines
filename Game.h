@@ -2,8 +2,7 @@
 #define GAME_H
 
 #include"GameObject.h"
-#include"GameScene.h"
-#include"Point.h"
+#include"GameScene_FileList.h"
 #include"FontTextureCache.h"
 
 /** Game是整个游戏运行的环境，游戏的主要数据都在本类中
@@ -25,6 +24,9 @@ public:
 	//翻译
 	bool loadTranslationFile(const string &filename);
 	const char* translate(const string &english)const;//翻译(英文原文),返回译文,翻译失败则返回原文
+	//文件选择
+	GameScene_FileList* showScene_FileList();//显示选择文件列表
+	void deleteScene_TableDir();//删除文件列表所占的内存
 	//重写方法
 	void addTimeSlice(uint usec);
 	void render()const;
@@ -32,7 +34,9 @@ protected:
 	static Game *game;//运行中的游戏
 	//翻译
 	Map<string,string> translationMap;
-	//字体
+	//文件管理
+	GameScene_FileList *sceneFileList;
+
 	GameScene* findFirstGameScene()const;
 };
 

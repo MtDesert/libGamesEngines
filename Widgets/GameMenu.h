@@ -20,7 +20,6 @@ public:
 	//菜单状态
 	uint selectingItemIndex;//当前选择的索引
 	bool recycleMode;//循环模式,末项的下一项是首项,首项的上一项是末项
-	char menuStatus;//菜单状态,供外部进行检测以便得知用户所做的操作
 	//回调函数
 	void (*onConfirm)();
 	void (*onCancel)();

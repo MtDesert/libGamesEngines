@@ -7,7 +7,6 @@ uint GameDialog::maxLineCharAmount = 40;
 
 GameDialog::GameDialog(){
 	subObjects.push_back(&mGameText);
-	mGameButton.setString("Confirm");
 	subObjects.push_back(&mGameButton);
 }
 GameDialog::~GameDialog(){}

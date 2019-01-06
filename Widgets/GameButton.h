@@ -12,13 +12,9 @@ public:
 
 	//成员变量
 	Point2D<int> buttonSize;//按钮的大小,可用于无纹理的按钮绘制边框
-	decltype(GameString::stringCode) stringCode;//支持文字显示
-	decltype(GameString::charSize) charSize;//支持文字调整大小
 	bool isPressed;//是否处于按下状态
 	ColorRGBA bgColor;//背景色,按下状态时颜色互换
 
-	//设置函数
-	void setString(const string &str);
 	//以下函数有可能子类差异化
 	virtual void mouseMove(int x,int y);//鼠标移动出区域的时候恢复为不按下状态
 	virtual void mouseKey(MouseKey key,bool pressed);//让按钮可以响应鼠标点击

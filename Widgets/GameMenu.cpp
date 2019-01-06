@@ -4,8 +4,10 @@
 //构造函数
 GameMenu::GameMenu():
 	renderItemStart(0),renderItemAmount(4),itemWidth(0),itemHeight(32),
-	selectingItemIndex(0),recycleMode(true),menuStatus(Selecting),
-	onConfirm(nullptr),onCancel(nullptr){}
+	selectingItemIndex(0),recycleMode(true),
+	onConfirm(nullptr),onCancel(nullptr){
+	borderColor=0xFFFFFFFF;//菜单默认显示白色边框
+}
 GameMenu::~GameMenu(){}
 
 void GameMenu::updateRenderParameters(){
@@ -38,22 +40,18 @@ void GameMenu::keyboardKey(Keyboard::KeyboardKey key,bool pressed){
 		}
 		updateRenderParameters();
 	}else if(key==Keyboard::Key_Enter && !pressed){
-		menuStatus=Confirm;//确认选择项
 		if(onConfirm)onConfirm();
 	}else if(key==Keyboard::Key_Esc && !pressed){
-		menuStatus=Cancel;//取消选择
 		if(onCancel)onCancel();
 	}
 }
 //渲染
 void GameMenu::render()const{
-	//画个矩形
-	rect=rectF();
-	shapeRenderer.fillColor=0xFF000000;
-	shapeRenderer.hasFill=false;
-	shapeRenderer.drawRectangle(rect);
+	GameSprite::render();
 }
 
 Point2D<float> GameMenu::sizeF()const{//菜单尺寸,根据项尺寸和显示项数决定(子类可能会多出边缘或者间距等部分)
-	return Point2D<float>(itemWidth,itemHeight*renderItemAmount);
+	size2D.x()=itemWidth;
+	size2D.y()=itemHeight*renderItemAmount;
+	return size2D;
 }

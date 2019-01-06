@@ -1,8 +1,6 @@
 #include"GameText.h"
-#include"ShapeRenderer.h"
 #include"Charset.h"
-
-static GameString gameString;
+#include"extern.h"
 
 GameText::GameText():lineCharAmount(16){
 	gameString.anchorPoint=Point2D<float>(0,1);
@@ -43,7 +41,7 @@ void GameText::refresh(){
 Point2D<GLfloat> GameText::sizeF()const{return Point2D<GLfloat>(charSize.x()*lineCharAmount,charSize.y()*lineStart.size());}
 void GameText::render()const{
 	ShapeRenderer::setColor(color);
-	auto rect=rectF();
+	rect=rectF();
 	gameString.position.x()=rect.p0.x();
 	gameString.position.y()=rect.p1.y();
 	//开始计算
