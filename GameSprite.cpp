@@ -1,22 +1,21 @@
 #include"GameSprite.h"
 #include"extern.h"
 
-GameSprite::GameSprite():color(0xFFFFFFFF),borderColor(0),anchorPoint(0.5,0.5){}
+GameSprite::GameSprite():color(0xFFFFFFFF),anchorPoint(0.5,0.5){}
 GameSprite::~GameSprite(){}
 
 void GameSprite::render()const{
 	//绘制纹理
 	ShapeRenderer::setColor(color);
-	rect=rectF();
-	texture.draw(rect);
-	//绘制边框
-	if(borderColor){
-		shapeRenderer.hasEdge=true;
-		shapeRenderer.hasFill=false;
-		shapeRenderer.edgeColor=borderColor;
-		shapeRenderer.drawRectangle(rect);
-	}
+	texture.draw(rectF());
+	//递归绘制子节点
 	GameObject::render();
+}
+void GameSprite::renderRectBorder()const{
+	shapeRenderer.hasEdge=true;
+	shapeRenderer.hasFill=false;
+	shapeRenderer.edgeColor=color;
+	shapeRenderer.drawRectangle(rectF());
 }
 
 Point2D<float> GameSprite::posF()const{

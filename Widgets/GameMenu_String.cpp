@@ -10,7 +10,8 @@ void GameMenu_String::addString(const string &str){
 
 uint GameMenu_String::rowAmount()const{return stringCodeList.size();}
 void GameMenu_String::render()const{
-	GameMenu::render();//先画基类该画的内容
+	GameMenu::render();
+	//绘制每一项内容
 	point2D=rect.topCenter();
 	gameString.position.x()=point2D.x();
 	decltype(renderItemStart) i=0,j=0;
@@ -34,4 +35,6 @@ void GameMenu_String::render()const{
 		if(j>=renderItemAmount)break;
 		++i;//下一个
 	}
+	//绘制菜单边框
+	renderRectBorder();
 }

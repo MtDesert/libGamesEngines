@@ -5,9 +5,7 @@
 GameMenu::GameMenu():
 	renderItemStart(0),renderItemAmount(4),itemWidth(0),itemHeight(32),
 	selectingItemIndex(0),recycleMode(true),
-	onConfirm(nullptr),onCancel(nullptr){
-	borderColor=0xFFFFFFFF;//菜单默认显示白色边框
-}
+	onConfirm(nullptr),onCancel(nullptr){}
 GameMenu::~GameMenu(){}
 
 void GameMenu::updateRenderParameters(){
