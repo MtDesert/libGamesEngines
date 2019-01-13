@@ -37,7 +37,6 @@ Point2D<float> GameTable::sizeF()const{
 	colAmount=columnAmount();
 	size2D.x()=0;
 	for(x=0;x<colAmount;++x){size2D.x()+=columnWidth(x);}
-	size2D.x()=itemWidth;
 	size2D.y()=itemHeight*renderItemAmount;
 	return size2D;
 }

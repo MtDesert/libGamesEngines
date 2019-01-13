@@ -19,10 +19,19 @@ public:
 		CHARSET_ALL(CHARSET_NAME)
 		AmountOf_EnumCharset
 	};
+	//源字符集和目标字符集
+	Charset();
+	~Charset();
+
+	EnumCharset srcCharset,destCharset;
+	//创建字符
+	bool newString(const char *srcStr,DataBlock &dataBlock)const;
+	bool newString(const char *srcStr,char **destStr,size_t &destLen)const;
+
 	//统计字符串str的字符数(charset为str的字符集)
 	static size_t charAmount(const char *str,EnumCharset charset);
-	//转换
-	static DataBlock newString(const char *str,EnumCharset fromCharset,EnumCharset toCharset);
+	//转换(静态方法)
+	static bool newString(const char *str,EnumCharset fromCharset,EnumCharset toCharset,char **destStr,size_t &destLen);
 };
 
 #endif

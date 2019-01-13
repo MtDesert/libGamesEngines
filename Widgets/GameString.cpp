@@ -2,6 +2,7 @@
 #include"Charset.h"
 #include"extern.h"
 
+Charset GameString::charset;
 FontTextureCache GameString::fontTextureCache;
 //渲染用的变量
 static uint8 u8;//存放单字节的字符
@@ -15,12 +16,8 @@ GameString::GameString(const string &str):GameString(){
 }
 GameString::~GameString(){stringCode.memoryFree();}
 
-DataBlock GameString::newString(const string &str){//这里写死了字符集,后期可以修改
-	return Charset::newString(str.data(),Charset::UTF8,Charset::GB2312);
-}
 void GameString::setString(const string &str){
-	stringCode.memoryFree();//删除掉旧的数据
-	stringCode=newString(str);
+	charset.newString(str.data(),stringCode);
 }
 uint GameString::stringWidth()const{
 	uint ret=0;

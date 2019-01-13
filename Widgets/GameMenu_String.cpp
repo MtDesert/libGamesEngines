@@ -5,7 +5,9 @@ GameMenu_String::GameMenu_String(){}
 GameMenu_String::~GameMenu_String(){}
 
 void GameMenu_String::addString(const string &str){
-	stringCodeList.push_back(Charset::newString(str.data(),Charset::UTF8,Charset::GB2312));
+	DataBlock block;
+	GameString::charset.newString(str.data(),block);
+	stringCodeList.push_back(block);
 }
 
 uint GameMenu_String::rowAmount()const{return stringCodeList.size();}

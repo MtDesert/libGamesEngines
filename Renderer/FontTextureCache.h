@@ -22,7 +22,6 @@ public:
 	Map<uint16,Texture> mapTextures;//存放纹理的容器
 	//渲染过程
 	Texture renderCharCode(uint16 character);//渲染文字(Unicode字符),返回文字对应的纹理
-	bool renderString(const string &str,Charset::EnumCharset charset);//渲染字符串
 	void clearCache();//清除缓冲
 };
 

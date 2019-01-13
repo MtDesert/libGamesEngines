@@ -15,7 +15,7 @@ Game::Game(){
 }
 Game::~Game(){
 	//删除控件
-	deleteScene_TableDir();
+	deleteScene_FileList();
 	//删除字体
 	FontTextureCache &cache(GameString::fontTextureCache);
 	cache.bitmapFontAscii.charBlock.deleteDataPointer();
@@ -69,7 +69,7 @@ GameScene_FileList *Game::showScene_FileList(){
 	subObjects.push_front(sceneFileList);
 	return sceneFileList;
 }
-void Game::deleteScene_TableDir(){
+void Game::deleteScene_FileList(){
 	if(sceneFileList){
 		subObjects.remove(sceneFileList);
 		delete sceneFileList;

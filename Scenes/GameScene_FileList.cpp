@@ -19,8 +19,6 @@ GameScene_FileList::GameScene_FileList(){
 	gameTableDir.position = textPath.position;
 	gameTableDir.position.y() -= textPath.charSize.y();
 	gameTableDir.anchorPoint.y()=1;
-	gameTableDir.itemWidth=res.x()-32;
-	gameTableDir.renderItemAmount=10;
 	subObjects.push_back(&gameTableDir);
 
 	//按钮

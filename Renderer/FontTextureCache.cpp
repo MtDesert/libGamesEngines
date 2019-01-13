@@ -22,17 +22,6 @@ Texture FontTextureCache::renderCharCode(uint16 character){
 	}
 	return tex;
 }
-bool FontTextureCache::renderString(const string &str,Charset::EnumCharset charset){
-	auto block=Charset::newString(str.data(),Charset::UTF8,Charset::GB2312);//得到转换结果
-	uint16 charCode;
-	for(size_t i=2;i<block.dataLength;i+=2){
-		if(block.get_uint16(i,charCode)){
-			renderCharCode(charCode);//渲染每个文字,不必担心重复问题
-		}
-	}
-	block.deleteDataPointer();//清理
-	return true;
-}
 
 void FontTextureCache::clearCache(){
 	auto kv=mapTextures.data(0);

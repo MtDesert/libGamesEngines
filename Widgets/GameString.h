@@ -28,9 +28,8 @@ public:
 	virtual void render()const;//实时渲染文字
 
 	//静态变量
+	static Charset charset;//GameString共用的字符集转化方案,暂时还没提供换字符集的方案
 	static FontTextureCache fontTextureCache;//GameString共用的文字缓存,暂时还没提供换字体的方案
-	//静态函数
-	static DataBlock newString(const string &str);//直接创建新的字符串,此方法可以用于各种控件,别忘记释放
 };
 
 #endif
