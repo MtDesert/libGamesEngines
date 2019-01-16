@@ -24,7 +24,7 @@ Point2D<float> GameSprite::posF()const{
 	return point2D;
 }
 Point2D<float> GameSprite::sizeF()const{return texture.sizeF();}
-Rectangle<float> GameSprite::rectF()const{
+Rectangle2D<float> GameSprite::rectF()const{
 	size2D=sizeF();
 	rect.p0.x()=position.x()-anchorPoint.x()*size2D.x();
 	rect.p0.y()=position.y()-anchorPoint.y()*size2D.y();

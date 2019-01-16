@@ -1,7 +1,7 @@
 #ifndef TEXTURE_H
 #define TEXTURE_H
 
-#include"gl.h"
+#include"GL/gl.h"
 #include"FileBMP.h"
 #include"FilePNG.h"
 #include"Pixmap.h"
@@ -31,7 +31,7 @@ public:
 	void texImage2D_FileBMP(const string &filename);
 	void texImage2D_FilePNG(const string &filename);
 	void texImage2D_FileName(const string &filename);
-	
+
 	//局部绘制枚举
 	enum TexCoord{
 		TexCoord_Default,//默认绘制整个纹理
@@ -43,15 +43,15 @@ public:
 	//绘制纹理(从p开始绘制,绘制大小为size,若没指定size则以本身的宽和高来作为默认size)
 	void draw(const Point2D<GLfloat> &p,TexCoord coord=TexCoord_Default)const;
 	void draw(const Point2D<GLfloat> &p,const Point2D<GLfloat> &size,TexCoord coord=TexCoord_Default)const;
-	void draw(const Rectangle<GLfloat> &rect,TexCoord coord=TexCoord_Default)const;
-	
+	void draw(const Rectangle2D<GLfloat> &rect,TexCoord coord=TexCoord_Default)const;
+
 	//纹理的几何尺寸
 	GLsizei getWidth()const;//宽
 	GLsizei getHeight()const;//高
 	Point2D<GLsizei> size()const;//宽高
 	Point2D<GLfloat> sizeF()const;//宽高
 
-	static void rect2vertex(const Rectangle<GLfloat> &rect,GLfloat vertex[]);
+	static void rect2vertex(const Rectangle2D<GLfloat> &rect,GLfloat vertex[]);
 private:
 	GLuint texture;
 	GLsizei width,height;

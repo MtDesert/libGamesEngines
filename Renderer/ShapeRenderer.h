@@ -48,7 +48,7 @@ public:
 	//画矩形
 	void drawRectangle(numType x0,numType y0,numType x1,numType y1)const;
 	void drawRectangle(const Point2D<numType> &p0,const Point2D<numType> &p1)const;
-	void drawRectangle(const Rectangle<numType> &rect)const;
+	void drawRectangle(const Rectangle2D<numType> &rect)const;
 	void drawRectangle(const numType vertex[])const;
 	//画多边形(顶点数组,顶点数量)
 	void drawPolygen(const numType vertex[],int n)const;//注意:n是顶点数,不是数组大小

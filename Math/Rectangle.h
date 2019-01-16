@@ -5,10 +5,10 @@
 
 template<typename T>
 //2维矩形
-struct Rectangle{
-	Rectangle(){}
-	Rectangle(const Point2D<T> &p0,const Point2D<T> &p1):p0(p0),p1(p1){}
-	Rectangle(const T &x0,const T &y0,const T &x1,const T &y1):p0(x0,y0),p1(x1,y1){}
+struct Rectangle2D{
+	Rectangle2D(){}
+	Rectangle2D(const Point2D<T> &p0,const Point2D<T> &p1):p0(p0),p1(p1){}
+	Rectangle2D(const T &x0,const T &y0,const T &x1,const T &y1):p0(x0,y0),p1(x1,y1){}
 
 	//特征
 	inline T width()const{return abs(p1.x()-p0.x());}
@@ -27,8 +27,8 @@ inline const T& name()const{return (p0.xORy() gtORlt p1.xORy()?p0.xORy():p1.xORy
 	RECTANGLE_INLINE_T_REF(bottom,y,<)
 	RECTANGLE_INLINE_T_REF(top,y,>)
 
-	Rectangle normalized()const{//坐标标准化
-		Rectangle ret;
+	Rectangle2D normalized()const{//坐标标准化
+		Rectangle2D ret;
 		ret.p0.x()=min(p0.x(),p1.x());
 		ret.p1.x()=max(p0.x(),p1.x());
 		ret.p0.y()=min(p0.y(),p1.y());
@@ -42,7 +42,7 @@ inline const T& name()const{return (p0.xORy() gtORlt p1.xORy()?p0.xORy():p1.xORy
 	bool containPoint(const Point2D<T> &p)const{
 		return containPoint(p.x(),p.y());
 	}
-	
+
 	//特征点
 #define RECTANGLE_INLINE_POINT2D_CENTER_X left()+(right()-left())/2
 #define RECTANGLE_INLINE_POINT2D_CENTER_Y bottom()+(top()-bottom())/2

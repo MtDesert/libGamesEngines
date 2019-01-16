@@ -10,7 +10,7 @@
 #define ALL_EXTERN_VARIABLE(MACRO)\
 MACRO(Point2D<float>,point2D)\
 MACRO(Point2D<float>,size2D)\
-MACRO(Rectangle<float>,rect)\
+MACRO(Rectangle2D<float>,rect)\
 MACRO(Texture,texture)\
 MACRO(ShapeRenderer,shapeRenderer)\
 MACRO(GameString,gameString)\

@@ -19,7 +19,7 @@ set(paths
 )
 
 #系统头文件包含目录
-foreach(name /usr/include/lua5.3 /usr/include/x86_64-linux-gnu/qt5)
+foreach(name ../lua-5.3.5/src)
 	include_directories(${name})
 endforeach()
 
@@ -48,15 +48,15 @@ else()
 	add_executable(GamesGLUT ./executable/GamesGLUT.cpp)
 	target_link_libraries(GamesGLUT ${COMMON_LIBRARIES} glut GL)
 
-	add_executable(GamesGLFW ./executable/GamesGLFW.cpp)
-	target_link_libraries(GamesGLFW ${COMMON_LIBRARIES} glfw GL)
+	#add_executable(GamesGLFW ./executable/GamesGLFW.cpp)
+	#target_link_libraries(GamesGLFW ${COMMON_LIBRARIES} glfw GL)
 
-	add_executable(GamesSDL ./executable/GamesSDL.cpp)
-	target_link_libraries(GamesSDL ${COMMON_LIBRARIES} SDL)
+	#add_executable(GamesSDL ./executable/GamesSDL.cpp)
+	#target_link_libraries(GamesSDL ${COMMON_LIBRARIES} SDL)
 
-	add_executable(GamesSDL2 ./executable/GamesSDL2.cpp)
-	target_link_libraries(GamesSDL2 ${COMMON_LIBRARIES} SDL2)
+	#add_executable(GamesSDL2 ./executable/GamesSDL2.cpp)
+	#target_link_libraries(GamesSDL2 ${COMMON_LIBRARIES} SDL2)
 
-	add_executable(GamesQt ./executable/GamesQt.cpp)
-	target_link_libraries(GamesQt ${COMMON_LIBRARIES} Qt5Widgets Qt5Core)
+	#add_executable(GamesQt ./executable/GamesQt.cpp)
+	#target_link_libraries(GamesQt ${COMMON_LIBRARIES} Qt5Widgets Qt5Core)
 endif()

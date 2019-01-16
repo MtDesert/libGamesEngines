@@ -1,5 +1,5 @@
 #include"ShapeRenderer.h"
-#include"gl.h"
+#include"GL/gl.h"
 
 ShapeRenderer::ShapeRenderer():hasEdge(true),hasFill(true),edgeColor(0xFFFFFFFF),fillColor(0xFFFFFFFF),texture(0){}
 ShapeRenderer::~ShapeRenderer(){}
@@ -118,7 +118,7 @@ void ShapeRenderer::drawRectangle(numType x0,numType y0,numType x1,numType y1)co
 void ShapeRenderer::drawRectangle(const Point2D<numType> &p0,const Point2D<numType> &p1)const{
 	SHAPERENDERER_DRAW_RECTANGLE(p0.x(),p0.y(),p1.x(),p1.y())
 }
-void ShapeRenderer::drawRectangle(const Rectangle<numType> &rect)const{
+void ShapeRenderer::drawRectangle(const Rectangle2D<numType> &rect)const{
 	SHAPERENDERER_DRAW_RECTANGLE(rect.p0.x(),rect.p0.y(),rect.p1.x(),rect.p1.y())
 }
 void ShapeRenderer::drawRectangle(const numType vertex[])const{

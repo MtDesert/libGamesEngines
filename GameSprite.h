@@ -23,6 +23,6 @@ public:
 	void renderRectBorder()const;//渲染矩形边线,可用于在视觉上确认精灵的大小
 	virtual Point2D<float> posF()const;//返回精灵的位置,值由成员变量推断
 	virtual Point2D<float> sizeF()const;//返回精灵在屏幕上的尺寸,值由成员变量推断
-	virtual Rectangle<float> rectF()const;//返回精灵在屏幕上的矩形区域,值由成员变量推断
+	virtual Rectangle2D<float> rectF()const;//返回精灵在屏幕上的矩形区域,值由成员变量推断
 };
 #endif

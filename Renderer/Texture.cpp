@@ -93,9 +93,9 @@ void Texture::draw(const Point2D<GLfloat> &p,TexCoord coord)const{
 	draw(p,sizeF()-Point2D<float>(1,1),coord);
 }
 void Texture::draw(const Point2D<GLfloat> &p,const Point2D<GLfloat> &size,TexCoord coord)const{
-	draw(Rectangle<GLfloat>(p,p+size),coord);
+	draw(Rectangle2D<GLfloat>(p,p+size),coord);
 }
-void Texture::draw(const Rectangle<GLfloat> &rect,TexCoord coord)const{
+void Texture::draw(const Rectangle2D<GLfloat> &rect,TexCoord coord)const{
 	if(!glIsTexture(texture))return;
 	glBindTexture(GL_TEXTURE_2D,texture);
 	//顶点数组
@@ -121,7 +121,7 @@ GLsizei Texture::getHeight()const{return height;}
 Point2D<GLsizei> Texture::size()const{return Point2D<GLsizei>(width,height);}
 Point2D<GLfloat> Texture::sizeF()const{return Point2D<GLfloat>(width,height);}
 
-void Texture::rect2vertex(const Rectangle<GLfloat> &rect,GLfloat vertex[]){
+void Texture::rect2vertex(const Rectangle2D<GLfloat> &rect,GLfloat vertex[]){
 	vertex[0]=vertex[6]=rect.p0.x();
 	vertex[1]=vertex[3]=rect.p0.y();
 	vertex[2]=vertex[4]=rect.p1.x();
