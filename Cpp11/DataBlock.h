@@ -144,7 +144,7 @@ public:
 	bool newDataPointer(size_t size);//封装new关键字
 	bool deleteDataPointer();//封装delete关键字
 	//调试
-	int debug()const;//输出成员变量信息
+	//int debug()const;//输出成员变量信息
 
 	//数据分析
 	/** @brief parseData 自行分析,子类可以重写此函数,主要目的是根据分析结果重新调整数据,比如调整能识别的数据长度,或调整子类的其他成员变量

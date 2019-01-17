@@ -33,10 +33,6 @@ int PrintF::printf(const char *format,...)const{
 	va_end(args);
 	return ret;
 }
-int PrintF::vprintf(const char *format,va_list args)const{
-	return ::vprintf(codesStringFormat(format).data(),args);
-}
-
 int PrintF::sprintf(char *buffer,const char *format,...)const{
 	va_list args;
 	va_start(args,format);
@@ -44,10 +40,6 @@ int PrintF::sprintf(char *buffer,const char *format,...)const{
 	va_end(args);
 	return ret;
 }
-int PrintF::vsprintf(char *buffer,const char *format,va_list args)const{
-	return ::vsprintf(buffer,codesStringFormat(format).data(),args);
-}
-
 int PrintF::fprintf(FILE *file,const char *format,...)const{
 	va_list args;
 	va_start(args,format);
@@ -55,10 +47,6 @@ int PrintF::fprintf(FILE *file,const char *format,...)const{
 	va_end(args);
 	return ret;
 }
-int PrintF::vfprintf(FILE *file,const char *format,va_list args)const{
-	return ::vfprintf(file,codesStringFormat(format).data(),args);
-}
-
 int PrintF::snprintf(char *buffer, size_t maxlen, const char *format,...)const{
 	va_list args;
 	va_start(args,format);
@@ -66,9 +54,21 @@ int PrintF::snprintf(char *buffer, size_t maxlen, const char *format,...)const{
 	va_end(args);
 	return ret;
 }
+
+#ifndef __MINGW32__
+int PrintF::vprintf(const char *format,va_list args)const{
+	return ::vprintf(codesStringFormat(format).data(),args);
+}
+int PrintF::vsprintf(char *buffer,const char *format,va_list args)const{
+	return ::vsprintf(buffer,codesStringFormat(format).data(),args);
+}
+int PrintF::vfprintf(FILE *file,const char *format,va_list args)const{
+	return ::vfprintf(file,codesStringFormat(format).data(),args);
+}
 int PrintF::vsnprintf(char *buffer,size_t maxlen,const char *format,va_list args)const{
 	return ::vsnprintf(buffer,maxlen,codesStringFormat(format).data(),args);
 }
+#endif
 
 #define PRINTF_SNPRINTF\
 	str.clear();\

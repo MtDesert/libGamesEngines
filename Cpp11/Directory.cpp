@@ -12,7 +12,6 @@ bool DirectoryEntry::operator==(const DirectoryEntry &directoryEntry)const{
 }
 
 decltype(dirent::d_ino) DirectoryEntry::indexNode()const{return d_ino;}
-decltype(dirent::d_off) DirectoryEntry::offset()const{return d_off;}
 decltype(dirent::d_reclen) DirectoryEntry::nameLength()const{return d_reclen;}
 
 bool DirectoryEntry::isUnknown()const{return d_type==DT_UNKNOWN;}
@@ -23,7 +22,6 @@ bool DirectoryEntry::isBlockDevice()const{return d_type==DT_BLK;}
 bool DirectoryEntry::isRegularFile()const{return d_type==DT_REG;}
 bool DirectoryEntry::isSymbolicLink()const{return d_type==DT_LNK;}
 bool DirectoryEntry::isSocket()const{return d_type==DT_SOCK;}
-bool DirectoryEntry::isWhiteOut()const{return d_type==DT_WHT;}
 
 #define DIRENT_CASE(name) case name:return #name;
 string DirectoryEntry::directoryTypename()const{
@@ -36,7 +34,6 @@ string DirectoryEntry::directoryTypename()const{
 		DIRENT_CASE(DT_REG)
 		DIRENT_CASE(DT_LNK)
 		DIRENT_CASE(DT_SOCK)
-		DIRENT_CASE(DT_WHT)
 		default:return "????????";
 	}
 }
@@ -64,7 +61,6 @@ string DirectoryEntry::strModifyDate()const{
 
 //DirentList
 static bool compareIndexNode(const DirectoryEntry &entryA,const DirectoryEntry &entryB){return entryA.d_ino<entryB.d_ino;}
-static bool compareOffset(const DirectoryEntry &entryA,const DirectoryEntry &entryB){return entryA.d_off<entryB.d_off;}
 static bool compareRecLen(const DirectoryEntry &entryA,const DirectoryEntry &entryB){return entryA.d_reclen<entryB.d_reclen;}
 static bool compareType(const DirectoryEntry &entryA,const DirectoryEntry &entryB){return entryA.d_type<entryB.d_type;}
 static bool compareName(const DirectoryEntry &entryA,const DirectoryEntry &entryB){
@@ -74,7 +70,6 @@ static bool compareName(const DirectoryEntry &entryA,const DirectoryEntry &entry
 void DirentList::sortBy(SortBy by){
 	switch(by){
 		DIRENTLIST_COMPARE(IndexNode)
-		DIRENTLIST_COMPARE(Offset)
 		DIRENTLIST_COMPARE(RecLen)
 		DIRENTLIST_COMPARE(Type)
 		DIRENTLIST_COMPARE(Name)

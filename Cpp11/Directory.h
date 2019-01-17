@@ -17,7 +17,6 @@ struct DirectoryEntry:public dirent,public stat{
 	bool operator==(const DirectoryEntry &directoryEntry)const;
 
 	decltype(d_ino) indexNode()const;//索引节点号
-	decltype(d_off) offset()const;//在文件目录中的偏移
 	decltype(d_reclen) nameLength()const;//文件名长度
 
 	bool isUnknown()const;//未知类型
@@ -28,7 +27,6 @@ struct DirectoryEntry:public dirent,public stat{
 	bool isRegularFile()const;//正常文件
 	bool isSymbolicLink()const;//符号链接
 	bool isSocket()const;//套接字
-	bool isWhiteOut()const;//空白?
 	string directoryTypename()const;//类型名(返回枚举名)
 
 	//字符串值(推导结果)
@@ -42,7 +40,6 @@ class DirentList:public list<DirectoryEntry>{
 public:
 	enum SortBy{//排序,按照dirent结构体的属性来排
 		ByIndexNode,
-		ByOffset,
 		ByRecLen,
 		ByType,
 		ByName,

@@ -212,9 +212,9 @@ bool DataBlock::deleteDataPointer(){
 	return ret;
 }
 
-int DataBlock::debug()const{
+/*int DataBlock::debug()const{
 	return printf("DataBlock: ptr=%p file=%p off=%lu len=%lu\n",dataPointer,dataFile,dataOffset,dataLength);
-}
+}*/
 
 DataBlock::SizeType DataBlock::reset(){
 	dataPointer=nullptr;

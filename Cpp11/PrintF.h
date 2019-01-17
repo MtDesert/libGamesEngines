@@ -53,16 +53,15 @@ struct PrintF{
 
 	//printf....
 	int printf(const char *format,...)const;
-	int vprintf(const char *format,va_list args)const;
-
 	int sprintf(char *buffer,const char *format,...)const;
-	int vsprintf(char *buffer,const char *format,va_list args)const;
-
 	int fprintf(FILE *file,const char *format,...)const;
-	int vfprintf(FILE *file,const char *format,va_list args)const;
-
 	int snprintf(char *buffer,size_t maxlen,const char *format,...)const;
+#ifndef __MINGW32__
+	int vprintf(const char *format,va_list args)const;
+	int vsprintf(char *buffer,const char *format,va_list args)const;
+	int vfprintf(FILE *file,const char *format,va_list args)const;
 	int vsnprintf(char *buffer,size_t maxlen,const char *format,va_list args)const;
+#endif
 
 	//std::string
 	int snprintf(string &str,const char *format,...)const;
