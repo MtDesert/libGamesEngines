@@ -1,6 +1,8 @@
 #ifndef TRANSLATIONMAP_H
 #define TRANSLATIONMAP_H
 
+#include"typedef.h"
+
 #include<string>
 using namespace std;
 
