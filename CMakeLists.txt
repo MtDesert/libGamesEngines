@@ -23,6 +23,9 @@ foreach(name ../lua/src)
 	include_directories(${name})
 endforeach()
 
+#默认库(包括源码编译的第三方库)
+set(LIBS_LIST lua z iconv pthread opengl32)
+
 #此文件可能会被别的CMakeLists.txt文件引用,一般是游戏项目的CMakeLists.txt文件,游戏项目在编译时必须设置此值
 if(ENGINE_LIB)
 	message(编译整个引擎)
@@ -33,25 +36,34 @@ if(ENGINE_LIB)
 	endforeach()
 	#库输出
 	add_library(${PROJECT_NAME} SHARED ${SRC_LIST})
-	target_link_libraries(${PROJECT_NAME} lua z iconv opengl32)
+	target_link_libraries(${PROJECT_NAME} ${LIBS_LIST})
 elseif(GAME_LIB)
 	message(编译游戏库 ${LD_LIBRARY_PATH})
 	project(${GAME_NAME})
+
 	#添加引擎的所有包含路径
 	foreach(name ${paths})
 		include_directories(../libGamesEngines/${name})
 	endforeach()
+
 	#编译成库
 	add_library(${PROJECT_NAME} SHARED ${SRC_LIST})
-	target_link_libraries(${PROJECT_NAME} GamesEngines lua z iconv opengl32)
+	target_link_libraries(${PROJECT_NAME} ${LIBS_LIST} GamesEngines)
 else()
 	message(编译执行程序)
+	project(${GAME_NAME})
+
+	#添加引擎的所有包含路径
+	foreach(name ${paths})
+		include_directories(../libGamesEngines/${name})
+	endforeach()
+
 	#设置共用库,给不同平台的可执行文件用
-	set(COMMON_LIBRARIES ${GAME_NAME} GamesEngines lua z)
+	set(LIBS_LIST ${GAME_NAME} GamesEngines ${LIBS_LIST})#把编译好的引擎添加到库中
 
 	#以下为各种可执行文件的编译过程,根据情况选择编译自己需要的可执行文件即可
 	add_executable(GamesGLUT ./executable/GamesGLUT.cpp)
-	target_link_libraries(GamesGLUT ${COMMON_LIBRARIES} freeglut opengl32)
+	target_link_libraries(GamesGLUT ${LIBS_LIST} freeglut)
 
 	#add_executable(GamesGLFW ./executable/GamesGLFW.cpp)
 	#target_link_libraries(GamesGLFW ${COMMON_LIBRARIES} glfw GL)

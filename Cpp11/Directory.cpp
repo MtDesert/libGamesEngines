@@ -54,8 +54,8 @@ string DirectoryEntry::strSize()const{
 	return str;
 }
 string DirectoryEntry::strModifyDate()const{
-	char str[20];
-	strftime(str,20,"%F %T",localtime(&st_mtime));
+	char str[100];
+	strftime(str,100,"%x %X",localtime(&st_mtime));
 	return str;
 }
 
