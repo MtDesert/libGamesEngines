@@ -24,7 +24,11 @@ foreach(name ../lua/src)
 endforeach()
 
 #默认库(包括源码编译的第三方库)
-set(LIBS_LIST lua z iconv pthread opengl32)
+if(${TARGET_SYSTEM_NAME} STREQUAL Windows)
+	set(LIBS_LIST lua z iconv pthread opengl32)
+else()
+	set(LIBS_LIST lua5.3 z GL) #lua5.3是当前版本,请自行修改lua的版本号
+endif()
 
 #此文件可能会被别的CMakeLists.txt文件引用,一般是游戏项目的CMakeLists.txt文件,游戏项目在编译时必须设置此值
 if(ENGINE_LIB)
@@ -60,10 +64,15 @@ else()
 
 	#设置共用库,给不同平台的可执行文件用
 	set(LIBS_LIST ${GAME_NAME} GamesEngines ${LIBS_LIST})#把编译好的引擎添加到库中
+	if(${TARGET_SYSTEM_NAME} STREQUAL Windows)
+		set(LIBS_LIST ${LIBS_LIST} freeglut)
+	else()
+		set(LIBS_LIST ${LIBS_LIST} glut)
+	endif()
 
 	#以下为各种可执行文件的编译过程,根据情况选择编译自己需要的可执行文件即可
 	add_executable(GamesGLUT ./executable/GamesGLUT.cpp)
-	target_link_libraries(GamesGLUT ${LIBS_LIST} freeglut)
+	target_link_libraries(GamesGLUT ${LIBS_LIST})
 
 	#add_executable(GamesGLFW ./executable/GamesGLFW.cpp)
 	#target_link_libraries(GamesGLFW ${COMMON_LIBRARIES} glfw GL)
