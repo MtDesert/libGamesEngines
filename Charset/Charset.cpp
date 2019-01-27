@@ -7,7 +7,9 @@ static const char* strCharset[]={//静态字符表
 	CHARSET_ALL(STR_NAME)
 };
 
-Charset::Charset():srcCharset(UTF8),destCharset(GBK){}
+Charset::Charset():srcCharset(UTF8),destCharset(GBK){
+	strCharset[UTF8]="UTF-8";//Windows的iconv -l命令查出"UTF-8"而非"UTF8",这会影响iconv_open的返回值
+}
 Charset::~Charset(){}
 
 bool Charset::newString(const char *srcStr,DataBlock &dataBlock)const{
