@@ -10,7 +10,7 @@ enum{
 	TimerGPU,
 	Timer_Amount
 };
-int timerInterval[Timer_Amount]={1,16};//microsecond
+int timerInterval[Timer_Amount]={16,16};//microsecond
 
 void glutTimerFunction(int timerID){
 	switch(timerID){
@@ -239,7 +239,7 @@ int main(int argc,char* argv[]){
 	//OpenGL初始化
 	glScalef(2.0/width,2.0/height,1);//以原点为缩放源进行缩放,使得整个屏幕的坐标范围变成(-width/2,-height/2 ~ width/2,height/2)
 	glTranslatef(-width/2,-height/2,0);//原本屏幕的坐标范围为(-1,-1 ~ 1,1),此操作将原点移动到左下角,变成(0,0 ~ width,height)
-	glEnable(GL_DEPTH_TEST);
+	//glEnable(GL_DEPTH_TEST);
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);//设置混合功能对透明度的处理

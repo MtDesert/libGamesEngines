@@ -1,7 +1,7 @@
 #include"GameObject.h"
 #include<stdio.h>
 
-GameObject::GameObject():timeSlice(0),minTimeSlice(1000),maxTimeSlice(100000){}
+GameObject::GameObject():timeSlice(0),minTimeSlice(16000),maxTimeSlice(100000){}
 GameObject::~GameObject(){clearSubObjects();}
 
 #define FOR_SUB_OBJECTS(code)\
