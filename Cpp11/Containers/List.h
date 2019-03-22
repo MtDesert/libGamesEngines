@@ -87,6 +87,17 @@ public:
 		return dataPtr;
 	}
 	bool contain(const T &value)const{return nodeValue(value);}
+	int indexOf(const T &value,int from=0){
+		int ret=from;
+		auto n=node(from);
+		if(n){//开始搜索
+			do{
+				if(n->data==value)return ret;//找到了
+				n=n->next;++ret;//下一个
+			}while(n);
+		}
+		return -1;//找不到
+	}
 	//表当前项数
 	inline uint size()const{return amount;}
 

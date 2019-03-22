@@ -4,6 +4,12 @@
 GameSprite::GameSprite():color(0xFFFFFFFF),anchorPoint(0.5,0.5){}
 GameSprite::~GameSprite(){}
 
+void GameSprite::setPosition(int x,int y){
+	position.x()=x;
+	position.y()=y;
+}
+void GameSprite::setPosition(const decltype(position) &pos){position=pos;}
+
 void GameSprite::render()const{
 	//绘制纹理
 	ShapeRenderer::setColor(color);

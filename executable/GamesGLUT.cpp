@@ -1,5 +1,6 @@
 #include"Game.h"
 #include<GL/glut.h>
+//#include<GL/glext.h>
 #include<stdio.h>
 
 Game *game=nullptr;
@@ -7,21 +8,14 @@ const Keyboard keyboard;
 
 enum{
 	TimerCPU,
-	TimerGPU,
 	Timer_Amount
 };
-int timerInterval[Timer_Amount]={16,16};//microsecond
+int timerInterval[Timer_Amount]={16};//microsecond
 
 void glutTimerFunction(int timerID){
 	switch(timerID){
 		case TimerCPU:
 			game->addTimeSlice(1000*timerInterval[timerID]);
-		break;
-		case TimerGPU:
-			glClear(GL_DEPTH_BUFFER_BIT|GL_ACCUM_BUFFER_BIT|GL_STENCIL_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
-			glClearColor(0,0,0,1);
-			game->render();
-			glFlush();
 		break;
 	}
 	glutTimerFunc(timerInterval[timerID],glutTimerFunction,timerID);
@@ -31,6 +25,7 @@ void glutIdleFunction(){
 	if(error){
 		printf("GL get error %d\n",error);
 	}
+	glutPostRedisplay();//空闲时候,立刻通知刷新
 }
 
 //input-keyboard
@@ -97,10 +92,10 @@ void glutMouseFunction(int button,int state,int x,int y){
 	}
 }
 void glutMotionFunction(int x,int y){
-	game->mouseMove(x,y);
+	game->mouseMove(x,game->resolution.y()-y);
 }
 void glutPassiveMotionFunction(int x,int y){
-	game->mouseMove(x,y);
+	game->mouseMove(x,game->resolution.y()-y);
 }
 //input-joystick
 void glutJoystickFunction(unsigned int buttonMask,int x, int y, int z){
@@ -132,7 +127,12 @@ void glutVisibilityFunction(int state){
 		default:;
 	}
 }
-void glutDisplayFunction(){}
+void glutDisplayFunction(){
+	glClear(GL_DEPTH_BUFFER_BIT|GL_ACCUM_BUFFER_BIT|GL_STENCIL_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
+	glClearColor(0,0,0,1);
+	game->render();
+	glFlush();
+}
 void glutOverlayDisplayFunction(){}
 void glutEntryFunction(int state){
 	switch(state){
@@ -196,14 +196,13 @@ int main(int argc,char* argv[]){
 	Game::resolution=Point2D<int>(width,height);
 	//glut初始化
 	glutInit(&argc,argv);
-	glutInitDisplayMode(GLUT_SINGLE|GLUT_RGBA);
+	glutInitDisplayMode(GLUT_SINGLE|GLUT_RGBA|GLUT_DEPTH);
 	glutInitWindowSize(Game::resolution.x(),Game::resolution.y());
 	glutInitWindowPosition(100,100);
 	int window=glutCreateWindow("GamesGLUT");
 	//计时器回调函数
-	glutTimerFunc(timerInterval[TimerCPU],glutTimerFunction,TimerCPU);
-	glutTimerFunc(timerInterval[TimerGPU],glutTimerFunction,TimerGPU);
 	GAMESGLUT_GLUTFUNC(Idle);
+	glutTimerFunc(timerInterval[TimerCPU],glutTimerFunction,TimerCPU);
 	//主要输入回调
 	GAMESGLUT_GLUTFUNC(Keyboard);
 	GAMESGLUT_GLUTFUNC(KeyboardUp);
@@ -234,8 +233,8 @@ int main(int argc,char* argv[]){
 	GAMESGLUT_GLUTFUNC(Entry);
 
 	//输出调试信息
-	//printGlutGet();
-	//printGlutDeviceGet();
+	printGlutGet();
+	printGlutDeviceGet();
 	//OpenGL初始化
 	glScalef(2.0/width,2.0/height,1);//以原点为缩放源进行缩放,使得整个屏幕的坐标范围变成(-width/2,-height/2 ~ width/2,height/2)
 	glTranslatef(-width/2,-height/2,0);//原本屏幕的坐标范围为(-1,-1 ~ 1,1),此操作将原点移动到左下角,变成(0,0 ~ width,height)

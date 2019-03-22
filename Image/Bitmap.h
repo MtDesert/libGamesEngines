@@ -2,19 +2,10 @@
 #define BITMAP_H
 
 #include"DataBlock.h"
+#include"List.h"
 
 /**
- * @brief The Bitmap_32bit class is to store image data,each pixel is 32bit(unsigned long)
- *
- * About Color:
- * Bitmap_32bit can store color format RGBA or ARGB or BGRA and so on
- * It always 32bit, no matter what format it is
- * It determined by user, Bitmap_32bit do not care about it
- * That means, you can dynamic change the color format as you like
- *
- * About Coordinate:
- * Bitmap_32bit can use Math Coordinate(Up is Y+) or Screen Cordiante(Down is Y+)
- * You can change the value of member variable coordinateType,it only effect getColor() and setColor()
+32位图,可以是RGBA,BGRA,ARGB等格式,但本类不存储具体是什么格式,使用者根据需求自定义需要的格式即可
  */
 class Bitmap_32bit:public DataBlock{
 public:
@@ -23,21 +14,23 @@ public:
 	//new & delete
 	bool newBitmap(uint width,uint height);
 	bool deleteBitmap();
-	//size
+	//尺寸
 	uint getWidth()const;
 	uint getHeight()const;
 
-	//coordiante type
+	//坐标类型
 	enum CoordinateType{
 		CoordinateType_Math,
 		CoordinateType_Screen
 	};
 	CoordinateType coordinateType;
 
+	//颜色读写,返回读写是否成功
 	bool getColor(uint x,uint y,uint32 &color)const;
 	bool setColor(uint x,uint y,uint32 &color);
+	//色表,获取所有用到的颜色
+	void getColorsList(List<uint32> &colorsList)const;
 private:
-	uint width;
-	uint height;
+	uint width,height;
 };
-#endif // BITMAP_H
+#endif

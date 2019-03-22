@@ -28,6 +28,7 @@ public:
 	GameScene_FileList* showScene_FileList();//显示选择文件列表
 	void deleteScene_FileList();//删除文件列表所占的内存
 	//重写方法
+	void mouseMove(int x,int y);
 	void addTimeSlice(uint usec);
 	void render()const;
 protected:

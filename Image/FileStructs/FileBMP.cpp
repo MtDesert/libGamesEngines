@@ -153,19 +153,10 @@ DataBlock::SizeType FileBMP::parseData()
 	subDataBlock(pos,dataLength-pos,infoHeader);
 	pos+=infoHeader.parseData();
 	//color list,make sure the color count first
-	uint16 bitCount;
-	if(infoHeader.getBitCount(bitCount)){
-		uint colorCount=0;
-		switch(bitCount){
-			case 1:colorCount=2;break;
-			case 4:colorCount=16;break;
-			case 8:colorCount=256;break;
-			default:colorCount=0;
-		}
-		if(colorCount!=0){
-			subDataBlock(pos,colorCount*4,colorsList);
-			pos+=colorsList.parseData();
-		}
+	uint colorCount=colorCountOfColorsList();
+	if(colorCount!=0){
+		subDataBlock(pos,colorCount*4,colorsList);
+		pos+=colorsList.parseData();
 	}
 	//unknown block before bitmap data
 	uint32 offbits;
@@ -206,8 +197,89 @@ bool FileBMP::isValid_FileOffbits()const{
 	uint32 offbits;
 	return fileHeader.getOffBits(offbits)&&offbits<dataLength;
 }
+uint FileBMP::colorCountOfColorsList()const{
+	uint colorCount=0;
+	uint16 bitCount;
+	if(infoHeader.getBitCount(bitCount)){
+		switch(bitCount){
+			case 1:colorCount=2;break;
+			case 4:colorCount=16;break;
+			case 8:colorCount=256;break;
+		}
+	}
+	return colorCount;
+}
 
+bool FileBMP::encodeFrom(const Bitmap_32bit &bitmap,uint16 bitCount,const List<uint32> *pRgbaList){
+	//验证
+	if(!FileBMP_InfoHeader::isValid_BitCount(bitCount))return false;
+	auto width=bitmap.getWidth(),height=bitmap.getHeight();
+	auto lineSize=infoHeader.lineSize();
+	//文件头
+	fileHeader.newDataPointer(14);
+	fileHeader.setType(FileBMP_FileHeader::Type_BM);
+	fileHeader.setReserved1(0);
+	fileHeader.setReserved2(0);
+	//信息头
+	infoHeader.newDataPointer(FileBMP_InfoHeader::Size::BitmapInfoHeader);
+	infoHeader.setSize(infoHeader.dataLength);
+	infoHeader.setWidth(width);
+	infoHeader.setHeight(height);
+	infoHeader.setPlanes(1);
+	infoHeader.setBitCount(bitCount);
+	infoHeader.setCompression(FileBMP_InfoHeader::Compression::NoCompression);
+	infoHeader.setImageSize(lineSize*height);
+	infoHeader.setXPelsPerMeter(0);
+	infoHeader.setYPelsPerMeter(0);
+	infoHeader.setClrUsed(0);//for 256 colors bitmap, this always 256
+	infoHeader.setClrImportant(0);
+	//颜色表
+	auto colorsCount=colorCountOfColorsList();
+	if(colorsCount>0){
+		//如果没有参考颜色表,则从bitmap推断
+		List<uint32> rgbaList;
+		if(!pRgbaList){
+			bitmap.getColorsList(rgbaList);
+			pRgbaList=&rgbaList;
+		}
+		//开始构建颜色表
+		colorsList.newDataPointer(colorsCount*4);
+		decltype(colorsCount) i=0;
+		ColorRGBA rgba;
+		for(auto &value:*pRgbaList){
+			if(i>=colorsCount)break;
+			rgba.fromRGBA(value);//转换
+			colorsList.setColor(i,rgba);//设置
+			++i;
+		}
+	}
+	//开始编码
+	bitmapData.newDataPointer(lineSize*height);
+	uint32 color32;ColorRGBA rgba;SizeType offset;
+	for(decltype(height) y=0;y<height;++y){
+		offset=lineSize*y;
+		for(decltype(width) x=0;x<width;++x){
+			bitmap.getColor(x,y,color32);//获取颜色
+			//颜色转换
+			if(bitCount==32){
+				rgba.fromRGBA(color32);
+				color32=rgba.toBGRA();
+				bitmapData.set_uint32(offset,color32);
+				offset+=4;
+			}else if(bitCount==24){
+				rgba.fromRGBA(color32);
+				bitmapData.set_uint8(offset,rgba.blue);
+				bitmapData.set_uint8(offset+1,rgba.green);
+				bitmapData.set_uint8(offset+2,rgba.red);
+				offset+=3;
+			}else{
+			}
+		}
+	}
+	return true;
+}
 bool FileBMP::decodeTo(Bitmap_32bit &bitmap)const{
+	//获取尺寸(注意,高度有可能存为负数)
 	uint32 width;int32 height;
 	if(!infoHeader.getWidth(width)||!infoHeader.getHeight(height))return false;
 	FILEBMP_POSITIVE_HEIGHT
@@ -216,7 +288,7 @@ bool FileBMP::decodeTo(Bitmap_32bit &bitmap)const{
 	auto lineSize=infoHeader.lineSize();
 	if(lineSize==0)return false;
 	auto needPalette=(bitCount!=24 && bitCount!=32);
-	//make image data
+	//创建图像数据
 	if(!bitmap.newBitmap(width,height))return false;
 	uint8 *pixels=bitmap.dataPointer;uint pixelOffset=0;//dest
 	BitBlock lineData;uint lineOffset=0;//src
@@ -224,7 +296,7 @@ bool FileBMP::decodeTo(Bitmap_32bit &bitmap)const{
 	uint32 colorIndex;ColorRGBA colorRGBA;//buffer for palette
 	uint8 colorIndex8;
 	uint16 colorIndex16;
-	//copy data
+	//开始复制数据
 	for(int y=0;y<height;++y){
 		lineOffset=0;
 		if(!bitmapData.subDataBlock(lineSize*y,lineSize,lineData,needPalette))break;//get line

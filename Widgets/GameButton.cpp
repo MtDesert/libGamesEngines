@@ -2,15 +2,20 @@
 #include"Game.h"
 #include"extern.h"
 
-GameButton::GameButton():buttonSize(160,32),isPressed(false),bgColor(0xFF000000){}
+GameButton::GameButton():buttonSize(160,32),isPressed(false),bgColor(0xFF000000),onClicked(nullptr){}
 GameButton::~GameButton(){}
+GameButton_String::GameButton_String(){
+	subObjects.push_back(&mGameString);
+	mGameString.setString("Confirm");
+}
+GameButton_String::~GameButton_String(){}
 
 void GameButton::mouseMove(int x,int y){
 	rect=rectF();
 	auto &pos(Game::currentGame()->mousePos);
 	if(rect.containPoint(pos.x(),pos.y())){
 	}else{
-		isPressed=false;
+		setIsPressed(false);
 	}
 }
 void GameButton::mouseKey(MouseKey key,bool pressed){
@@ -19,9 +24,9 @@ void GameButton::mouseKey(MouseKey key,bool pressed){
 	auto &pos(Game::currentGame()->mousePos);
 	if(rect.containPoint(pos.x(),pos.y())){
 		bool changed=(isPressed!=pressed);
-		isPressed=pressed;
+		setIsPressed(pressed);
 		if(changed && !isPressed){
-			printf("clicked!\n");
+			if(onClicked)onClicked();
 		}
 	}
 }
@@ -44,4 +49,14 @@ Point2D<float> GameButton::sizeF()const{
 		size2D.y()=buttonSize.y();
 	}
 	return size2D;
+}
+void GameButton::setIsPressed(bool pressed){isPressed=pressed;}
+
+void GameButton_String::setPosition(int x,int y){
+	GameButton::setPosition(x,y);
+	mGameString.setPosition(x,y);
+}
+void GameButton_String::setIsPressed(bool pressed){
+	GameButton::setIsPressed(pressed);
+	mGameString.color=(isPressed ? bgColor : color);
 }

@@ -31,3 +31,12 @@ GameScene_FileList::GameScene_FileList(){
 		subObjects.push_back(btn);
 	}
 }
+
+bool GameScene_FileList::changeDirectory(const string &dirName){
+	if(directory.changeDir(dirName,true)){
+		for(auto &dirEntry:directory.direntList){
+			printf("%s\n",dirEntry.name().data());
+		}
+	}
+	return false;
+}

@@ -28,8 +28,7 @@ bool Bitmap_32bit::getColor(uint x,uint y,uint32 &color)const{
 		pos=((height-1-y)*width+x)*4;
 	}else return false;
 	//get color
-	color=get_uint32(pos,color);
-	return true;
+	return get_uint32(pos,color);
 }
 bool Bitmap_32bit::setColor(uint x,uint y,uint32 &color){
 	if(x>=width||y>=height)return false;
@@ -41,6 +40,14 @@ bool Bitmap_32bit::setColor(uint x,uint y,uint32 &color){
 		pos=((height-1-y)*width+x)*4;
 	}else return false;
 	//set color
-	set_uint32(pos,color);
-	return false;
+	return set_uint32(pos,color);
+}
+void Bitmap_32bit::getColorsList(List<uint32> &colorsList)const{
+	colorsList.clear();
+	uint32 color;
+	for(SizeType pos=0;pos<dataLength;pos+=4){
+		if(get_uint32(pos,color) && !colorsList.contain(color)){//找到新颜色,添加
+			colorsList.push_back(color);
+		}
+	}
 }

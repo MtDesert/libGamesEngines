@@ -214,14 +214,14 @@ struct FilePNG:public DataBlock{
 	//decode functions
 	//Some return value of these function were allocated memory,
 	//don't forget to call deleteDataPointer(). (DELETE)
-	DataBlock decode_contactIDATs()const;//(DELETE)
-	DataBlock_deflate decode_getDeflateFromIDATs(const DataBlock &idatBlock)const;
-	DataBlock decode_uncompressDeflate(DataBlock_deflate &deflateData)const;//(DELETE)
+	DataBlock decode_allIDATs()const;//(DELETE)
 	//decode functions - Interlace
 	bool decode_InterlaceNone(DataBlock &filterBlock,const FilePNG_IHDR &ihdr)const;
 	bool decode_InterlaceAdam7(DataBlock &filterBlock,const FilePNG_IHDR &ihdr)const;
 	bool decode_makeBitmap(Bitmap_32bit &bitmap,const DataBlock &filterBlock,const FilePNG_IHDR &ihdr)const;
 	bool decode_makeBitmapAdam7(Bitmap_32bit &bitmap,const DataBlock &filterBlock,const FilePNG_IHDR &ihdr)const;
 
+	//图像编码解码
+	bool encodeFrom(const Bitmap_32bit &bitmap,bool hasPalette,bool hasColor,bool hasAlpha);
 	bool decodeTo(Bitmap_32bit &bitmap)const;
 };

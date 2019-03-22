@@ -14,7 +14,7 @@ public:
 	virtual void render()const;
 	//主要控件
 	GameText mGameText;//文本内容,显示给玩家需要看的信息
-	GameButton mGameButton;//按钮,用来给玩家进行操作
+	GameButton_String mGameButton;//按钮,用来给玩家进行操作
 	//设置内容
 	void setText(const string &text);
 	static uint maxLineCharAmount;//最大行字符数,超出此行宽会自动换行

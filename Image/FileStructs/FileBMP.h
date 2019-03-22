@@ -1,5 +1,5 @@
-#ifndef BITMAPFILE_H
-#define BITMAPFILE_H
+#ifndef FILEBMP_H
+#define FILEBMP_H
 
 #include"BitBlock.h"
 #include"ColorRGB.h"
@@ -120,17 +120,19 @@ class FileBMP:public DataBlock
 {
 public:
 	SizeType parseData();
-	//datablocks
-	FileBMP_FileHeader fileHeader;
-	FileBMP_InfoHeader infoHeader;
-	FileBMP_BGRAsList colorsList;
-	DataBlock unknownBlockBefore;//before bitmap data
-	BitBlock bitmapData;
-	DataBlock unknownBlockAfter;//after bitmap data
-	//validation
+	//数据块
+	FileBMP_FileHeader fileHeader;//文件头,一般14字节
+	FileBMP_InfoHeader infoHeader;//信息头,一般40字节
+	FileBMP_BGRAsList colorsList;//颜色表,一般来说BitCount为1,4,8的图会包含此表
+	DataBlock unknownBlockBefore;//可能存在的未知数据
+	BitBlock bitmapData;//图像数据
+	DataBlock unknownBlockAfter;//可能存在的隐藏数据
+	//有效性
 	bool isValid_FileSize()const;
 	bool isValid_FileOffbits()const;
-	//decode
-	bool decodeTo(Bitmap_32bit &bitmap)const;
+	uint colorCountOfColorsList()const;
+	//编码解码
+	bool encodeFrom(const Bitmap_32bit &bitmap,uint16 bitCount=32,const List<uint32> *rgbaList=nullptr);//将bitmap的内容编码到BMP文件中,bitCount为希望保存的位数
+	bool decodeTo(Bitmap_32bit &bitmap)const;//将BMP的内容解码到bitmap
 };
-#endif // BITMAPFILE_H
+#endif

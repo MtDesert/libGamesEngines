@@ -42,11 +42,8 @@ void GameDialog::setText(const string &text){
 	//设置mGameText的几何位置
 	auto rct=rectF();
 	auto center=rct.center();
-	mGameText.anchorPoint=Point2D<float>(0.5,0.5);
 	mGameText.position.x()=center.x();
 	mGameText.position.y()=rct.p1.y() - border - mGameText.sizeF().y()/2;
 	//设置mGameButton的几何位置
-	mGameButton.anchorPoint=Point2D<float>(0.5,0.5);
-	mGameButton.position.x()=center.x();
-	mGameButton.position.y()=rct.p0.y() + border + mGameButton.sizeF().y()/2;
+	mGameButton.setPosition(center.x(),rct.p0.y() + border + mGameButton.sizeF().y()/2);
 }

@@ -10,7 +10,7 @@ for(auto obj:subObjects){\
 }
 
 void GameObject::clearSubObjects(){
-	FOR_SUB_OBJECTS(delete obj;)
+	//FOR_SUB_OBJECTS(delete obj;)
 	subObjects.clear();
 }
 

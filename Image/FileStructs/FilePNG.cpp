@@ -442,68 +442,14 @@ bool FilePNG::isValid_Signature()const{
 }
 uint64 FilePNG::make_Signature(){return 0x0A1A0A0D474E5089;}
 
-DataBlock FilePNG::decode_contactIDATs()const{
-	//find all IDAT
-	uint32 idatSize=0,len;
+DataBlock FilePNG::decode_allIDATs()const{
+	List<DataBlock> allIDATs;
 	for(FilePNG_Chunk *chunk:allChunks){
-		if(chunk && chunk->chunkName()=="IDAT" && chunk->getChunkLength(len)){
-			idatSize+=len;
+		if(chunk && chunk->chunkName()=="IDAT"){
+			allIDATs.push_back(chunk->chunkDataBlock());
 		}
 	}
-	//allocate memory
-	DataBlock idat;
-	if(idat.newDataPointer(idatSize)){
-		uint pos=0;
-		//copy all data
-		for(FilePNG_Chunk *chunk:allChunks){
-			if(chunk && chunk->chunkName()=="IDAT" && chunk->getChunkLength(len)){
-				auto buffer=idat.subDataBlock(pos,len);
-				auto chunkBlock=chunk->chunkDataBlock();
-				chunkBlock.subDataBlock(0,len,buffer,true);
-				pos+=len;
-			}
-		}
-	}
-	return idat;
-}
-DataBlock_deflate FilePNG::decode_getDeflateFromIDATs(const DataBlock &idatBlock)const{
-	DataBlock_deflate deflateData;
-	bool formatOK=false;
-
-	//check whether zlib format
-	if(idatBlock.dataLength>=2){
-		DataBlock_zlib zlibBlock;
-		idatBlock.subDataBlock(0,idatBlock.dataLength,zlibBlock);
-		zlibBlock.bitLength=zlibBlock.dataLength*8;
-		bool isZlibHeader=
-			zlibBlock.isValid_CompressionMethod()&&
-			zlibBlock.isValid_CompressionInfo()&&
-			zlibBlock.isValid_FlagCheck();
-		if(isZlibHeader){
-			deflateData=zlibBlock.deflateDataBlock();
-			formatOK=true;
-		}
-	}
-	//check whether gzip format
-	if(!formatOK){
-		FileGZIP fileGZIP;
-		fileGZIP.DataBlock::operator=(idatBlock);
-		if(fileGZIP.isValid_Header()){
-			deflateData=fileGZIP.deflateData();
-			formatOK=true;
-		}
-	}
-	//check whether deflate block
-	if(!formatOK){
-		deflateData.DataBlock::operator=(idatBlock);
-		formatOK=true;
-	}
-	return deflateData;
-}
-DataBlock FilePNG::decode_uncompressDeflate(DataBlock_deflate &deflateData)const{
-	//decode
-	deflateData.parseData();
-	return deflateData.inflate();
+	return DataBlock_deflate::inflate(allIDATs);
 }
 
 //interlace module
@@ -639,15 +585,17 @@ bool FilePNG::decode_makeBitmapAdam7(Bitmap_32bit &bitmap,const DataBlock &filte
 	return false;
 }
 
+bool FilePNG::encodeFrom(const Bitmap_32bit &bitmap, bool hasPalette, bool hasColor, bool hasAlpha){
+	//IHDR
+	//PLTE
+	return true;
+}
 bool FilePNG::decodeTo(Bitmap_32bit &bitmap)const{
-	//if no IHDR,we can not decided how to decode
+	//必须得有IHDR,否则我们无法得知怎么解码
 	auto ihdr=findIHDR();
 	if(!ihdr)return false;
-	//get block
-	auto allIDATs=decode_contactIDATs();
-	auto deflateBlock=decode_getDeflateFromIDATs(allIDATs);
-	auto filterBlock=decode_uncompressDeflate(deflateBlock);
-	allIDATs.deleteDataPointer();
+	//找出所有IDAT数据块并解压
+	auto filterBlock=decode_allIDATs();
 	//interlace
 	uint8 method;
 	if(ihdr->getInterlaceMethod(method)){

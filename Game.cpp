@@ -2,6 +2,8 @@
 #include"GameScene.h"
 #include"GameString.h"
 
+#include"errno.h"
+
 //全局变量
 string errorString;//错误描述,如果游戏运行过程中出现各种错误,都可以存到此变量中
 
@@ -38,7 +40,11 @@ Game* Game::currentGame(){return Game::game;}
 bool Game::loadTranslationFile(const string &filename){
 	translationMap.clear();
 	auto file=fopen(filename.data(),"r");
-	if(!file){return false;}
+	if(!file){
+		switch(errno){
+		}
+		return false;
+	}
 	//开始读取映射
 	int bufferSize=256;
 	char buffer[bufferSize];
@@ -77,6 +83,11 @@ void Game::deleteScene_FileList(){
 	sceneFileList=nullptr;
 }
 
+void Game::mouseMove(int x,int y){
+	mousePos.x()=x;
+	mousePos.y()=y;
+	GameObject::mouseMove(x,y);
+}
 void Game::addTimeSlice(uint usec){
 	auto scene=findFirstGameScene();
 	if(scene)scene->addTimeSlice(usec);

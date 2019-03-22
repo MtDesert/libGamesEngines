@@ -79,23 +79,9 @@ bool LuaState::readEnum(const string &enumName,EnumType &enumType){
 		enumType.setEnumName(amount,lua_tostring(luaState,-1));
 		++amount;
 	);
+	lua_pop(luaState,1);
 	return true;
 }
-
-bool LuaState::readTranslationMap(const string &name,TranslationMap &translationMap){
-	lua_getglobal(luaState,name.data());//获取表名
-	ASSERT(lua_istable(luaState,-1),"\""+name+"\" is not a table");//必须是表
-	//统计个数
-	TranslationMap::amountType amount=0;
-	TABLE_FOREACH(
-		ASSERT(lua_isstring(luaState,-2)&&lua_isstring(luaState,-1),
-			"\""+name+"["+lua_tostring(luaState,-2)+"]\" is not string=string");
-		++amount;
-	);
-	//开始添加
-	translationMap.setAmount(amount);
-	TABLE_FOREACH(
-		translationMap.addStringMap(lua_tostring(luaState,-2),lua_tostring(luaState,-1));
-	);
-	return true;
+void LuaState::clearStack(){
+	lua_pop(luaState,lua_gettop(luaState));
 }

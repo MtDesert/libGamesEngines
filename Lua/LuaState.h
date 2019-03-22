@@ -33,7 +33,8 @@ struct LuaState{
 	bool toInteger(int index,int &value);//数字转换,非数字可能转换失败
 	//枚举
 	bool readEnum(const string &enumName,EnumType &enumType);//读取枚举类型enumName,存储到enumType中
-	bool readTranslationMap(const string &name,TranslationMap &translationMap);
+	//清理
+	void clearStack();
 	//错误信息
 	string errorString;//错误信息,可以保存lua的信息,也可以保存自定义信息
 private:
