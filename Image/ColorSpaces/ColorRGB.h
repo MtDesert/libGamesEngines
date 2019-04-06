@@ -39,10 +39,11 @@ struct ColorRGBA:public ColorRGB{//RGBA(Red-Green-Blue-Alpha)
 	//constructor
 	ColorRGBA();
 	ColorRGBA(uint8 r,uint8 g,uint8 b,uint8 a=255);
-	ColorRGBA(unsigned value);//0xAARRGGBB
+	explicit ColorRGBA(unsigned value);//0xAARRGGBB
 
 	//operator
 	bool operator==(const ColorRGBA &color)const;
+	ColorRGBA& operator=(const ColorRGB &color);
 
 	//to unsigned 32 bit
 	COLOR_UNSIGNED32(RGBA)

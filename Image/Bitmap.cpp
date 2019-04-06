@@ -1,9 +1,7 @@
 #include "Bitmap.h"
 
 Bitmap_32bit::Bitmap_32bit():coordinateType(CoordinateType_Math),width(0),height(0){}
-Bitmap_32bit::~Bitmap_32bit(){
-	deleteDataPointer();
-}
+Bitmap_32bit::~Bitmap_32bit(){deleteBitmap();}
 
 bool Bitmap_32bit::newBitmap(uint w,uint h){
 	if(w==0||h==0)return false;

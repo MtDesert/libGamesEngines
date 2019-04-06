@@ -1,11 +1,12 @@
 #include"DataBlock_deflate.h"
+#include"BitBlock.h"
 
 struct DataBlock_zlib:public BitBlock{
-	BITBLOCK_CUSTOM_BITS(CompressionMethod,8)
-	BITBLOCK_CUSTOM_BITS(CompressionInfo,8)
-	BITBLOCK_CUSTOM_BITS(FlagCheck,8)
+	DATABLOCK_CUSTOM_TYPE(CompressionMethod,uint8)
+	DATABLOCK_CUSTOM_TYPE(CompressionInfo,uint8)
+	DATABLOCK_CUSTOM_TYPE(FlagCheck,uint8)
 	DATABLOCK_CUSTOM_BOOL(PresetDictionary)
-	BITBLOCK_CUSTOM_BITS(CompressionLevel,8)
+	DATABLOCK_CUSTOM_TYPE(CompressionLevel,uint8)
 
 	enum CompressionMethod{
 		Deflate=8,Reserve=15

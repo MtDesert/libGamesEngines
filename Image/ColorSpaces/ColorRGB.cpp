@@ -6,8 +6,7 @@ ColorRGB::ColorRGB(uint8 r,uint8 g,uint8 b):red(r),green(g),blue(b){}
 ColorRGB::ColorRGB(unsigned value){fromBGR(value);}
 
 ColorRGBA::ColorRGBA():ColorRGBA(0,0,0,0){}
-ColorRGBA::ColorRGBA(uint8 r, uint8 g, uint8 b, uint8 a):
-	ColorRGB(r,g,b){alpha=a;}
+ColorRGBA::ColorRGBA(uint8 r, uint8 g, uint8 b, uint8 a):ColorRGB(r,g,b),alpha(a){}
 ColorRGBA::ColorRGBA(unsigned value){fromBGRA(value);}
 
 uint8 ColorRGB::gray()const{
@@ -41,6 +40,12 @@ bool ColorRGB::operator==(const ColorRGB &color)const{
 bool ColorRGBA::operator==(const ColorRGBA &color)const{
 	return this->operator==(color)
 		&& alpha==color.alpha;
+}
+ColorRGBA& ColorRGBA::operator=(const ColorRGB &color){
+	red=color.red;
+	green=color.green;
+	blue=color.blue;
+	return *this;
 }
 
 #define COLOR_CPP_FROMTO24(Name,Color0,Color1,Color2) \

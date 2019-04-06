@@ -91,29 +91,3 @@ BITBLOCK_BITS_CPP(8)
 BITBLOCK_BITS_CPP(16)
 BITBLOCK_BITS_CPP(32)
 BITBLOCK_BITS_CPP(64)
-
-uint8* BitBlock::newUint8Array(uint digit,uint &amount)const{
-	if(digit==0)return nullptr;
-	if(digit*amount>bitLength)amount=bitLength/digit;//限定数量
-	auto array=new uint8[amount];
-	if(array){
-		//取数据用的变量
-		SizeType byteOff=0,bitOff=bitPointer;
-		DataBlock::normalizedOffset(byteOff,bitOff);
-		uint8 value=0;
-		for(uint i=0;i<amount;++i){//开始生成每个数据
-			array[i]=0;
-			for(uint d=0;d<digit;++d){
-				//开始赋值
-				array[i]<<=1;
-				if(getByte(byteOff,value,1<<(7-bitOff)) && value){
-					array[i]|=1;
-				}
-				//寻找下一个位
-				++bitOff;
-				normalizedOffset(byteOff,bitOff);
-			}
-		}
-	}
-	return array;
-}

@@ -351,7 +351,7 @@ bool DataBlock::getByte(SizeType offset,uint8 &value,uint8 mask)const{
 		return true;
 	}else return false;
 }
-bool DataBlock::setByte(SizeType offset, const uint8 value, uint8 mask){
+bool DataBlock::setByte(SizeType offset,const uint8 value,uint8 mask){
 	uint8 oldValue;
 	if(get_uint8(offset,oldValue)){
 		uint8 maskXor=0xFF-mask;
@@ -360,3 +360,54 @@ bool DataBlock::setByte(SizeType offset, const uint8 value, uint8 mask){
 		return set_uint8(offset,constValue|variableValue);
 	}else return false;
 }
+
+uint DataBlock::leastUintToStoreBit(uint8 bitLen){
+	uint8 ret=0;
+	if(0<bitLen && bitLen<=8)ret=1;
+	else if(bitLen<=16)ret=2;
+	else if(bitLen<=32)ret=4;
+	else if(bitLen<=64)ret=8;
+	return ret;
+}
+
+#define DATABLOCK_CPP_TO_ARRAY(bit)\
+bool DataBlock::toUint##bit##Array(uint8 bitLen,SizeType amount,bool littleEndian,uint##bit uintArray[])const{\
+	/*检查参数合法性*/\
+	if(bitLen==0||bitLen>64)return 0;\
+	if(amount*bitLen>dataLength*8)return 0;\
+	/*开始解数据*/\
+	SizeType offset=0;\
+	uint##bit value;\
+	uint8 byte,remainBits=0,valueSize=0;\
+	for(decltype(amount) i=0;i<amount;++i){\
+		value=valueSize=0;\
+		while(valueSize<bitLen){/*生成需要的数值*/\
+			/*补充数据*/\
+			if(remainBits==0){\
+				getByte(offset,byte);\
+				remainBits=8;\
+				++offset;\
+			}\
+			/*根据大尾或小尾来取数据*/\
+			if(littleEndian){\
+				value|=((uint##bit)(byte&0x01)<<valueSize);\
+				byte>>=1;\
+			}else{\
+				value<<=1;\
+				value|=((byte&0x80)>>7);\
+				byte<<=1;\
+			}\
+			/*更新状态*/\
+			++valueSize;\
+			--remainBits;\
+		}\
+		/*写入数组*/\
+		uintArray[i]=value;\
+	}\
+	return true;\
+}
+
+DATABLOCK_CPP_TO_ARRAY(8)
+DATABLOCK_CPP_TO_ARRAY(16)
+DATABLOCK_CPP_TO_ARRAY(32)
+DATABLOCK_CPP_TO_ARRAY(64)

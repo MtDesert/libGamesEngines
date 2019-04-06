@@ -205,7 +205,7 @@ public:
 	DATABLOCK_TYPE(uint16)
 	DATABLOCK_TYPE(uint32)
 	DATABLOCK_TYPE(uint64)
-	
+
 	DATABLOCK_TYPE(wchar_t)
 	DATABLOCK_TYPE(char16_t)
 	DATABLOCK_TYPE(char32_t)
@@ -222,6 +222,24 @@ public:
 	//字节操作(支持掩码操作)
 	bool getByte(SizeType offset,uint8 &value,uint8 mask=0xFF)const;//获取offset位置的字节到value中,并用mask过滤,返回是否读写成功
 	bool setByte(SizeType offset,const uint8 value,uint8 mask=0xFF);//写字节到offset位置,所写字节会先被mask过滤再写入,返回是否读写成功
+
+	//转换
+	//使用uint存储bit个位需要多少个字节(根据系统情况会返回1,2,4,8,返回0表示bit超出范围)
+	static uint leastUintToStoreBit(uint8 bitLen);
+	/** @brief 将原始数据转换成整数数组(DataBlock保存),在地址上是连续的,以便直接访问
+	 * bitLen 原始数据中每个数据的长度(bit)
+	 * amount 原始数据数量
+	 * littleEndian 原始数据的排列规律是否为小尾序列
+	 * uintArray 输出的数组
+	*/
+#define DATABLOCK_TO_ARRAY(bit)\
+	bool toUint##bit##Array(uint8 bitLen,SizeType amount,bool littleEndian,uint##bit uintArray[])const;
+
+	DATABLOCK_TO_ARRAY(8)
+	DATABLOCK_TO_ARRAY(16)
+	DATABLOCK_TO_ARRAY(32)
+	DATABLOCK_TO_ARRAY(64)
+#undef DATABLOCK_TO_ARRAY
 
 	/** @brief dataPointer 指向内存数据的指针,指向数据块的首字节
 	这个指针可以任意改变,只要你知道你在干什么.和操作普通指针一样,访问野指针可能会造成程序崩溃

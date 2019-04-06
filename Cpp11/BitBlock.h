@@ -54,16 +54,5 @@ public:
 	BITBLOCK_BITS(16)
 	BITBLOCK_BITS(32)
 	BITBLOCK_BITS(64)
-
-	/*将数据以digit个位为单位形成amount个数的数组,amount可能在调用此函数后发生变化,以表示实际可得到的数组数量,数组在使用完之后需要delete
-	例如{00011011,11100100}
-	newUint8Array(0,8)==nullptr;//无
-	newUint8Array(1,8)=={0,0,0,1,1,0,1,1};
-	newUint8Array(2,8)=={00,01,10,11,11,10,01,00};
-	newUint8Array(2,9)=={00,01,10,11,11,10,01,00},amount==8;//最多只能产生8个
-	newUint8Array(9,1)==nullptr;//超过uint8的位数
-	*/
-	uint8* newUint8Array(uint digit,uint &amount)const;
 };
-
 #endif

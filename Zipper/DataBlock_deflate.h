@@ -1,13 +1,11 @@
 #ifndef DATABLOCK_DEFLATE
 #define DATABLOCK_DEFLATE
 
-#include"BitBlock.h"
+#include"DataBlock.h"
 #include"List.h"
 
-struct DataBlock_deflate:public BitBlock{
-	DataBlock deflate()const;
-	DataBlock inflate()const;
-
+struct DataBlock_deflate:public DataBlock{
+	static DataBlock deflate(const List<DataBlock> &blockList);
 	/**解压blockList,里面存储的数据可以是内存不连续的,解压过程会自动拼接*/
 	static DataBlock inflate(const List<DataBlock> &blockList);
 };
