@@ -126,7 +126,9 @@ struct FilePNG_PLTE:public FilePNG_Chunk{//调色板,个别PNG格式会带有
 	bool getRGBA(uint index,uint32 &color)const;
 	bool setRGBA(uint index,const ColorRGBA &color);
 	bool setRGBA(uint index,uint32 &color);//0x00RRGGBB
-
+	//导出
+	void getColorsList(bool hasColor,bool hasAlpha,List<uint32> &colorsList);
+	//创建
 	void makeChunk(bool hasColor,bool hasAlpha,List<uint32> &colorsList);
 };
 struct FilePNG_IDAT:public FilePNG_Chunk{//图像数据本体

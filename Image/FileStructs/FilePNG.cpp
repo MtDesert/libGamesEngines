@@ -291,6 +291,38 @@ bool FilePNG_PLTE::setRGBA(uint index,uint32 &color){
 	return setRGBA(index,rgba);
 }
 
+void FilePNG_PLTE::getColorsList(bool hasColor,bool hasAlpha,List<uint32> &colorsList){
+	colorsList.clear();
+	//获取颜色数
+	uint amount=hasColor?
+		(hasAlpha ? rgbaAmount() : rgbAmount()):
+		(hasAlpha ? grayAlphaAmount() : grayAmount());
+	//获取各个颜色值
+	uint32 u32;ColorRGBA rgba;
+	uint16 grayAlpha;
+	uint8 u8;
+	for(uint i=0;i<amount;++i){
+		if(hasColor){
+			if(hasAlpha){
+				getRGBA(i,rgba);
+			}else{//标准色表
+				getColor(i,rgba);
+			}
+		}else{
+			if(hasAlpha){
+				getGrayAlpha(i,grayAlpha);
+				rgba.red=rgba.green=rgba.blue=(grayAlpha&0xFF);
+				rgba.alpha=(grayAlpha>>8);
+			}else{
+				getGray(i,u8);
+				rgba.red=rgba.green=rgba.blue=u8;
+			}
+		}
+		u32=rgba.toRGBA();
+		colorsList.push_back(u32);
+	}
+}
+
 void FilePNG_PLTE::makeChunk(bool hasColor,bool hasAlpha,List<uint32> &colorsList){
 	auto size=colorsList.size()*(hasColor?
 		(hasAlpha?RGBA_SIZE:RGB_SIZE):

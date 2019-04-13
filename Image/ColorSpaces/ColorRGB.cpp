@@ -7,7 +7,7 @@ ColorRGB::ColorRGB(unsigned value){fromBGR(value);}
 
 ColorRGBA::ColorRGBA():ColorRGBA(0,0,0,0){}
 ColorRGBA::ColorRGBA(uint8 r, uint8 g, uint8 b, uint8 a):ColorRGB(r,g,b),alpha(a){}
-ColorRGBA::ColorRGBA(unsigned value){fromBGRA(value);}
+ColorRGBA::ColorRGBA(unsigned value){fromRGBA(value);}
 
 uint8 ColorRGB::gray()const{
 	//CIE 1931,HDTV,ATSC
