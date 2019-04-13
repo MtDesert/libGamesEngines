@@ -6,6 +6,13 @@ int Number::devideRound(int devidend,int devisor){
 	if(devidend%devisor*2>=devisor)++ret;
 	return ret;
 }
+int Number::devideCeil(int devidend,int devisor){
+	if(devisor==0)return INT_MAX;
+	int ret=devidend/devisor;
+	if(devidend%devisor)++ret;
+	return ret;
+}
+
 void Number::makePrimeNumbersList(ulonglong range){
 	if(range<2){//表中无项
 		primeNumbersList.clear();

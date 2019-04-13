@@ -20,6 +20,7 @@ public:
 	}
 	//整数除法,返回四舍五入结果
 	static int devideRound(int devidend,int devisor);
+	static int devideCeil(int devidend,int devisor);
 	//质数
 	list<ulonglong> primeNumbersList;//质数表
 	void makePrimeNumbersList(ulonglong range);//质数表,2~range为质数表范围

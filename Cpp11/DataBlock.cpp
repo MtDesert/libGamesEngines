@@ -373,8 +373,8 @@ uint DataBlock::leastUintToStoreBit(uint8 bitLen){
 #define DATABLOCK_CPP_TO_ARRAY(bit)\
 bool DataBlock::toUint##bit##Array(uint8 bitLen,SizeType amount,bool littleEndian,uint##bit uintArray[])const{\
 	/*检查参数合法性*/\
-	if(bitLen==0||bitLen>64)return 0;\
-	if(amount*bitLen>dataLength*8)return 0;\
+	if(bitLen==0||bitLen>64)return false;\
+	if(amount*bitLen>dataLength*8)return false;\
 	/*开始解数据*/\
 	SizeType offset=0;\
 	uint##bit value;\
@@ -404,6 +404,40 @@ bool DataBlock::toUint##bit##Array(uint8 bitLen,SizeType amount,bool littleEndia
 		/*写入数组*/\
 		uintArray[i]=value;\
 	}\
+	return true;\
+}\
+bool DataBlock::fromUint##bit##Array(uint##bit uintArray[],SizeType amount,uint8 bitLen,bool littleEndian){\
+	/*检查参数合法性*/\
+	if(bitLen==0||bitLen>64)return false;\
+	if(amount*bitLen>dataLength*8)return false;\
+	/*开始编数据*/\
+	SizeType offset=0;\
+	uint##bit value;\
+	uint8 byte=0,usedBits=0,valueSize=0;\
+	for(decltype(amount) i=0;i<amount;++i){\
+		value=uintArray[i];\
+		valueSize=bitLen;\
+		while(valueSize>0){/*生成需要的数值*/\
+			--valueSize;\
+			/*根据大尾或小尾来取数据*/\
+			if(littleEndian){\
+				byte|=((value&0x01)<<usedBits);\
+				value>>=1;\
+			}else{\
+				byte|=(((value>>valueSize)&0x01)<<(7-usedBits));\
+			}\
+			/*更新状态*/\
+			++usedBits;\
+			/*写入数据*/\
+			if(usedBits>=8){\
+				setByte(offset,byte);\
+				byte=0;\
+				usedBits=0;\
+				++offset;\
+			}\
+		}\
+	}\
+	setByte(offset,byte);/*确保写入最后一个字节*/\
 	return true;\
 }
 

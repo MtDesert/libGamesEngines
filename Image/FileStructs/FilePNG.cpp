@@ -11,8 +11,14 @@
 
 //常量宏
 #define DEFAULT_CHUNK_SIZE 12
+#define CHUNK_LEN_SIZE 4
+#define CHUNK_NAME_SIZE 4
 #define CHUNK_DATA_START 8
+#define CRC_SIZE 4
+
 #define DEFAULT_IHDR_SIZE 13
+#define GRAY_SIZE 1
+#define GRAY_ALPHA_SIZE 2
 #define RGB_SIZE 3
 #define RGBA_SIZE 4
 
@@ -28,7 +34,7 @@ ColorRGBA rgba;
 DataBlock::SizeType FilePNG_Chunk::parseData(){
 	uint32 chunkLength;
 	if(getChunkLength(chunkLength)){
-		chunkLength=8+chunkLength+4;
+		chunkLength=CHUNK_DATA_START+chunkLength+CRC_SIZE;
 		if(dataLength>chunkLength)dataLength=chunkLength;
 	}
 	return dataLength;
@@ -64,11 +70,11 @@ bool FilePNG_Chunk::setChunkCRC(const uint32 &value){
 string FilePNG_Chunk::chunkName()const{
 	uint32 type;
 	if(getChunkType(type)){
-		return string((const char*)&type,4);
+		return string((const char*)&type,CHUNK_NAME_SIZE);
 	}else return string();
 }
 void FilePNG_Chunk::setChunkName(const string &name){
-	if(name.length()!=4)return;
+	if(name.length()!=CHUNK_NAME_SIZE)return;
 	uint32 *u32=(uint32*)name.data();
 	setChunkType(*u32);
 }
@@ -81,10 +87,16 @@ DATABLOCK_CUSTOM_BOOL_CPP(FilePNG_Chunk,SafeToCopyBit,7,5)
 uint32 FilePNG_Chunk::makeCRC()const{
 	uint32 length;
 	if(getChunkLength(length)){
-		auto block=subDataBlock(4,4+length);
+		auto block=subDataBlock(CHUNK_LEN_SIZE,CHUNK_LEN_SIZE+length);//校验和只计算名字和数据两部分
 		return crc32(0,block.dataPointer,block.dataLength);
 	}
 	return 0;
+}
+
+void FilePNG_Chunk::makeChunk(uint32 length, const string &name){
+	memoryReallocate(DEFAULT_CHUNK_SIZE+length);
+	setChunkName(name);
+	setChunkLength(length);
 }
 
 DATABLOCK_CUSTOM_TYPE_CPP(FilePNG_IHDR,Width,uint32,8,false)
@@ -121,8 +133,8 @@ uint FilePNG_IHDR::channels(uint colorType){
 		case ColorType_Gray:
 		case ColorType_Palette:return 1;
 		case ColorType_GrayAlpha:return 2;
-		case ColorType_RGB:return 3;
-		case ColorType_RGBAlpha:return 4;
+		case ColorType_RGB:return RGB_SIZE;
+		case ColorType_RGBAlpha:return RGBA_SIZE;
 		//特殊格式
 		case ColorType_PaletteGray:
 		case ColorType_PaletteGrayAlpha:
@@ -170,48 +182,18 @@ bool FilePNG_IHDR::isValid_InterlaceMethod(uint8 method){
 	return (method>=InterlaceMethod_None && method<=InterlaceMethod_Adam7);
 }
 
-uint FilePNG_PLTE::rgbCount()const{
-	uint32 len;
-	return getChunkLength(len)?len/3:0;
-}
-bool FilePNG_PLTE::getColor(uint index,ColorRGB &color)const{
-	offset=CHUNK_DATA_START+index*3;
-	return get_uint8(offset,color.red)&&get_uint8(offset+1,color.green)&&get_uint8(offset+2,color.blue);
-}
-bool FilePNG_PLTE::setColor(uint index,const ColorRGB &color){
-	offset=CHUNK_DATA_START+index*3;
-	return set_uint8(offset,color.red)&&set_uint8(offset+1,color.green)&&set_uint8(offset+2,color.blue);
-}
-bool FilePNG_PLTE::setColor(uint index,uint32 color){
-	rgb.fromRGB(color);
-	return setColor(index,rgb);
-}
-
-bool FilePNG_PLTE::getGray(uint index,uint8 &gray) const{return get_uint8(CHUNK_DATA_START+index,gray);}
-bool FilePNG_PLTE::setGray(uint index,const uint8 &gray){return set_uint8(CHUNK_DATA_START+index,gray);}
-
-bool FilePNG_PLTE::getGrayAlpha(uint index,uint16 &grayAlpha)const{return get_uint16(CHUNK_DATA_START+index*2,grayAlpha);}
-bool FilePNG_PLTE::setGrayAlpha(uint index,const uint16 &grayAlpha){return set_uint16(CHUNK_DATA_START+index*2,grayAlpha);}
-
-bool FilePNG_PLTE::getRGBA(uint index,ColorRGBA &color)const{
-	if(getRGBA(index,value32)){
-		color.fromRGBA(value32);
-		return true;
-	}
-	return false;
-}
-bool FilePNG_PLTE::getRGBA(uint index,uint32 &color)const{
-	offset=CHUNK_DATA_START+index*4;
-	return get_uint32(offset,color);
-}
-bool FilePNG_PLTE::setRGBA(uint index,const ColorRGBA &color){
-	offset=CHUNK_DATA_START+index*4;
-	value32=color.toRGBA();
-	return set_uint32(offset,value32);
-}
-bool FilePNG_PLTE::setRGBA(uint index,uint32 &color){
-	rgba.fromRGBA(color);
-	return setRGBA(index,rgba);
+void FilePNG_IHDR::makeChunk(uint32 width,uint32 height,uint8 bitDepth,bool hasPalette,bool hasColor,bool hasAlpha){
+	FilePNG_Chunk::makeChunk(DEFAULT_IHDR_SIZE,"IHDR");
+	setWidth(width);
+	setHeight(height);
+	setBitDepth(bitDepth);
+	setColorType(0);//清除
+	setColorMask_Palette(hasPalette);
+	setColorMask_Color(hasColor);
+	setColorMask_Alpha(hasAlpha);
+	setCompressionMethod(0);//默认
+	setFilterMethod(0);//默认
+	setInterlaceMethod(0);//默认
 }
 
 DATABLOCK_CUSTOM_TYPE_CPP(FilePNG_tRNS,Gray,uint16,8,false)
@@ -220,14 +202,125 @@ uint FilePNG_tRNS::alphaCount()const{
 	return getChunkLength(len)?len:0;
 }
 bool FilePNG_tRNS::getAlpha(uint index,uint8 &alpha)const{
-	return chunkDataBlock().get_uint8(index,alpha);
+	return get_uint8(CHUNK_DATA_START+index,alpha);
 }
 bool FilePNG_tRNS::setAlpha(uint index,const uint8 &alpha){
-	return chunkDataBlock().set_uint8(index,alpha);
+	return set_uint8(CHUNK_DATA_START+index,alpha);
 }
 DATABLOCK_CUSTOM_TYPE_CPP(FilePNG_tRNS,Red,uint16,8,false)
 DATABLOCK_CUSTOM_TYPE_CPP(FilePNG_tRNS,Green,uint16,10,false)
 DATABLOCK_CUSTOM_TYPE_CPP(FilePNG_tRNS,Blue,uint16,12,false)
+
+void FilePNG_tRNS::makeChunk(uint32 size){
+	FilePNG_Chunk::makeChunk(size,"tRNS");
+}
+
+FilePNG_PLTE::FilePNG_PLTE():filePng_tRNS(nullptr){}
+uint FilePNG_PLTE::rgbAmount()const{return getChunkLength(value32)?value32/RGB_SIZE:0;}
+bool FilePNG_PLTE::getColor(uint index,ColorRGBA &color)const{
+	offset=CHUNK_DATA_START+index*RGB_SIZE;
+	//先获取RGB
+#define GET_UINT8(off,name)\
+	if(!get_uint8(off,color.name))return false;
+	GET_UINT8(offset,red)
+	GET_UINT8(offset+1,green)
+	GET_UINT8(offset+2,blue)
+#undef GET_UINT8
+	//再看看有没有透明度
+	if(filePng_tRNS && filePng_tRNS->getAlpha(index,color.alpha));
+	else color.alpha=0xFF;//默认不透明
+	return true;
+}
+bool FilePNG_PLTE::setColor(uint index,const ColorRGBA &color){
+	offset=CHUNK_DATA_START+index*RGB_SIZE;
+#define SET_UINT8(off,name)\
+	if(!set_uint8(off,color.name))return false;
+	SET_UINT8(offset,red)
+	SET_UINT8(offset+1,green)
+	SET_UINT8(offset+2,blue)
+#undef SET_UINT8
+	//设置透明度
+	if(filePng_tRNS){
+		return filePng_tRNS->setAlpha(index,color.alpha);
+	}
+	return true;
+}
+bool FilePNG_PLTE::setColor(uint index,uint32 color){
+	rgba.fromRGBA(color);
+	return setColor(index,rgba);
+}
+/*bool FilePNG_PLTE::findColor(const ColorRGB &color,uint &index)const{
+	auto size=rgbAmount();
+	for(decltype(size) i=0;i<size;++i){
+		getColor(i,rgb);
+		if(rgb==color){//找到了
+			index=i;
+			return true;
+		}
+	}
+	return false;
+}*/
+
+uint FilePNG_PLTE::grayAmount()const{return getChunkLength(value32)?value32:0;}
+bool FilePNG_PLTE::getGray(uint index,uint8 &gray) const{return get_uint8(CHUNK_DATA_START+index,gray);}
+bool FilePNG_PLTE::setGray(uint index,const uint8 &gray){return set_uint8(CHUNK_DATA_START+index,gray);}
+
+uint FilePNG_PLTE::grayAlphaAmount()const{return getChunkLength(value32)?value32/2:0;}
+bool FilePNG_PLTE::getGrayAlpha(uint index,uint16 &grayAlpha)const{return get_uint16(CHUNK_DATA_START+index*2,grayAlpha);}
+bool FilePNG_PLTE::setGrayAlpha(uint index,const uint16 &grayAlpha){return set_uint16(CHUNK_DATA_START+index*2,grayAlpha);}
+
+uint FilePNG_PLTE::rgbaAmount()const{return getChunkLength(value32)?value32/4:0;}
+bool FilePNG_PLTE::getRGBA(uint index,ColorRGBA &color)const{
+	if(getRGBA(index,value32)){
+		color.fromRGBA(value32);
+		return true;
+	}
+	return false;
+}
+bool FilePNG_PLTE::getRGBA(uint index,uint32 &color)const{
+	offset=CHUNK_DATA_START+index*RGBA_SIZE;
+	return get_uint32(offset,color);
+}
+bool FilePNG_PLTE::setRGBA(uint index,const ColorRGBA &color){
+	offset=CHUNK_DATA_START+index*RGBA_SIZE;
+	value32=color.toRGBA();
+	return set_uint32(offset,value32);
+}
+bool FilePNG_PLTE::setRGBA(uint index,uint32 &color){
+	rgba.fromRGBA(color);
+	return setRGBA(index,rgba);
+}
+
+void FilePNG_PLTE::makeChunk(bool hasColor,bool hasAlpha,List<uint32> &colorsList){
+	auto size=colorsList.size()*(hasColor?
+		(hasAlpha?RGBA_SIZE:RGB_SIZE):
+		(hasAlpha?GRAY_ALPHA_SIZE:GRAY_SIZE)
+	);
+	FilePNG_Chunk::makeChunk(size,"PLTE");
+	auto idx=0;
+	for(auto &color32:colorsList){
+		if(hasColor){
+			if(hasAlpha){
+				setRGBA(idx,color32);
+			}else{//标准格式
+				setColor(idx,color32);
+			}
+		}else{
+			rgba.fromRGBA(color32);
+			if(hasAlpha){
+				setGrayAlpha(idx,rgba.gray());
+			}else{
+				setGray(idx,rgba.gray());
+			}
+		}
+		++idx;
+	}
+}
+
+void FilePNG_IDAT::makeChunk(const DataBlock &idatData){
+	FilePNG_Chunk::makeChunk(idatData.dataLength,"IDAT");
+	chunkDataBlock().memcpyFrom(idatData.dataPointer,idatData.dataLength);
+}
 
 DATABLOCK_CUSTOM_TYPE_CPP(FilePNG_gAMA,Gama,uint32,8,false)
 
@@ -248,7 +341,8 @@ DATABLOCK_CUSTOM_TYPE_CPP(FilePNG_sRGB,RenderingIntent,uint8,8,false)
 	}else
 
 FilePNG_Scanline::FilePNG_Scanline(uchar *pointer):
-	bitDepth(0),colorType(0),channelAmount(0),pixelDepth(0),
+	width(0),height(0),bitDepth(0),colorType(0),
+	channelAmount(0),lineSize(0),
 	hasPalette(false),hasColor(false),hasAlpha(false),
 	filePng_PLTE(nullptr),filePng_tRNS(nullptr),
 	leastUint(0),
@@ -256,14 +350,16 @@ FilePNG_Scanline::FilePNG_Scanline(uchar *pointer):
 {
 	dataPointer=pointer;
 }
+FilePNG_Scanline::~FilePNG_Scanline(){deleteBuffer();}
 
 void FilePNG_Scanline::setIHDR(const FilePNG_IHDR &ihdr){
 	//获取头部各个属性
 	ihdr.getWidth(width);
+	ihdr.getHeight(height);
 	ihdr.getBitDepth(bitDepth);
 	ihdr.getColorType(colorType);
 	channelAmount=FilePNG_IHDR::channels(colorType);
-	pixelDepth=bitDepth*channelAmount;
+	lineSize=FilePNG_IHDR::rowBytes(width,bitDepth,colorType,true);
 	ihdr.getColorMask_Palette(hasPalette);
 	ihdr.getColorMask_Color(hasColor);
 	ihdr.getColorMask_Alpha(hasAlpha);
@@ -297,12 +393,7 @@ bool FilePNG_Scanline::decodeLine(uint y,Bitmap_32bit &bitmap)const{
 				if(hasAlpha){//非标准格式
 					filePng_PLTE->getRGBA(index,rgba);
 				}else{//标准格式之一
-					if(filePng_PLTE->getColor(index,rgb)){
-						rgba=rgb;
-						//可能有透明度
-						if(filePng_tRNS && filePng_tRNS->getAlpha(index,rgba.alpha));
-						else rgba.alpha=0xFF;
-					}
+					filePng_PLTE->getColor(index,rgba);
 				}
 			}else{//黑白图
 				if(hasAlpha){//非标准格式
@@ -320,17 +411,17 @@ bool FilePNG_Scanline::decodeLine(uint y,Bitmap_32bit &bitmap)const{
 				}
 			}
 		}else{
-			if(hasColor){
-				rgba.red=precisionQuantization(getBufferValue(x,0));
-				rgba.green=precisionQuantization(getBufferValue(x,1));
-				rgba.blue=precisionQuantization(getBufferValue(x,2));
+			if(hasColor){//彩色图
+				rgba.red=value2color(getBufferValue(x,0));
+				rgba.green=value2color(getBufferValue(x,1));
+				rgba.blue=value2color(getBufferValue(x,2));
 				rgba.alpha=hasAlpha?
-					precisionQuantization(getBufferValue(x,3)):0xFF;
-			}else{
-				rgba.red=precisionQuantization(getBufferValue(x,0));
+					value2color(getBufferValue(x,3)):0xFF;
+			}else{//灰度图
+				rgba.red=value2color(getBufferValue(x,0));
 				rgba.blue=rgba.green=rgba.red;
 				rgba.alpha=hasAlpha?
-					precisionQuantization(getBufferValue(x,1)):0xFF;
+					value2color(getBufferValue(x,1)):0xFF;
 			}
 		}
 		//保存像素值
@@ -339,10 +430,56 @@ bool FilePNG_Scanline::decodeLine(uint y,Bitmap_32bit &bitmap)const{
 	}
 	return true;
 }
+bool FilePNG_Scanline::encodeLine(uint y,const Bitmap_32bit &bitmap){
+	if(bitDepth==0)return false;//位深肯定不能为0
+	for(decltype(width) x=0;x<width;++x){
+		//取颜色值
+		bitmap.getColor(x,y,value32);
+		rgba.fromRGBA(value32);
+		//开始编码
+		if(hasPalette && filePng_PLTE){
+			if(hasColor){
+				if(hasAlpha){
+				}else{//标准格式
+				}
+			}else{
+			}
+		}else{
+			if(hasColor){
+				setBufferValue(x,0,color2value(rgba.red));
+				setBufferValue(x,1,color2value(rgba.green));
+				setBufferValue(x,2,color2value(rgba.blue));
+				if(hasAlpha){
+					setBufferValue(x,3,color2value(rgba.alpha));
+				}
+			}else{
+				setBufferValue(x,0,color2value(rgba.gray()));
+				if(hasAlpha){
+					setBufferValue(x,1,color2value(rgba.alpha));
+				}
+			}
+		}
+	}
+	//开始转换
+	switch(leastUint){
+#define CASE_ARRAY(byte,bit)\
+		case byte:fromUint##bit##Array(buffer##bit,channelAmount*width,bitDepth,false);break;
+		CASE_ARRAY(1,8)
+		CASE_ARRAY(2,16)
+		CASE_ARRAY(4,32)
+		CASE_ARRAY(8,64)
+#undef CASE_ARRAY
+	}
+	return true;
+}
 
-uint8 FilePNG_Scanline::precisionQuantization(decltype(precision) value)const{
+uint8 FilePNG_Scanline::value2color(decltype(precision) value)const{
 	return Number::devideRound(value*0xFF,precision);
 }
+decltype(FilePNG_Scanline::precision) FilePNG_Scanline::color2value(uint8 color)const{
+	return Number::devideRound(color*precision,0xFF);
+}
+
 void FilePNG_Scanline::newBuffer(SizeType size){
 	buffer8=new uint8[size];
 	buffer16=reinterpret_cast<uint16*>(buffer8);
@@ -351,7 +488,8 @@ void FilePNG_Scanline::deleteBuffer(){
 	delete []buffer8;
 	buffer8=nullptr;
 }
-uint64 FilePNG_Scanline::getBufferValue(uint x, uint8 channel)const{
+
+uint64 FilePNG_Scanline::getBufferValue(uint x,uint8 channel)const{
 	switch(leastUint){
 #define CASE_ARRAY(byte,bit)\
 		case byte:return buffer##bit[x*channelAmount+channel];break;
@@ -362,6 +500,18 @@ uint64 FilePNG_Scanline::getBufferValue(uint x, uint8 channel)const{
 #undef CASE_ARRAY
 	}
 	return 0;
+}
+
+void FilePNG_Scanline::setBufferValue(uint x,uint8 channel,uint64 value){
+	switch(leastUint){
+#define CASE_ARRAY(byte,bit)\
+		case byte:buffer##bit[x*channelAmount+channel]=value;break;
+		CASE_ARRAY(1,8)
+		CASE_ARRAY(2,16)
+		CASE_ARRAY(4,32)
+		CASE_ARRAY(8,64)
+#undef CASE_ARRAY
+	}
 }
 
 FilePNG_SubImage::FilePNG_SubImage(uint width, uint height, uint pixelDepth):
@@ -484,17 +634,22 @@ bool FilePNG::isValid_Signature()const{
 }
 uint64 FilePNG::make_Signature(){return 0x0A1A0A0D474E5089;}
 
-DataBlock FilePNG::encode_makeFilterBlock(const Bitmap_32bit &bitmap,const FilePNG_IHDR &ihdr,List<uint32> *colorsList){
+DataBlock FilePNG::encode_makeFilterBlock(const Bitmap_32bit &bitmap,const FilePNG_IHDR &ihdr){
 	DataBlock filterBlock;
-	//计算需要存储的数据量
-	uint8 bitDepth;uint8 colorType;
-	if(!ihdr.getBitDepth(bitDepth) || !ihdr.getColorType(colorType))return filterBlock;
-	//计算一行所需的字节数,并申请空间
-	auto width=bitmap.getWidth(),height=bitmap.getHeight();
-	auto lineSize=FilePNG_IHDR::rowBytes(width,bitDepth,colorType,true);
-	filterBlock.newDataPointer(lineSize*height);
-	//开始对数据进行编码
-	for(decltype(height) y=0;y<height;++y){
+	//设置扫描线数据
+	FilePNG_Scanline scanLine;
+	scanLine.setIHDR(ihdr);
+	if(scanLine.hasPalette){
+		scanLine.filePng_PLTE=findPLTE();
+		scanLine.filePng_tRNS=findtRNS();
+	}
+	filterBlock.newDataPointer(scanLine.lineSize*scanLine.height);
+	filterBlock.memset(0,filterBlock.dataLength);
+	//开始编码
+	for(uint32 y=0;y<scanLine.height;++y){
+		filterBlock.subDataBlock(scanLine.lineSize*y,scanLine.lineSize,scanLine);//获取行数据
+		scanLine.subDataBlock(1,scanLine.lineSize-1,scanLine);//去掉filter字节
+		scanLine.encodeLine(y,bitmap);//编码到缓冲中
 	}
 	return filterBlock;
 }
@@ -558,30 +713,20 @@ bool FilePNG::decode_InterlaceAdam7(DataBlock &filterBlock,const FilePNG_IHDR &i
 	return true;
 }
 bool FilePNG::decode_makeBitmap(Bitmap_32bit &bitmap,const DataBlock &filterBlock,const FilePNG_IHDR &ihdr)const{
-	//获取头部属性
-	uint32 width,height;
-	uint8 bitDepth,colorType;
-	if(!ihdr.getWidth(width))return false;
-	if(!ihdr.getHeight(height))return false;
-	if(!ihdr.getBitDepth(bitDepth))return false;
-	if(!ihdr.getColorType(colorType))return false;
-	//确定数据块的数据量
-	uint lineSize=ihdr.rowBytes(width,bitDepth,colorType,true);
-	if(filterBlock.dataLength<lineSize*height)return false;//不足
-	//申请空间
-	bitmap.newBitmap(width,height);
-	bitmap.coordinateType=Bitmap_32bit::CoordinateType_Screen;//PNG使用屏幕坐标系
 	//设置扫描线信息,准备解码
 	FilePNG_Scanline scanLine;
 	scanLine.setIHDR(ihdr);
+	//申请空间
+	bitmap.newBitmap(scanLine.width,scanLine.height);
+	bitmap.coordinateType=Bitmap_32bit::CoordinateType_Screen;//PNG使用屏幕坐标系
 	if(scanLine.hasPalette){
 		scanLine.filePng_PLTE=findPLTE();
 		scanLine.filePng_tRNS=findtRNS();
 	}
-	//设定缓冲
-	for(uint32 y=0;y<height;++y){
-		filterBlock.subDataBlock(lineSize*y,lineSize,scanLine);//获取行数据
-		scanLine.subDataBlock(1,lineSize-1,scanLine);//去掉filter字节
+	//开始解码
+	for(uint32 y=0;y<scanLine.height;++y){
+		filterBlock.subDataBlock(scanLine.lineSize*y,scanLine.lineSize,scanLine);//获取行数据
+		scanLine.subDataBlock(1,scanLine.lineSize-1,scanLine);//去掉filter字节
 		scanLine.decodeLine(y,bitmap);//解码到缓冲中
 	}
 	return true;
@@ -639,43 +784,38 @@ bool FilePNG::encodeFrom(const Bitmap_32bit &bitmap,uint8 bitDepth,bool hasPalet
 	setSignature(make_Signature());
 	//IHDR
 	auto ihdr=new FilePNG_IHDR();
-	ihdr->newDataPointer(DEFAULT_CHUNK_SIZE+DEFAULT_IHDR_SIZE);
-	ihdr->setChunkLength(DEFAULT_IHDR_SIZE);
-	ihdr->setChunkName("IDAT");
-	ihdr->setWidth(bitmap.getWidth());
-	ihdr->setHeight(bitmap.getHeight());
-	ihdr->setBitDepth(bitDepth);
-	ihdr->setColorMask_Palette(hasPalette);
-	ihdr->setColorMask_Color(hasColor);
-	ihdr->setColorMask_Alpha(hasAlpha);
-	ihdr->setCompressionMethod(0);
-	ihdr->setFilterMethod(0);
-	ihdr->setInterlaceMethod(0);
-	//PLTE
+	ihdr->makeChunk(bitmap.getWidth(),bitmap.getHeight(),bitDepth,hasPalette,hasColor,hasAlpha);
+	//PLTE和tRNS
 	FilePNG_PLTE *plte=nullptr;
+	FilePNG_tRNS *trns=nullptr;
 	if(hasPalette){//需要调色板
+		bool newList=false;
 		if(!colorsList){//如果没有参考调色板,则自己生成
 			colorsList=new List<uint32>();
+			newList=true;
 			bitmap.getColorsList(*colorsList);
 		}
+		auto colorsAmount=colorsList->size();
+		//生成tRNS
+		trns=new FilePNG_tRNS();
+		trns->makeChunk(colorsAmount);
 		//生成PLTE
 		plte=new FilePNG_PLTE();
-		auto colorsAmount=colorsList->size();
-		plte->newDataPointer(DEFAULT_CHUNK_SIZE+colorsAmount*3);
-		plte->setChunkLength(colorsAmount*3);
-		plte->setChunkName("PLTE");
-		//构建列表
-		auto idx=0;
-		for(auto &color32:*colorsList){
-			plte->setColor(idx,color32);
-			++idx;
+		plte->filePng_tRNS=trns;
+		plte->makeChunk(hasColor,hasAlpha,*colorsList);
+		//删除new出来的列表
+		if(newList){
+			delete colorsList;
 		}
 	}
+	//扫描线
+	auto uncompressData=encode_makeFilterBlock(bitmap,*ihdr);
+	auto idatData=DataBlock_deflate::deflate(uncompressData);
+	uncompressData.deleteDataPointer();
 	//IDAT
 	auto idat=new FilePNG_IDAT();
-	idat->newDataPointer(DEFAULT_CHUNK_SIZE);
-	idat->setChunkLength(0);
-	idat->setChunkName("IDAT");
+	idat->makeChunk(idatData);
+	idatData.memoryFree();
 	//IEND
 	auto iend=new FilePNG_IEND();
 	iend->newDataPointer(DEFAULT_CHUNK_SIZE);
@@ -684,12 +824,14 @@ bool FilePNG::encodeFrom(const Bitmap_32bit &bitmap,uint8 bitDepth,bool hasPalet
 	//保存所有chunk
 	allChunks.push_back(ihdr);
 	if(plte)allChunks.push_back(plte);
+	if(trns)allChunks.push_back(trns);
 	allChunks.push_back(idat);
 	allChunks.push_back(iend);
 	//并计算CRC值
 	for(auto &chunk:allChunks){
-		chunk->makeCRC();
+		chunk->setChunkCRC(chunk->makeCRC());
 	}
+	//清理
 	return true;
 }
 bool FilePNG::decodeTo(Bitmap_32bit &bitmap)const{
@@ -710,5 +852,6 @@ bool FilePNG::decodeTo(Bitmap_32bit &bitmap)const{
 		}else return false;
 	}else return false;
 	//end
+	filterBlock.memoryFree();
 	return true;
 }

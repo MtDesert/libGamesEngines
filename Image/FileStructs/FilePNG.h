@@ -1,3 +1,6 @@
+#ifndef FILEPNG_H
+#define FILEPNG_H
+
 #include"DataBlock_deflate.h"
 #include"List.h"
 #include"ColorRGB.h"
@@ -10,9 +13,9 @@
 	macro(IEND)\
 
 struct FilePNG_Chunk:public DataBlock{
-	virtual ~FilePNG_Chunk(){}
 	SizeType parseData();
 
+	//块结构
 	DATABLOCK_CUSTOM_TYPE(ChunkLength,uint32)
 	DATABLOCK_CUSTOM_TYPE(ChunkType,uint32)
 	DataBlock chunkDataBlock()const;
@@ -29,6 +32,9 @@ struct FilePNG_Chunk:public DataBlock{
 
 	//循环冗余校验
 	uint32 makeCRC()const;
+
+	//创建(本结构自己申请空间)
+	void makeChunk(uint32 length,const string &name);
 };
 
 /** @brief 关键块:IHDR,PLTE,IDAT,IEND*/
@@ -73,39 +79,12 @@ struct FilePNG_IHDR:public FilePNG_Chunk{//图像头,首个块,一般紧跟在PN
 	static bool isValid_CompressionMethod(uint8 method);
 	static bool isValid_FilterMethod(uint8 method);
 	static bool isValid_InterlaceMethod(uint8 method);
-};
-struct FilePNG_PLTE:public FilePNG_Chunk{//调色板,个别PNG格式会带有
-	uint rgbCount()const;//颜色数
-	//读写颜色RGB
-	bool getColor(uint index,ColorRGB &color)const;
-	bool setColor(uint index,const ColorRGB &color);
-	bool setColor(uint index,uint32 color);//0x00RRGGBB
-	//以下为非标准接口
-	//读写灰度
-	bool getGray(uint index,uint8 &gray)const;
-	bool setGray(uint index,const uint8 &gray);
-	//读写灰度alpha
-	bool getGrayAlpha(uint index,uint16 &grayAlpha)const;//0xAAGG
-	bool setGrayAlpha(uint index,const uint16 &grayAlpha);
-	//读写颜色RGBA
-	bool getRGBA(uint index,ColorRGBA &color)const;
-	bool getRGBA(uint index,uint32 &color)const;
-	bool setRGBA(uint index,const ColorRGBA &color);
-	bool setRGBA(uint index,uint32 &color);//0x00RRGGBB
-};
-struct FilePNG_IDAT:public FilePNG_Chunk{//图像数据本体
-};
-struct FilePNG_IEND:public FilePNG_Chunk{//图像结束
+
+	//创建
+	void makeChunk(uint32 width,uint32 height,uint8 bitDepth,bool hasPalette,bool hasColor,bool hasAlpha);
 };
 
-/**
- * @brief Ancillary chunks:tRNS,
- * gAMA,cHRM,sRGB,iCCP
- * tEXt,zTXt,ITXt
- * bKGD,pHYs,sBIT,sPLT,hIST,tIME
- */
-//Transparency Information
-struct FilePNG_tRNS:public FilePNG_Chunk{//Transparency
+struct FilePNG_tRNS:public FilePNG_Chunk{//透明度
 	//ColorType_Gray only
 	DATABLOCK_CUSTOM_TYPE(Gray,ushort)
 
@@ -118,7 +97,50 @@ struct FilePNG_tRNS:public FilePNG_Chunk{//Transparency
 	DATABLOCK_CUSTOM_TYPE(Red,ushort)
 	DATABLOCK_CUSTOM_TYPE(Green,ushort)
 	DATABLOCK_CUSTOM_TYPE(Blue,ushort)
+
+	void makeChunk(uint32 size);
 };
+
+struct FilePNG_PLTE:public FilePNG_Chunk{//调色板,个别PNG格式会带有
+	FilePNG_tRNS *filePng_tRNS;//透明度需要此结构体
+	FilePNG_PLTE();
+
+	uint rgbAmount()const;//颜色数
+	//读写颜色RGB
+	bool getColor(uint index,ColorRGBA &color)const;
+	bool setColor(uint index,const ColorRGBA &color);
+	bool setColor(uint index,uint32 color);//0x00RRGGBB
+	bool findColor(const ColorRGB &color,uint &index)const;
+	//以下为非标准接口
+	//读写灰度
+	uint grayAmount()const;
+	bool getGray(uint index,uint8 &gray)const;
+	bool setGray(uint index,const uint8 &gray);
+	//读写灰度alpha
+	uint grayAlphaAmount()const;
+	bool getGrayAlpha(uint index,uint16 &grayAlpha)const;//0xAAGG
+	bool setGrayAlpha(uint index,const uint16 &grayAlpha);
+	//读写颜色RGBA
+	uint rgbaAmount()const;
+	bool getRGBA(uint index,ColorRGBA &color)const;
+	bool getRGBA(uint index,uint32 &color)const;
+	bool setRGBA(uint index,const ColorRGBA &color);
+	bool setRGBA(uint index,uint32 &color);//0x00RRGGBB
+
+	void makeChunk(bool hasColor,bool hasAlpha,List<uint32> &colorsList);
+};
+struct FilePNG_IDAT:public FilePNG_Chunk{//图像数据本体
+	void makeChunk(const DataBlock &idatData);
+};
+struct FilePNG_IEND:public FilePNG_Chunk{//图像结束
+};
+
+/**
+ * @brief Ancillary chunks:tRNS,
+ * gAMA,cHRM,sRGB,iCCP
+ * tEXt,zTXt,ITXt
+ * bKGD,pHYs,sBIT,sPLT,hIST,tIME
+ */
 
 //Color Space Information
 struct FilePNG_gAMA:public FilePNG_Chunk{//Image Gama
@@ -175,12 +197,13 @@ struct FilePNG_tIME:public FilePNG_Chunk{//Image last-modification time
 //扫描线,其实是一行字节,用于在扫描线和颜色数据之间相互转化
 struct FilePNG_Scanline:public DataBlock{
 	FilePNG_Scanline(uchar *pointer=0);
+	~FilePNG_Scanline();
 
-	uint32 width;//图像宽度
+	uint32 width,height;//图像宽度
 	uint8 bitDepth;//位深
 	uint8 colorType;//颜色类型
 	uint8 channelAmount;//通道数
-	uint pixelDepth;//像素深度,一般是位深的n倍
+	uint lineSize;//一行需要的字节数
 	bool hasPalette,hasColor,hasAlpha;//是否有调色板,彩色,alpha通道
 
 	FilePNG_PLTE *filePng_PLTE;//有些图依赖PLTE结构
@@ -191,17 +214,19 @@ struct FilePNG_Scanline:public DataBlock{
 	//解码一行数据,结果保存到bitmap中
 	bool decodeLine(uint y,Bitmap_32bit &bitmap)const;
 	//编码一行数据
-	void encodeLine(const DataBlock &inputBuffer);
+	bool encodeLine(uint y,const Bitmap_32bit &bitmap);
 private:
 	//缓冲变量
 	uint64 precision;//精度,用于四舍五入
-	inline uint8 precisionQuantization(decltype(precision) value)const;
+	inline uint8 value2color(decltype(precision) value)const;
+	inline decltype(precision) color2value(uint8 color)const;
 
 	uint8 leastUint;//缓冲区的字节数
 	//缓冲区
 	void newBuffer(SizeType size);
 	void deleteBuffer();
 	uint64 getBufferValue(uint x,uint8 channel)const;
+	void setBufferValue(uint x,uint8 channel,uint64 value);
 	uint8 *buffer8;
 	uint16 *buffer16;
 	uint32 *buffer32;
@@ -246,7 +271,7 @@ struct FilePNG:public DataBlock{
 	static uint64 make_Signature();
 
 	//编码函数
-	DataBlock encode_makeFilterBlock(const Bitmap_32bit &bitmap,const FilePNG_IHDR &ihdr,List<uint32> *colorsList=nullptr);
+	DataBlock encode_makeFilterBlock(const Bitmap_32bit &bitmap,const FilePNG_IHDR &ihdr);
 	//解码函数
 	DataBlock decode_allIDATs()const;
 	bool decode_InterlaceNone(DataBlock &filterBlock,const FilePNG_IHDR &ihdr)const;
@@ -258,3 +283,5 @@ struct FilePNG:public DataBlock{
 	bool encodeFrom(const Bitmap_32bit &bitmap,uint8 bitDepth,bool hasPalette,bool hasColor,bool hasAlpha,List<uint32> *colorsList=nullptr);
 	bool decodeTo(Bitmap_32bit &bitmap)const;
 };
+
+#endif

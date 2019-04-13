@@ -233,7 +233,8 @@ public:
 	 * uintArray 输出的数组
 	*/
 #define DATABLOCK_TO_ARRAY(bit)\
-	bool toUint##bit##Array(uint8 bitLen,SizeType amount,bool littleEndian,uint##bit uintArray[])const;
+	bool toUint##bit##Array(uint8 bitLen,SizeType amount,bool littleEndian,uint##bit uintArray[])const;\
+	bool fromUint##bit##Array(uint##bit uintArray[],SizeType amount,uint8 bitLen,bool littleEndian);
 
 	DATABLOCK_TO_ARRAY(8)
 	DATABLOCK_TO_ARRAY(16)
