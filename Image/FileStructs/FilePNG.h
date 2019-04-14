@@ -9,6 +9,7 @@
 #define FILEPNG_CHUNK_MACRO(macro)\
 	macro(IHDR)\
 	macro(PLTE)\
+	macro(tRNS)\
 	macro(IDAT)\
 	macro(IEND)\
 

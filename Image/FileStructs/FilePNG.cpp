@@ -202,6 +202,7 @@ uint FilePNG_tRNS::alphaAmount()const{
 	return getChunkLength(len)?len:0;
 }
 bool FilePNG_tRNS::getAlpha(uint index,uint8 &alpha)const{
+	if(index>=alphaAmount())return false;
 	return get_uint8(CHUNK_DATA_START+index,alpha);
 }
 bool FilePNG_tRNS::setAlpha(uint index,const uint8 &alpha){
