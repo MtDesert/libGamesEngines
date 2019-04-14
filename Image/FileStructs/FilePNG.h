@@ -89,7 +89,7 @@ struct FilePNG_tRNS:public FilePNG_Chunk{//透明度
 	DATABLOCK_CUSTOM_TYPE(Gray,ushort)
 
 	//ColorType_Palette only
-	uint alphaCount()const;
+	uint alphaAmount()const;
 	bool getAlpha(uint index,uint8 &alpha)const;
 	bool setAlpha(uint index,const uint8 &alpha);
 
@@ -99,6 +99,8 @@ struct FilePNG_tRNS:public FilePNG_Chunk{//透明度
 	DATABLOCK_CUSTOM_TYPE(Blue,ushort)
 
 	void makeChunk(uint32 size);
+	//移除不必要的alpha,若全部移除,则移除掉该结构体的数据
+	void removeUnnecessaryAlpha();
 };
 
 struct FilePNG_PLTE:public FilePNG_Chunk{//调色板,个别PNG格式会带有
@@ -110,7 +112,6 @@ struct FilePNG_PLTE:public FilePNG_Chunk{//调色板,个别PNG格式会带有
 	bool getColor(uint index,ColorRGBA &color)const;
 	bool setColor(uint index,const ColorRGBA &color);
 	bool setColor(uint index,uint32 color);//0x00RRGGBB
-	bool findColor(const ColorRGB &color,uint &index)const;
 	//以下为非标准接口
 	//读写灰度
 	uint grayAmount()const;
@@ -126,15 +127,16 @@ struct FilePNG_PLTE:public FilePNG_Chunk{//调色板,个别PNG格式会带有
 	bool getRGBA(uint index,uint32 &color)const;
 	bool setRGBA(uint index,const ColorRGBA &color);
 	bool setRGBA(uint index,uint32 &color);//0x00RRGGBB
-	//导出
-	void getColorsList(bool hasColor,bool hasAlpha,List<uint32> &colorsList);
-	//创建
-	void makeChunk(bool hasColor,bool hasAlpha,List<uint32> &colorsList);
+	//导入导出
+	void getColorsList(bool hasColor,bool hasAlpha,List<uint32> &colorsList)const;
+	void getColorsList(const FilePNG_IHDR &ihdr,List<uint32> &colorsList)const;
+	void setColorsList(bool hasColor,bool hasAlpha,const List<uint32> &colorsList);
 };
 struct FilePNG_IDAT:public FilePNG_Chunk{//图像数据本体
 	void makeChunk(const DataBlock &idatData);
 };
 struct FilePNG_IEND:public FilePNG_Chunk{//图像结束
+	void makeChunk();
 };
 
 /**
@@ -198,18 +200,18 @@ struct FilePNG_tIME:public FilePNG_Chunk{//Image last-modification time
 
 //扫描线,其实是一行字节,用于在扫描线和颜色数据之间相互转化
 struct FilePNG_Scanline:public DataBlock{
-	FilePNG_Scanline(uchar *pointer=0);
+	FilePNG_Scanline();
 	~FilePNG_Scanline();
 
 	uint32 width,height;//图像宽度
 	uint8 bitDepth;//位深
 	uint8 colorType;//颜色类型
 	uint8 channelAmount;//通道数
+	uint pixelDepth;//像素深度
 	uint lineSize;//一行需要的字节数
 	bool hasPalette,hasColor,hasAlpha;//是否有调色板,彩色,alpha通道
 
-	FilePNG_PLTE *filePng_PLTE;//有些图依赖PLTE结构
-	FilePNG_tRNS *filePng_tRNS;//有些图依赖tRNS结构
+	List<uint32> *colorsList;//颜色表,索引图需要
 
 	//设置位深,同时设置一些缓冲变量
 	void setIHDR(const FilePNG_IHDR &ihdr);
@@ -262,24 +264,26 @@ struct FilePNG:public DataBlock{
 	SizeType reset();
 	bool saveFilePNG(const string &filename)const;
 
+	//主要结构
 	DATABLOCK_CUSTOM_TYPE(Signature,uint64)
 	List<FilePNG_Chunk*> allChunks;
 	FilePNG_Chunk* findChunk(const string &name)const;
 	FILEPNG_FINDCHUNK(IHDR)
 	FILEPNG_FINDCHUNK(PLTE)
 	FILEPNG_FINDCHUNK(tRNS)
-	//validation
+
+	//验证
 	bool isValid_Signature()const;
 	static uint64 make_Signature();
 
 	//编码函数
-	DataBlock encode_makeFilterBlock(const Bitmap_32bit &bitmap,const FilePNG_IHDR &ihdr);
+	DataBlock encode_makeFilterBlock(const Bitmap_32bit &bitmap,const FilePNG_IHDR &ihdr,List<uint32> *colorsList=nullptr);
 	//解码函数
 	DataBlock decode_allIDATs()const;
-	bool decode_InterlaceNone(DataBlock &filterBlock,const FilePNG_IHDR &ihdr)const;
-	bool decode_InterlaceAdam7(DataBlock &filterBlock,const FilePNG_IHDR &ihdr)const;
-	bool decode_makeBitmap(Bitmap_32bit &bitmap,const DataBlock &filterBlock,const FilePNG_IHDR &ihdr)const;
-	bool decode_makeBitmapAdam7(Bitmap_32bit &bitmap,const DataBlock &filterBlock,const FilePNG_IHDR &ihdr)const;
+	bool decode_InterlaceNone(DataBlock &filterBlock,const FilePNG_Scanline &scanLine)const;
+	bool decode_InterlaceAdam7(DataBlock &filterBlock, const FilePNG_Scanline &scanLine)const;
+	bool decode_makeBitmap(Bitmap_32bit &bitmap,const DataBlock &filterBlock,FilePNG_Scanline &scanLine)const;
+	bool decode_makeBitmapAdam7(Bitmap_32bit &bitmap,const DataBlock &filterBlock,FilePNG_Scanline &scanLine)const;
 
 	//图像编码解码
 	bool encodeFrom(const Bitmap_32bit &bitmap,uint8 bitDepth,bool hasPalette,bool hasColor,bool hasAlpha,List<uint32> *colorsList=nullptr);

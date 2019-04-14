@@ -24,8 +24,8 @@
 
 //静态缓冲区
 static uint offset;
-static uint8 value8;
-static uint16 value16;
+//static uint8 value8;
+//static uint16 value16;
 static uint32 value32;
 //static uint64 value64;
 ColorRGB rgb;
@@ -197,7 +197,7 @@ void FilePNG_IHDR::makeChunk(uint32 width,uint32 height,uint8 bitDepth,bool hasP
 }
 
 DATABLOCK_CUSTOM_TYPE_CPP(FilePNG_tRNS,Gray,uint16,8,false)
-uint FilePNG_tRNS::alphaCount()const{
+uint FilePNG_tRNS::alphaAmount()const{
 	uint32 len;
 	return getChunkLength(len)?len:0;
 }
@@ -213,6 +213,19 @@ DATABLOCK_CUSTOM_TYPE_CPP(FilePNG_tRNS,Blue,uint16,12,false)
 
 void FilePNG_tRNS::makeChunk(uint32 size){
 	FilePNG_Chunk::makeChunk(size,"tRNS");
+}
+void FilePNG_tRNS::removeUnnecessaryAlpha(){
+	auto size=alphaAmount();
+	uint8 alpha;
+	while(size>0){//从最后开始搜索
+		if(getAlpha(size-1,alpha) && alpha<0xFF)break;//找到小于0xFF的数字就停止
+		--size;
+	}
+	if(size>0){//还有颜色值,调整大小
+		makeChunk(size);
+	}else{//没有颜色值,释放剩余空间
+		memoryFree();
+	}
 }
 
 FilePNG_PLTE::FilePNG_PLTE():filePng_tRNS(nullptr){}
@@ -249,17 +262,6 @@ bool FilePNG_PLTE::setColor(uint index,uint32 color){
 	rgba.fromRGBA(color);
 	return setColor(index,rgba);
 }
-/*bool FilePNG_PLTE::findColor(const ColorRGB &color,uint &index)const{
-	auto size=rgbAmount();
-	for(decltype(size) i=0;i<size;++i){
-		getColor(i,rgb);
-		if(rgb==color){//找到了
-			index=i;
-			return true;
-		}
-	}
-	return false;
-}*/
 
 uint FilePNG_PLTE::grayAmount()const{return getChunkLength(value32)?value32:0;}
 bool FilePNG_PLTE::getGray(uint index,uint8 &gray) const{return get_uint8(CHUNK_DATA_START+index,gray);}
@@ -291,7 +293,7 @@ bool FilePNG_PLTE::setRGBA(uint index,uint32 &color){
 	return setRGBA(index,rgba);
 }
 
-void FilePNG_PLTE::getColorsList(bool hasColor,bool hasAlpha,List<uint32> &colorsList){
+void FilePNG_PLTE::getColorsList(bool hasColor,bool hasAlpha,List<uint32> &colorsList)const{
 	colorsList.clear();
 	//获取颜色数
 	uint amount=hasColor?
@@ -322,8 +324,14 @@ void FilePNG_PLTE::getColorsList(bool hasColor,bool hasAlpha,List<uint32> &color
 		colorsList.push_back(u32);
 	}
 }
+void FilePNG_PLTE::getColorsList(const FilePNG_IHDR &ihdr,List<uint32> &colorsList)const{
+	bool hasColor,hasAlpha;
+	if(ihdr.getColorMask_Color(hasColor)&&ihdr.getColorMask_Alpha(hasAlpha)){
+		getColorsList(hasColor,hasAlpha,colorsList);
+	}
+}
 
-void FilePNG_PLTE::makeChunk(bool hasColor,bool hasAlpha,List<uint32> &colorsList){
+void FilePNG_PLTE::setColorsList(bool hasColor,bool hasAlpha,const List<uint32> &colorsList){
 	auto size=colorsList.size()*(hasColor?
 		(hasAlpha?RGBA_SIZE:RGB_SIZE):
 		(hasAlpha?GRAY_ALPHA_SIZE:GRAY_SIZE)
@@ -354,6 +362,8 @@ void FilePNG_IDAT::makeChunk(const DataBlock &idatData){
 	chunkDataBlock().memcpyFrom(idatData.dataPointer,idatData.dataLength);
 }
 
+void FilePNG_IEND::makeChunk(){FilePNG_Chunk::makeChunk(0,"IEND");}
+
 DATABLOCK_CUSTOM_TYPE_CPP(FilePNG_gAMA,Gama,uint32,8,false)
 
 DATABLOCK_CUSTOM_TYPE_CPP(FilePNG_cHRM,WhitePointX,uint32,8,false)
@@ -372,16 +382,13 @@ DATABLOCK_CUSTOM_TYPE_CPP(FilePNG_sRGB,RenderingIntent,uint8,8,false)
 	pChunk=new FilePNG_##chunkType;\
 	}else
 
-FilePNG_Scanline::FilePNG_Scanline(uchar *pointer):
+FilePNG_Scanline::FilePNG_Scanline():
 	width(0),height(0),bitDepth(0),colorType(0),
-	channelAmount(0),lineSize(0),
+	channelAmount(0),pixelDepth(0),lineSize(0),
 	hasPalette(false),hasColor(false),hasAlpha(false),
-	filePng_PLTE(nullptr),filePng_tRNS(nullptr),
+	colorsList(nullptr),
 	leastUint(0),
-	buffer8(nullptr),buffer16(nullptr),buffer32(nullptr),buffer64(nullptr)
-{
-	dataPointer=pointer;
-}
+	buffer8(nullptr),buffer16(nullptr),buffer32(nullptr),buffer64(nullptr){}
 FilePNG_Scanline::~FilePNG_Scanline(){deleteBuffer();}
 
 void FilePNG_Scanline::setIHDR(const FilePNG_IHDR &ihdr){
@@ -391,6 +398,7 @@ void FilePNG_Scanline::setIHDR(const FilePNG_IHDR &ihdr){
 	ihdr.getBitDepth(bitDepth);
 	ihdr.getColorType(colorType);
 	channelAmount=FilePNG_IHDR::channels(colorType);
+	pixelDepth=FilePNG_IHDR::pixelDepth(bitDepth,colorType);
 	lineSize=FilePNG_IHDR::rowBytes(width,bitDepth,colorType,true);
 	ihdr.getColorMask_Palette(hasPalette);
 	ihdr.getColorMask_Color(hasColor);
@@ -419,28 +427,10 @@ bool FilePNG_Scanline::decodeLine(uint y,Bitmap_32bit &bitmap)const{
 	//取值
 	for(decltype(width) x=0;x<width;++x){
 		//判断格式
-		if(hasPalette && filePng_PLTE){
-			auto index=getBufferValue(x,0);//索引值
-			if(hasColor){//彩色图
-				if(hasAlpha){//非标准格式
-					filePng_PLTE->getRGBA(index,rgba);
-				}else{//标准格式之一
-					filePng_PLTE->getColor(index,rgba);
-				}
-			}else{//黑白图
-				if(hasAlpha){//非标准格式
-					if(filePng_PLTE->getGrayAlpha(index,value16)){
-						rgba.red=rgba.green=rgba.blue=value16&0xFF;
-						rgba.alpha=value16>>8;
-					}
-				}else{//非标准格式
-					if(filePng_PLTE->getGray(index,value8)){
-						rgba.red=rgba.green=rgba.blue=value8;
-						//可能有透明度
-						if(filePng_tRNS && filePng_tRNS->getAlpha(index,rgba.alpha));
-						else rgba.alpha=0xFF;
-					}
-				}
+		if(hasPalette && colorsList){
+			auto ptr=colorsList->data(getBufferValue(x,0));
+			if(ptr){
+				rgba.fromRGBA(*ptr);
 			}
 		}else{
 			if(hasColor){//彩色图
@@ -469,13 +459,8 @@ bool FilePNG_Scanline::encodeLine(uint y,const Bitmap_32bit &bitmap){
 		bitmap.getColor(x,y,value32);
 		rgba.fromRGBA(value32);
 		//开始编码
-		if(hasPalette && filePng_PLTE){
-			if(hasColor){
-				if(hasAlpha){
-				}else{//标准格式
-				}
-			}else{
-			}
+		if(hasPalette && colorsList){
+			setBufferValue(x,0,colorsList->indexOf(value32));
 		}else{
 			if(hasColor){
 				setBufferValue(x,0,color2value(rgba.red));
@@ -546,7 +531,7 @@ void FilePNG_Scanline::setBufferValue(uint x,uint8 channel,uint64 value){
 	}
 }
 
-FilePNG_SubImage::FilePNG_SubImage(uint width, uint height, uint pixelDepth):
+FilePNG_SubImage::FilePNG_SubImage(uint width,uint height,uint pixelDepth):
 	width(width),height(height),pixelDepth(pixelDepth){
 	dataLength=FilePNG_rowBytes(pixelDepth,width,true)*height;
 }
@@ -666,15 +651,12 @@ bool FilePNG::isValid_Signature()const{
 }
 uint64 FilePNG::make_Signature(){return 0x0A1A0A0D474E5089;}
 
-DataBlock FilePNG::encode_makeFilterBlock(const Bitmap_32bit &bitmap,const FilePNG_IHDR &ihdr){
+DataBlock FilePNG::encode_makeFilterBlock(const Bitmap_32bit &bitmap,const FilePNG_IHDR &ihdr,List<uint32> *colorsList){
 	DataBlock filterBlock;
 	//设置扫描线数据
 	FilePNG_Scanline scanLine;
 	scanLine.setIHDR(ihdr);
-	if(scanLine.hasPalette){
-		scanLine.filePng_PLTE=findPLTE();
-		scanLine.filePng_tRNS=findtRNS();
-	}
+	scanLine.colorsList=colorsList;
 	filterBlock.newDataPointer(scanLine.lineSize*scanLine.height);
 	filterBlock.memset(0,filterBlock.dataLength);
 	//开始编码
@@ -704,37 +686,23 @@ static const uint hInterval[]={8,8,8,4,4,2,2};
 static uint adam7Width(uint w,uint pass){return w/wInterval[pass] + (w%wInterval[pass] > wStart[pass]?1:0);}
 static uint adam7Height(uint h,uint pass){return h/hInterval[pass] + (h%hInterval[pass] > hStart[pass]?1:0);}
 
-bool FilePNG::decode_InterlaceNone(DataBlock &filterBlock,const FilePNG_IHDR &ihdr)const{
-	uint32 width,height;
-	uint8 bitDepth,colorType;
-	if(!ihdr.getWidth(width))return false;
-	if(!ihdr.getHeight(height))return false;
-	if(!ihdr.getBitDepth(bitDepth))return false;
-	if(!ihdr.getColorType(colorType))return false;
-	//check
-	if(filterBlock.dataLength<ihdr.rowBytes(width,bitDepth,colorType,true)*height)return false;//not enough
-	//parse
-	FilePNG_SubImage subImage(width,height,ihdr.pixelDepth(bitDepth,colorType));
+bool FilePNG::decode_InterlaceNone(DataBlock &filterBlock,const FilePNG_Scanline &scanLine)const{
+	if(filterBlock.dataLength<scanLine.lineSize*scanLine.height)return false;//不足
+	//解码
+	FilePNG_SubImage subImage(scanLine.width,scanLine.height,scanLine.pixelDepth);
 	if(filterBlock.subDataBlock(0,filterBlock.dataLength,subImage)){
 		subImage.filter();
 		return true;
 	}else return false;
 }
-bool FilePNG::decode_InterlaceAdam7(DataBlock &filterBlock,const FilePNG_IHDR &ihdr)const{
-	uint32 width,height;
-	uint8 bitDepth,colorType;
-	if(!ihdr.getWidth(width))return false;
-	if(!ihdr.getHeight(height))return false;
-	if(!ihdr.getBitDepth(bitDepth))return false;
-	if(!ihdr.getColorType(colorType))return false;
-
+bool FilePNG::decode_InterlaceAdam7(DataBlock &filterBlock,const FilePNG_Scanline &scanLine)const{
 	uint32 ww,hh;
 	uint pos=0;
 	for(uint pass=0;pass<7;++pass){
-		ww = adam7Width(width,pass);
-		hh = adam7Height(height,pass);
+		ww = adam7Width(scanLine.width,pass);
+		hh = adam7Height(scanLine.height,pass);
 		//interlace
-		FilePNG_SubImage subImage(ww,hh,ihdr.pixelDepth(bitDepth,colorType));
+		FilePNG_SubImage subImage(ww,hh,scanLine.pixelDepth);
 		if(filterBlock.subDataBlock(pos,filterBlock.dataLength-pos,subImage)){
 			if(pos<filterBlock.dataLength){
 				subImage.filter();
@@ -744,17 +712,7 @@ bool FilePNG::decode_InterlaceAdam7(DataBlock &filterBlock,const FilePNG_IHDR &i
 	}
 	return true;
 }
-bool FilePNG::decode_makeBitmap(Bitmap_32bit &bitmap,const DataBlock &filterBlock,const FilePNG_IHDR &ihdr)const{
-	//设置扫描线信息,准备解码
-	FilePNG_Scanline scanLine;
-	scanLine.setIHDR(ihdr);
-	//申请空间
-	bitmap.newBitmap(scanLine.width,scanLine.height);
-	bitmap.coordinateType=Bitmap_32bit::CoordinateType_Screen;//PNG使用屏幕坐标系
-	if(scanLine.hasPalette){
-		scanLine.filePng_PLTE=findPLTE();
-		scanLine.filePng_tRNS=findtRNS();
-	}
+bool FilePNG::decode_makeBitmap(Bitmap_32bit &bitmap,const DataBlock &filterBlock,FilePNG_Scanline &scanLine)const{
 	//开始解码
 	for(uint32 y=0;y<scanLine.height;++y){
 		filterBlock.subDataBlock(scanLine.lineSize*y,scanLine.lineSize,scanLine);//获取行数据
@@ -763,42 +721,21 @@ bool FilePNG::decode_makeBitmap(Bitmap_32bit &bitmap,const DataBlock &filterBloc
 	}
 	return true;
 }
-bool FilePNG::decode_makeBitmapAdam7(Bitmap_32bit &bitmap,const DataBlock &filterBlock,const FilePNG_IHDR &ihdr)const{
-	uint32 width,height;
-	uint8 bitDepth,colorType;
-	if(!ihdr.getWidth(width))return false;
-	if(!ihdr.getHeight(height))return false;
-	if(!ihdr.getBitDepth(bitDepth))return false;
-	if(!ihdr.getColorType(colorType))return false;
-
-	uint lineSize=ihdr.rowBytes(width,bitDepth,colorType,true);
-	if(filterBlock.dataLength<lineSize*height)return false;//not enough
-
-	//allocate memory
-	bitmap.newBitmap(width,height);
-	bitmap.coordinateType=Bitmap_32bit::CoordinateType_Screen;
+bool FilePNG::decode_makeBitmapAdam7(Bitmap_32bit &bitmap,const DataBlock &filterBlock,FilePNG_Scanline &scanLine)const{
 	//decode bitmap
 	DataBlock line;
-	FilePNG_Scanline scanLine;
-	scanLine.setIHDR(ihdr);
-	if(scanLine.hasPalette){
-		scanLine.filePng_PLTE=findPLTE();
-		scanLine.filePng_tRNS=findtRNS();
-	}
-	scanLine.parseData();
 	//copy data
 	uint ww,hh,pos=0;
 	uint32 value;
 	for(uint pass=0;pass<7;++pass){
-		ww = adam7Width(width,pass);
-		hh = adam7Height(height,pass);
-		uint lineSize=FilePNG_rowBytes(bitDepth,ww,true);
+		ww = adam7Width(scanLine.width,pass);
+		hh = adam7Height(scanLine.height,pass);
+		uint lineSize=FilePNG_rowBytes(scanLine.bitDepth,ww,true);
 		//copy from image
 		for(uint32 y=0;y<hh;++y){
 			filterBlock.subDataBlock(pos+lineSize*y,lineSize,line);
 			line.subDataBlock(1,lineSize-1,scanLine);
 			for(uint32 x=0;x<ww;++x){
-				//value=scanLine.getColor4B(x).toRGBA();
 				bitmap.setColor(
 					wStart[pass]+wInterval[pass]*x,
 					hStart[pass]+hInterval[pass]*y,
@@ -820,8 +757,8 @@ bool FilePNG::encodeFrom(const Bitmap_32bit &bitmap,uint8 bitDepth,bool hasPalet
 	//PLTE和tRNS
 	FilePNG_PLTE *plte=nullptr;
 	FilePNG_tRNS *trns=nullptr;
+	bool newList=false;
 	if(hasPalette){//需要调色板
-		bool newList=false;
 		if(!colorsList){//如果没有参考调色板,则自己生成
 			colorsList=new List<uint32>();
 			newList=true;
@@ -834,25 +771,29 @@ bool FilePNG::encodeFrom(const Bitmap_32bit &bitmap,uint8 bitDepth,bool hasPalet
 		//生成PLTE
 		plte=new FilePNG_PLTE();
 		plte->filePng_tRNS=trns;
-		plte->makeChunk(hasColor,hasAlpha,*colorsList);
-		//删除new出来的列表
-		if(newList){
-			delete colorsList;
+		plte->setColorsList(hasColor,hasAlpha,*colorsList);
+		//整理tRNS的内容
+		trns->removeUnnecessaryAlpha();
+		if(!trns->dataPointer){
+			delete trns;
+			trns=nullptr;
 		}
 	}
 	//扫描线
-	auto uncompressData=encode_makeFilterBlock(bitmap,*ihdr);
+	auto uncompressData=encode_makeFilterBlock(bitmap,*ihdr,colorsList);
 	auto idatData=DataBlock_deflate::deflate(uncompressData);
 	uncompressData.deleteDataPointer();
+	//删除new出来的列表
+	if(newList){
+		delete colorsList;
+	}
 	//IDAT
 	auto idat=new FilePNG_IDAT();
 	idat->makeChunk(idatData);
 	idatData.memoryFree();
 	//IEND
 	auto iend=new FilePNG_IEND();
-	iend->newDataPointer(DEFAULT_CHUNK_SIZE);
-	iend->setChunkLength(0);
-	iend->setChunkName("IEND");
+	iend->makeChunk();
 	//保存所有chunk
 	allChunks.push_back(ihdr);
 	if(plte)allChunks.push_back(plte);
@@ -870,20 +811,37 @@ bool FilePNG::decodeTo(Bitmap_32bit &bitmap)const{
 	//必须得有IHDR,否则我们无法得知怎么解码
 	auto ihdr=findIHDR();
 	if(!ihdr)return false;
+	//可能有PLTE和tRNS,但是最主要的是获得色表
+	List<uint32> colorsList;
+	auto plte=findPLTE();
+	if(plte){
+		plte->filePng_tRNS=findtRNS();
+		plte->getColorsList(*ihdr,colorsList);
+	}
+	//设置扫描线信息,准备解码
+	FilePNG_Scanline scanLine;
+	scanLine.setIHDR(*ihdr);
+	scanLine.colorsList=plte ? &colorsList : nullptr;
+	//申请空间
+	bitmap.newBitmap(scanLine.width,scanLine.height);
+	bitmap.coordinateType=Bitmap_32bit::CoordinateType_Screen;//PNG使用屏幕坐标系
 	//找出所有IDAT数据块并解压
+	bool ret=false;
 	auto filterBlock=decode_allIDATs();
-	//interlace
+	//根据交织算法来解码
 	uint8 method;
 	if(ihdr->getInterlaceMethod(method)){
 		if(method==FilePNG_IHDR::InterlaceMethod_None){
-			decode_InterlaceNone(filterBlock,*ihdr);
-			decode_makeBitmap(bitmap,filterBlock,*ihdr);
+			decode_InterlaceNone(filterBlock,scanLine);
+			decode_makeBitmap(bitmap,filterBlock,scanLine);
+			ret=true;
 		}else if(method==FilePNG_IHDR::InterlaceMethod_Adam7){
-			decode_InterlaceAdam7(filterBlock,*ihdr);
-			decode_makeBitmapAdam7(bitmap,filterBlock,*ihdr);
-		}else return false;
-	}else return false;
-	//end
+			decode_InterlaceAdam7(filterBlock,scanLine);
+			decode_makeBitmapAdam7(bitmap,filterBlock,scanLine);
+			ret=true;
+		}
+	}
+	//结束
 	filterBlock.memoryFree();
-	return true;
+	return ret;
 }
