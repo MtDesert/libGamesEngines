@@ -11,8 +11,7 @@ void GameMenu_String::addString(const string &str){
 }
 
 uint GameMenu_String::rowAmount()const{return stringCodeList.size();}
-void GameMenu_String::render()const{
-	GameMenu::render();
+void GameMenu_String::renderX()const{
 	//绘制每一项内容
 	point2D=rect.topCenter();
 	gameString.position.x()=point2D.x();
@@ -25,8 +24,12 @@ void GameMenu_String::render()const{
 			if(selectingItemIndex==i){
 				shapeRenderer.hasFill=true;
 				shapeRenderer.fillColor=0xFFFFFFFF;
-				shapeRenderer.drawRectangle(gameString.rectF());
 				gameString.color=0xFF000000;
+				//计算矩形选择区域
+				rect=gameString.rectF();
+				rect.p0.y()+=gameString.position.y();
+				rect.p1.y()+=gameString.position.y();
+				shapeRenderer.drawRectangle(rect);
 			}else{
 				gameString.color=0xFFFFFFFF;
 			}

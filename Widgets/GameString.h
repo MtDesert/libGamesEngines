@@ -25,7 +25,7 @@ public:
 	virtual void setString(const string &str);//设置文本内容
 	uint stringWidth()const;//文本宽度,即所有文本所生成的字体加起来的总宽度
 	virtual Point2D<float> sizeF()const;//根据文字内容计算尺寸
-	virtual void render()const;//实时渲染文字
+	virtual void renderX()const;//实时渲染文字
 
 	//静态变量
 	static Charset charset;//GameString共用的字符集转化方案,暂时还没提供换字符集的方案

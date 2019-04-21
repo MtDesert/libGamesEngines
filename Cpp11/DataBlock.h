@@ -124,6 +124,8 @@ public:
 	bool memoryMap(const string &name);//以内存映射方式访问文件,返回是否成功
 	bool memoryUnmap();//解除内存映射,返回是否成功
 
+	//stdio.h的部分封装
+	bool fileWrite(FILE *file)const;
 	//stdlib.h的部分封装
 	bool memoryCAllocate(size_t n,size_t size);//calloc()
 	bool memoryAllocate(size_t size);//malloc()

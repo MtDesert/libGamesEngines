@@ -18,9 +18,11 @@ public:
 		if(num<0)return -1;
 		return 0;
 	}
+
 	//整数除法,返回四舍五入结果
-	static int devideRound(int devidend,int devisor);
-	static int devideCeil(int devidend,int devisor);
+	static int divideRound(int devidend,int devisor);
+	//整数除法,向上取整
+	static int divideCeil(int devidend,int devisor);
 	//质数
 	list<ulonglong> primeNumbersList;//质数表
 	void makePrimeNumbersList(ulonglong range);//质数表,2~range为质数表范围

@@ -11,7 +11,7 @@ public:
 	~GameDialog();
 
 	virtual Point2D<float> sizeF()const;//根据内容动态计算尺寸
-	virtual void render()const;
+	virtual void renderX()const;
 	//主要控件
 	GameText mGameText;//文本内容,显示给玩家需要看的信息
 	GameButton_String mGameButton;//按钮,用来给玩家进行操作

@@ -193,7 +193,7 @@ void printGlutDeviceGet(){
 int main(int argc,char* argv[]){
 	//游戏参数初始化
 	int width=640,height=480;
-	Game::resolution=Point2D<int>(width,height);
+	Game::resolution=Point3D<int>(width,height);
 	//glut初始化
 	glutInit(&argc,argv);
 	glutInitDisplayMode(GLUT_SINGLE|GLUT_RGBA|GLUT_DEPTH);

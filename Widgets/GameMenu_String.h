@@ -17,7 +17,7 @@ public:
 
 	//重写
 	uint rowAmount()const;
-	void render()const;//渲染方法,主要渲染文字
+	void renderX()const;//渲染方法,主要渲染文字
 };
 
 #endif

@@ -7,7 +7,7 @@
 //全局变量
 string errorString;//错误描述,如果游戏运行过程中出现各种错误,都可以存到此变量中
 
-Game::Game(){
+Game::Game():sceneFileList(nullptr){
 	//加载字体
 	FontTextureCache &cache(GameString::fontTextureCache);
 	cache.bitmapFontAscii.charBlock.loadFile("fonts/ascii");
@@ -99,7 +99,7 @@ void Game::render()const{
 
 GameScene* Game::findFirstGameScene()const{
 	GameScene *scene=nullptr;
-	for(GameObject *obj:subObjects){
+	for(auto obj:subObjects){
 		scene=dynamic_cast<GameScene*>(obj);
 		if(scene)break;
 	}

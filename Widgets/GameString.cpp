@@ -37,7 +37,7 @@ Point2D<GLfloat> GameString::sizeF()const{
 	return Point2D<GLfloat>(stringWidth(),charSize.y());
 }
 
-void GameString::render()const{
+void GameString::renderX()const{
 	shapeRenderer.setColor(color);
 	p=rectF().p0;
 	size2D.y()=charSize.y();

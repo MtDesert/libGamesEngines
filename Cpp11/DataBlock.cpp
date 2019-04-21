@@ -115,6 +115,10 @@ bool DataBlock::memoryUnmap(){
 #endif
 }
 
+//stdio.h
+bool DataBlock::fileWrite(FILE *file)const{
+	return fwrite(dataPointer,dataLength,1,file);
+}
 //stdlib.h
 bool DataBlock::memoryCAllocate(size_t n,size_t size){
 	dataPointer=(uchar*)::calloc(n,size);

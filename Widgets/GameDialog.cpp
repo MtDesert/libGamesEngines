@@ -11,14 +11,13 @@ GameDialog::GameDialog(){
 }
 GameDialog::~GameDialog(){}
 
-void GameDialog::render()const{
+void GameDialog::renderX()const{
 	//画底板
 	sr.hasEdge=true;
 	sr.edgeColor=0xFFFFFFFF;
 	sr.hasFill=true;
 	sr.fillColor=0xFF000000;
 	sr.drawRectangle(rectF());
-	GameSprite::render();
 }
 
 Point2D<float> GameDialog::sizeF()const{

@@ -18,7 +18,7 @@ public:
 	static Game* newGame();//创建游戏,请在子类实现
 	static Game* currentGame();//当前游戏,请在子类实现
 	//输入输出变量
-	static Point2D<int> resolution;//分辨率
+	static Point3D<int> resolution;//分辨率
 	static Point2D<int> mousePos;//鼠标位置
 
 	//翻译

@@ -1,17 +1,18 @@
 #include"Number.h"
 
-int Number::devideRound(int devidend,int devisor){
-	if(devisor==0)return INT_MAX;
-	int ret=devidend/devisor;
-	if(devidend%devisor*2>=devisor)++ret;
-	return ret;
+#define DIVIDE_CONDITION(condition) \
+if(devisor==0)return INT_MAX;\
+int ret=devidend/devisor;\
+if(condition)++ret;\
+return ret;
+
+int Number::divideRound(int devidend,int devisor){
+	DIVIDE_CONDITION(devidend%devisor*2>=devisor)
 }
-int Number::devideCeil(int devidend,int devisor){
-	if(devisor==0)return INT_MAX;
-	int ret=devidend/devisor;
-	if(devidend%devisor)++ret;
-	return ret;
+int Number::divideCeil(int devidend,int devisor){
+	DIVIDE_CONDITION(devidend%devisor)
 }
+#undef DIVIDE_CONDITION
 
 void Number::makePrimeNumbersList(ulonglong range){
 	if(range<2){//表中无项

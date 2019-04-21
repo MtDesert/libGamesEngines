@@ -7,15 +7,15 @@
 #include<string>
 using namespace std;
 
-struct FileBMP_FileHeader:public DataBlock//14 bytes
-{
+/*BMP文件头*/
+struct FileBMP_FileHeader:public DataBlock{//14 bytes
 	SizeType parseData();
 
-	DATABLOCK_CUSTOM_TYPE(Type,uint16)//always "BM"
-	DATABLOCK_CUSTOM_TYPE(Size,uint32)//file size
-	DATABLOCK_CUSTOM_TYPE(Reserved1,uint16)//always 0
-	DATABLOCK_CUSTOM_TYPE(Reserved2,uint16)//always 0
-	DATABLOCK_CUSTOM_TYPE(OffBits,uint32)//where BMP data start
+	DATABLOCK_CUSTOM_TYPE(Type,uint16)//总是"BM"
+	DATABLOCK_CUSTOM_TYPE(Size,uint32)//文件大小
+	DATABLOCK_CUSTOM_TYPE(Reserved1,uint16)//总是0
+	DATABLOCK_CUSTOM_TYPE(Reserved2,uint16)//总是0
+	DATABLOCK_CUSTOM_TYPE(OffBits,uint32)//BMP数据起始位置
 	enum Type{
 		Type_BM=0x4D42,//Windows Bitmap
 		Type_BA=0x4142,//OS/2 Bitmap Array
@@ -25,26 +25,26 @@ struct FileBMP_FileHeader:public DataBlock//14 bytes
 		Type_PT=0x5450//OS/2 Pointer
 	};
 
-	//validation
+	//有效性
 	static bool isValid_Type(uint16 type);
 	static bool isValid_Reserved1(uint16 value);
 	static bool isValid_Reserved2(uint16 value);
 };
-struct FileBMP_InfoHeader:public DataBlock//40 bytes at least. See getSize()
-{
+/**BMP信息头*/
+struct FileBMP_InfoHeader:public DataBlock{//至少40字节.参看getSize()
 	SizeType parseData();
 
-	DATABLOCK_CUSTOM_TYPE(Size,uint32)//See enum Size
-	DATABLOCK_CUSTOM_TYPE(Width,uint32)
-	DATABLOCK_CUSTOM_TYPE(Height,int32)
-	DATABLOCK_CUSTOM_TYPE(Planes,uint16)//always 1
-	DATABLOCK_CUSTOM_TYPE(BitCount,uint16)//range:1,4,8,16,24,32
-	DATABLOCK_CUSTOM_TYPE(Compression,uint32)//0(NoCompression),1(BI_RLE8),2(BI_RLE4)
-	DATABLOCK_CUSTOM_TYPE(ImageSize,uint32)//size of BMP data part
-	DATABLOCK_CUSTOM_TYPE(XPelsPerMeter,uint32)
-	DATABLOCK_CUSTOM_TYPE(YPelsPerMeter,uint32)
-	DATABLOCK_CUSTOM_TYPE(ClrUsed,uint32)//for 256 colors bitmap, this always 256
-	DATABLOCK_CUSTOM_TYPE(ClrImportant,uint32)
+	DATABLOCK_CUSTOM_TYPE(Size,uint32)//参看enum Size
+	DATABLOCK_CUSTOM_TYPE(Width,uint32)//宽度
+	DATABLOCK_CUSTOM_TYPE(Height,int32)//高度
+	DATABLOCK_CUSTOM_TYPE(Planes,uint16)//平面数,总是1
+	DATABLOCK_CUSTOM_TYPE(BitCount,uint16)//位深,有效值:1,4,8,16,24,32
+	DATABLOCK_CUSTOM_TYPE(Compression,uint32)//0(无压缩),1(BI_RLE8),2(BI_RLE4)
+	DATABLOCK_CUSTOM_TYPE(ImageSize,uint32)//BMP数据大小
+	DATABLOCK_CUSTOM_TYPE(XPelsPerMeter,uint32)//水平分辨率
+	DATABLOCK_CUSTOM_TYPE(YPelsPerMeter,uint32)//垂直分辨率
+	DATABLOCK_CUSTOM_TYPE(ClrUsed,uint32)//使用的颜色数,0表示全使用.对于256位图,此值为256
+	DATABLOCK_CUSTOM_TYPE(ClrImportant,uint32)//重要的颜色数,0表示都重要
 	//v4 header
 	DATABLOCK_CUSTOM_TYPE(RedMask,uint32)
 	DATABLOCK_CUSTOM_TYPE(GreenMask,uint32)
@@ -96,43 +96,59 @@ struct FileBMP_InfoHeader:public DataBlock//40 bytes at least. See getSize()
 		CMYKRLE4=13//only os/2 2.x?
 	};
 
-	uint lineSize()const;
-	uint colorsCount()const;
-	DataBlock unknownBlock()const;//see attribute Size
-	//validation
+	uint lineSize()const;//行字节数,4的倍数
+	uint colorsCount()const;//颜色数
+	//有效性
 	static bool isValid_Size(uint32 size);
 	static bool isValid_Planes(uint16 plane);
 	static bool isValid_BitCount(uint16 bitCount);
 	static bool isValid_Compression(uint32 compression);
 	bool isValid_ImageSize()const;
 };
-struct FileBMP_BGRAsList:public DataBlock
-{
+
+/*BMP颜色表,BMP的索引图才会带有此表*/
+struct FileBMP_BGRAsList:public DataBlock{
 	SizeType parseData();
-	//
-	uint colorsCount()const;
-	bool getColor(uint index,ColorRGBA &color)const;
-	bool setColor(uint index,const ColorRGBA &color);
-	bool setColor(uint index,uint color);//0xAARRGGBB
+
+	uint colorsAmount()const;//颜色数
+	bool getColor(uint index,ColorRGBA &color)const;//获取颜色
+	bool getColor(uint index,uint32 &color)const;
+	bool setColor(uint index,const ColorRGBA &color);//设置颜色
+	bool setColor(uint index,uint32 color);//0xAARRGGBB
+	//转换
+	void getColorsList(List<uint32> &colorsList)const;
 };
 
-class FileBMP:public DataBlock
-{
-public:
+struct FileBMP_Scanline:public Bitmap32_Scanline{
+	void setInfoHeader(const FileBMP_InfoHeader &infoHeader);
+	//解码一行数据,结果保存到bitmap中
+	bool decodeLine(uint y,Bitmap_32bit &bitmap)const;
+	//编码一行数据
+	bool encodeLine(uint y,const Bitmap_32bit &bitmap);
+};
+
+/**BMP文件结构*/
+struct FileBMP:public DataBlock{
 	SizeType parseData();
 	//数据块
 	FileBMP_FileHeader fileHeader;//文件头,一般14字节
 	FileBMP_InfoHeader infoHeader;//信息头,一般40字节
-	FileBMP_BGRAsList colorsList;//颜色表,一般来说BitCount为1,4,8的图会包含此表
+	FileBMP_BGRAsList bgrasList;//颜色表,一般来说BitCount为1,4,8的图会包含此表
 	DataBlock unknownBlockBefore;//可能存在的未知数据
 	BitBlock bitmapData;//图像数据
-	DataBlock unknownBlockAfter;//可能存在的隐藏数据
+	DataBlock unknownBlockAfter;//可能存在的未知数据
 	//有效性
 	bool isValid_FileSize()const;
 	bool isValid_FileOffbits()const;
-	uint colorCountOfColorsList()const;
+	uint64 colorCountOfColorsList()const;
+
+	//文件读写
+	bool saveFileBMP(const string &filename)const;
 	//编码解码
-	bool encodeFrom(const Bitmap_32bit &bitmap,uint16 bitCount=32,const List<uint32> *rgbaList=nullptr);//将bitmap的内容编码到BMP文件中,bitCount为希望保存的位数
+	bool encodeFrom(const Bitmap_32bit &bitmap,uint16 bitCount=32,List<uint32> *colorsList=nullptr);//将bitmap的内容编码到BMP文件中,bitCount为希望保存的位数,encodeFrom会自动申请内存
 	bool decodeTo(Bitmap_32bit &bitmap)const;//将BMP的内容解码到bitmap
+
+	//删除申请的各个数据块内存
+	bool deleteDataPointer(bool deleteAllChunk=false);
 };
 #endif

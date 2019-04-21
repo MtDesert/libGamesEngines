@@ -28,8 +28,8 @@ static uint offset;
 //static uint16 value16;
 static uint32 value32;
 //static uint64 value64;
-ColorRGB rgb;
-ColorRGBA rgba;
+static ColorRGB rgb;
+static ColorRGBA rgba;
 
 DataBlock::SizeType FilePNG_Chunk::parseData(){
 	uint32 chunkLength;
@@ -365,6 +365,11 @@ void FilePNG_IDAT::makeChunk(const DataBlock &idatData){
 
 void FilePNG_IEND::makeChunk(){FilePNG_Chunk::makeChunk(0,"IEND");}
 
+FilePNG_code::SizeType FilePNG_code::parseData(){return 0;}
+void FilePNG_code::makeChunk(const string &textCode){
+	FilePNG_Chunk::makeChunk(textCode.size(),"code");
+}
+
 DATABLOCK_CUSTOM_TYPE_CPP(FilePNG_gAMA,Gama,uint32,8,false)
 
 DATABLOCK_CUSTOM_TYPE_CPP(FilePNG_cHRM,WhitePointX,uint32,8,false)
@@ -384,15 +389,12 @@ DATABLOCK_CUSTOM_TYPE_CPP(FilePNG_sRGB,RenderingIntent,uint8,8,false)
 	}else
 
 FilePNG_Scanline::FilePNG_Scanline():
-	width(0),height(0),bitDepth(0),colorType(0),
-	channelAmount(0),pixelDepth(0),lineSize(0),
-	hasPalette(false),hasColor(false),hasAlpha(false),
-	colorsList(nullptr),
-	leastUint(0),
-	buffer8(nullptr),buffer16(nullptr),buffer32(nullptr),buffer64(nullptr){}
+	pixelDepth(0),
+	hasPalette(false),hasColor(false),hasAlpha(false){}
 FilePNG_Scanline::~FilePNG_Scanline(){deleteBuffer();}
 
 void FilePNG_Scanline::setIHDR(const FilePNG_IHDR &ihdr){
+	uint8 colorType=0;
 	//获取头部各个属性
 	ihdr.getWidth(width);
 	ihdr.getHeight(height);
@@ -404,27 +406,15 @@ void FilePNG_Scanline::setIHDR(const FilePNG_IHDR &ihdr){
 	ihdr.getColorMask_Palette(hasPalette);
 	ihdr.getColorMask_Color(hasColor);
 	ihdr.getColorMask_Alpha(hasAlpha);
-	//确定精度
-	precision=pow(2,bitDepth)-1;
 	//申请缓冲区
-	leastUint=leastUintToStoreBit(bitDepth);
-	deleteBuffer();
-	newBuffer(leastUint*channelAmount*width);
+	createBuffer();
 }
 
 bool FilePNG_Scanline::decodeLine(uint y,Bitmap_32bit &bitmap)const{
 	//参数检查
 	if(bitDepth==0)return false;//位深肯定不能为0
 	//开始转换
-	switch(leastUint){
-#define CASE_ARRAY(byte,bit)\
-		case byte:toUint##bit##Array(bitDepth,channelAmount*width,false,buffer##bit);break;
-		CASE_ARRAY(1,8)
-		CASE_ARRAY(2,16)
-		CASE_ARRAY(4,32)
-		CASE_ARRAY(8,64)
-#undef CASE_ARRAY
-	}
+	decodeLineData();
 	//取值
 	for(decltype(width) x=0;x<width;++x){
 		//判断格式
@@ -479,57 +469,8 @@ bool FilePNG_Scanline::encodeLine(uint y,const Bitmap_32bit &bitmap){
 		}
 	}
 	//开始转换
-	switch(leastUint){
-#define CASE_ARRAY(byte,bit)\
-		case byte:fromUint##bit##Array(buffer##bit,channelAmount*width,bitDepth,false);break;
-		CASE_ARRAY(1,8)
-		CASE_ARRAY(2,16)
-		CASE_ARRAY(4,32)
-		CASE_ARRAY(8,64)
-#undef CASE_ARRAY
-	}
+	encodeLineData();
 	return true;
-}
-
-uint8 FilePNG_Scanline::value2color(decltype(precision) value)const{
-	return Number::devideRound(value*0xFF,precision);
-}
-decltype(FilePNG_Scanline::precision) FilePNG_Scanline::color2value(uint8 color)const{
-	return Number::devideRound(color*precision,0xFF);
-}
-
-void FilePNG_Scanline::newBuffer(SizeType size){
-	buffer8=new uint8[size];
-	buffer16=reinterpret_cast<uint16*>(buffer8);
-}
-void FilePNG_Scanline::deleteBuffer(){
-	delete []buffer8;
-	buffer8=nullptr;
-}
-
-uint64 FilePNG_Scanline::getBufferValue(uint x,uint8 channel)const{
-	switch(leastUint){
-#define CASE_ARRAY(byte,bit)\
-		case byte:return buffer##bit[x*channelAmount+channel];break;
-		CASE_ARRAY(1,8)
-		CASE_ARRAY(2,16)
-		CASE_ARRAY(4,32)
-		CASE_ARRAY(8,64)
-#undef CASE_ARRAY
-	}
-	return 0;
-}
-
-void FilePNG_Scanline::setBufferValue(uint x,uint8 channel,uint64 value){
-	switch(leastUint){
-#define CASE_ARRAY(byte,bit)\
-		case byte:buffer##bit[x*channelAmount+channel]=value;break;
-		CASE_ARRAY(1,8)
-		CASE_ARRAY(2,16)
-		CASE_ARRAY(4,32)
-		CASE_ARRAY(8,64)
-#undef CASE_ARRAY
-	}
 }
 
 FilePNG_SubImage::FilePNG_SubImage(uint width,uint height,uint pixelDepth):
@@ -599,27 +540,20 @@ DataBlock::SizeType FilePNG::parseData(){
 	}
 	return dataLength;
 }
-DataBlock::SizeType FilePNG::reset(){
-	for(auto chunk:allChunks){
-		if(chunk)delete chunk;
-	}
-	allChunks.clear();
-	deleteDataPointer();
-	return DataBlock::reset();;
-}
+
 bool FilePNG::saveFilePNG(const string &filename)const{
-	//open file
+	//打开文件
 	auto file=fopen(filename.data(),"wb");
 	if(!file)return false;
-	//write signature
+	//写入签名
 	uint64 signature;
 	if(!getSignature(signature))return false;
 	fwrite(&signature,sizeof(signature),1,file);
-	//write each chunk
+	//写入所有块
 	for(auto &chunk:allChunks){
 		fwrite(chunk->dataPointer,chunk->dataLength,1,file);
 	}
-	//close file
+	//关闭文件
 	fflush(file);
 	fclose(file);
 	return true;
@@ -845,4 +779,17 @@ bool FilePNG::decodeTo(Bitmap_32bit &bitmap)const{
 	//结束
 	filterBlock.memoryFree();
 	return ret;
+}
+
+bool FilePNG::deleteDataPointer(bool freeAllChunks){
+	for(auto chunk:allChunks){
+		if(chunk){
+			if(freeAllChunks){
+				chunk->memoryFree();
+			}
+			delete chunk;
+		}
+	}
+	allChunks.clear();
+	return DataBlock::deleteDataPointer();
 }

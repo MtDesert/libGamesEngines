@@ -21,7 +21,7 @@ public:
 	virtual uint columnWidth(uint column)const;//各个列的宽度,在子类中实现
 	virtual void keyboardKey(Keyboard::KeyboardKey key,bool pressed);
 	//渲染
-	virtual void render()const;
+	virtual void renderX()const;
 	virtual Point2D<float> sizeF()const;
 	virtual void renderItem(uint x,uint y)const;
 };

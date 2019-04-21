@@ -53,9 +53,9 @@ size_t Charset::charAmount(const char *str,EnumCharset charset){
 
 size_t prefixLen,bytesPerChar;
 //转换过程变量
-iconv_t convert;
-char *fromStr,*toStr;
-size_t fromLen,toLen;
+static iconv_t convert;
+static char *fromStr,*toStr;
+static size_t fromLen,toLen;
 
 bool Charset::newString(const char *srcStr,EnumCharset fromCharset,EnumCharset toCharset,char **destStr, size_t &destLen){
 	if(!srcStr || fromCharset>=AmountOf_EnumCharset || toCharset>=AmountOf_EnumCharset || !destStr)return false;//防非法输入
@@ -74,7 +74,7 @@ bool Charset::newString(const char *srcStr,EnumCharset fromCharset,EnumCharset t
 	if(toStr){
 		toStr=(char*)::realloc(toStr,toLen);
 	}else{
-		toStr=(char*)::malloc(toLen);//申请空间,不保证空间一定能用完
+		toStr=(char*)::malloc(toLen);
 	}
 	//申请成功就开始转换
 	if(toStr){

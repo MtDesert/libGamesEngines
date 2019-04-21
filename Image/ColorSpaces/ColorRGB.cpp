@@ -1,4 +1,5 @@
 #include"ColorRGB.h"
+#include"Number.h"
 
 //constructors
 ColorRGB::ColorRGB():ColorRGB(0,0,0){}
@@ -19,7 +20,7 @@ uint8 ColorRGB::gray()const{
 	//return red*0.3 + green*0.6 + blue*0.1;
 
 	//PAL NTSC(int)
-	return (red*3+green*6+blue)/10;
+	return Number::divideRound(red*3+green*6+blue,10);
 	//return (red*30+green*59+blue*11)/100;
 	//return (red*299+green*587+blue*114)/1000;//SDTV with BT.601
 

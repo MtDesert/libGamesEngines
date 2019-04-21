@@ -22,10 +22,13 @@ GameScene_FileList::GameScene_FileList(){
 	subObjects.push_back(&gameTableDir);
 
 	//按钮
-	GameButton *buttons[]={&buttonConfirm,&buttonFile,&buttonDir,&buttonCancel};
+	auto game=Game::currentGame();
+	const char* names[]={"Confirm","File","Directory","Cancel"};
+	GameButton_String *buttons[]={&buttonConfirm,&buttonFile,&buttonDir,&buttonCancel};
 	auto btnWidth=res.x()/4;
 	for(auto i=0;i<4;++i){
-		GameButton *btn=buttons[i];
+		auto btn=buttons[i];
+		btn->setString(game->translate(names[i]));
 		btn->position.x() = btnWidth*i + btnWidth/2;
 		btn->position.y() = btn->buttonSize.y()/2;
 		subObjects.push_back(btn);

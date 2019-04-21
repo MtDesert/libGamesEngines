@@ -6,7 +6,6 @@ GameButton::GameButton():buttonSize(160,32),isPressed(false),bgColor(0xFF000000)
 GameButton::~GameButton(){}
 GameButton_String::GameButton_String(){
 	subObjects.push_back(&mGameString);
-	mGameString.setString("Confirm");
 }
 GameButton_String::~GameButton_String(){}
 
@@ -30,7 +29,7 @@ void GameButton::mouseKey(MouseKey key,bool pressed){
 		}
 	}
 }
-void GameButton::render()const{
+void GameButton::renderX()const{
 	rect=rectF();
 	//绘制按钮纹理
 	shapeRenderer.hasFill=true;
@@ -39,8 +38,6 @@ void GameButton::render()const{
 	//绘制按钮边框
 	shapeRenderer.hasFill=false;
 	shapeRenderer.drawRectangle(rect);
-	//递归绘制
-	GameSprite::render();
 }
 Point2D<float> GameButton::sizeF()const{
 	size2D=texture.sizeF();
@@ -52,6 +49,9 @@ Point2D<float> GameButton::sizeF()const{
 }
 void GameButton::setIsPressed(bool pressed){isPressed=pressed;}
 
+void GameButton_String::setString(const string &str){
+	mGameString.setString(str);
+}
 void GameButton_String::setPosition(int x,int y){
 	GameButton::setPosition(x,y);
 	mGameString.setPosition(x,y);

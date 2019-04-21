@@ -39,7 +39,7 @@ void GameText::refresh(){
 }
 
 Point2D<GLfloat> GameText::sizeF()const{return Point2D<GLfloat>(charSize.x()*lineCharAmount,charSize.y()*lineStart.size());}
-void GameText::render()const{
+void GameText::renderX()const{
 	ShapeRenderer::setColor(color);
 	rect=rectF();
 	gameString.position.x()=rect.p0.x();

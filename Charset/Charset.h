@@ -13,16 +13,17 @@
 //字符集,用于支持字体处理程序的功能
 class Charset{
 public:
+	Charset();
+	~Charset();
+
 #define CHARSET_NAME(name) name,
 	//字符集枚举
 	enum EnumCharset{
 		CHARSET_ALL(CHARSET_NAME)
 		AmountOf_EnumCharset
 	};
-	//源字符集和目标字符集
-	Charset();
-	~Charset();
 
+	//源字符集和目标字符集
 	EnumCharset srcCharset,destCharset;
 	//创建字符
 	bool newString(const char *srcStr,DataBlock &dataBlock)const;

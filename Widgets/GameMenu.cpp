@@ -43,10 +43,6 @@ void GameMenu::keyboardKey(Keyboard::KeyboardKey key,bool pressed){
 		if(onCancel)onCancel();
 	}
 }
-//渲染
-void GameMenu::render()const{
-	GameSprite::render();
-}
 
 Point2D<float> GameMenu::sizeF()const{//菜单尺寸,根据项尺寸和显示项数决定(子类可能会多出边缘或者间距等部分)
 	size2D.x()=itemWidth;

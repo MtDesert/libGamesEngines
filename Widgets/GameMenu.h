@@ -33,7 +33,6 @@ public:
 
 	//override
 	virtual void keyboardKey(Keyboard::KeyboardKey key,bool pressed);//菜单可以响应键盘事件(比如方向键选择,回车键确定,退出键关闭菜单等)
-	virtual void render()const;//菜单有特定的渲染方式
 	virtual Point2D<float> sizeF()const;//菜单尺寸,根据项尺寸和显示项数决定(子类可能会多出边缘或者间距等部分)
 };
 #endif

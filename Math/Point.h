@@ -158,8 +158,7 @@ struct Point2D:public Point<T,2>{
 template<typename T>
 struct Point3D:public Point<T,3>{
 	//构造函数
-	Point3D(){}
-	Point3D(T x,T y,T z){
+	Point3D(T x=0,T y=0,T z=0){
 		this->x()=x;
 		this->y()=y;
 		this->z()=z;

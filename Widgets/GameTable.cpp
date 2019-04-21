@@ -15,8 +15,7 @@ void GameTable::keyboardKey(Keyboard::KeyboardKey key,bool pressed){
 //渲染
 static decltype(rect) rct;
 static uint colAmount,x,y;
-void GameTable::render()const{
-	GameMenu::render();
+void GameTable::renderX()const{
 	//渲染整个表格内容
 	colAmount=columnAmount();
 	for(y=0;y<renderItemAmount;++y){

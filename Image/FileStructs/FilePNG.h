@@ -12,6 +12,7 @@
 	macro(tRNS)\
 	macro(IDAT)\
 	macro(IEND)\
+	macro(code)
 
 struct FilePNG_Chunk:public DataBlock{
 	SizeType parseData();
@@ -199,20 +200,23 @@ struct FilePNG_hIST:public FilePNG_Chunk{//Palette histogram
 struct FilePNG_tIME:public FilePNG_Chunk{//Image last-modification time
 };
 
+//自定义结构
+/**PNG代码,可在PNG结构中插入特定的代码
+对于代码规范目前没有统一的标准,主要依靠宿主程序解读
+*/
+struct FilePNG_code:public FilePNG_Chunk{
+	SizeType parseData();
+	//使用文本代码创建此结构
+	void makeChunk(const string &textCode);
+};
+
 //扫描线,其实是一行字节,用于在扫描线和颜色数据之间相互转化
-struct FilePNG_Scanline:public DataBlock{
+struct FilePNG_Scanline:public Bitmap32_Scanline{
 	FilePNG_Scanline();
 	~FilePNG_Scanline();
 
-	uint32 width,height;//图像宽度
-	uint8 bitDepth;//位深
-	uint8 colorType;//颜色类型
-	uint8 channelAmount;//通道数
-	uint pixelDepth;//像素深度
-	uint lineSize;//一行需要的字节数
-	bool hasPalette,hasColor,hasAlpha;//是否有调色板,彩色,alpha通道
-
-	List<uint32> *colorsList;//颜色表,索引图需要
+	uint pixelDepth;
+	bool hasPalette,hasColor,hasAlpha;
 
 	//设置位深,同时设置一些缓冲变量
 	void setIHDR(const FilePNG_IHDR &ihdr);
@@ -220,22 +224,6 @@ struct FilePNG_Scanline:public DataBlock{
 	bool decodeLine(uint y,Bitmap_32bit &bitmap)const;
 	//编码一行数据
 	bool encodeLine(uint y,const Bitmap_32bit &bitmap);
-private:
-	//缓冲变量
-	uint64 precision;//精度,用于四舍五入
-	inline uint8 value2color(decltype(precision) value)const;
-	inline decltype(precision) color2value(uint8 color)const;
-
-	uint8 leastUint;//缓冲区的字节数
-	//缓冲区
-	void newBuffer(SizeType size);
-	void deleteBuffer();
-	uint64 getBufferValue(uint x,uint8 channel)const;
-	void setBufferValue(uint x,uint8 channel,uint64 value);
-	uint8 *buffer8;
-	uint16 *buffer16;
-	uint32 *buffer32;
-	uint64 *buffer64;
 };
 
 //PNG的子图像
@@ -262,7 +250,6 @@ FilePNG_##name* find##name()const;
 //PNG文件结构,由1个PNG签名和n个块组成
 struct FilePNG:public DataBlock{
 	SizeType parseData();
-	SizeType reset();
 	bool saveFilePNG(const string &filename)const;
 
 	//主要结构
@@ -289,6 +276,9 @@ struct FilePNG:public DataBlock{
 	//图像编码解码
 	bool encodeFrom(const Bitmap_32bit &bitmap,uint8 bitDepth,bool hasPalette,bool hasColor,bool hasAlpha,List<uint32> *colorsList=nullptr);
 	bool decodeTo(Bitmap_32bit &bitmap)const;
+
+	//删除
+	bool deleteDataPointer(bool freeAllChunks=false);
 };
 
 #endif

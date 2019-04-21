@@ -23,7 +23,7 @@ public:
 
 	virtual void setString(const string &str);
 	virtual Point2D<float> sizeF()const;//根据文字内容计算尺寸
-	virtual void render()const;//实时渲染文字
+	virtual void renderX()const;//实时渲染文字
 protected:
 	list<uint> lineStart;//保存每行的起始位置
 };
