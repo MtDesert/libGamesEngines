@@ -11,7 +11,8 @@ enum GameMenuStatus{
 
 /*游戏中用到的菜单,可以显示各种数据,具体的显示方法一般在子类实现*/
 class GameMenu:public GameSprite{
-	void updateRenderParameters();//更新渲染参数
+protected:
+	virtual void updateRenderParameters();//更新渲染参数
 public:
 	//渲染变量,修改此值会直接改变渲染结果
 	uint renderItemStart;//渲染开始项,表示从第几项开始渲染

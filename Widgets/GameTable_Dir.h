@@ -16,12 +16,19 @@ public:
 	Directory directory;//保存当前的目录,以便提供数据显示文件
 	bool changeDir(const string &dirName);//切换目录,并刷新视图
 
-	//override
+	//重写
+	virtual void renderItem(uint x,uint y,const Rectangle2D<float> &rectArea)const;
+
 	virtual uint columnAmount()const;//显示文件的属性列数
 	virtual uint columnWidth(uint column)const;//设定各个列宽
 	virtual void keyboardKey(Keyboard::KeyboardKey key,bool pressed);
-	//渲染
-	virtual void renderItem(uint x,uint y)const;//渲染文件信息
+protected:
+	//缓存结构
+	struct FileInfo{
+		DataBlock fileName;//文件名
+		DataBlock fileSize;//文件大小
+	};
+	DirectoryEntry *entryBuffer;
 };
 
 #endif

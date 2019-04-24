@@ -27,7 +27,7 @@ void GameTable::renderX()const{
 			rct.p1.x() = rct.p0.x() + columnWidth(x);//调整渲染参数
 			//渲染内容
 			shapeRenderer.drawRectangle(rct);
-			renderItem(x,y);
+			renderItem(x,y,rct);//渲染子类内容
 			rct.p0.x() = rct.p1.x();//调整渲染参数
 		}
 	}
@@ -39,4 +39,4 @@ Point2D<float> GameTable::sizeF()const{
 	size2D.y()=itemHeight*renderItemAmount;
 	return size2D;
 }
-void GameTable::renderItem(uint x,uint y)const{}
+void GameTable::renderItem(uint x,uint y,const Rectangle2D<float> &rectArea)const{}

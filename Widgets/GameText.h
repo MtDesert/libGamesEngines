@@ -19,7 +19,7 @@ public:
 	//换行相关
 	uint lineCharAmount;//一行的字母数量,超过的话绘制成自动换行
 	uint lineAmount()const;//根据内容推断行数
-	void refresh();
+	void updateRenderParameter();
 
 	virtual void setString(const string &str);
 	virtual Point2D<float> sizeF()const;//根据文字内容计算尺寸

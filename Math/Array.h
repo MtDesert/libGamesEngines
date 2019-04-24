@@ -10,9 +10,42 @@ using namespace std;
 #include"typedef.h"
 #include"Point.h"
 
+//一维数组模板
 template<typename T>
-struct Array2D
-{
+struct Array{
+	Array():length(0),dataPtr(nullptr){}
+	~Array(){clear();}
+
+	//设置存储空间
+	size_t size()const{return length;}
+	void setSize(size_t size){
+		if(size==length)return;
+		if(dataPtr){
+			dataPtr=(decltype(dataPtr))realloc(dataPtr,size*sizeof(T));
+		}else{
+			dataPtr=(decltype(dataPtr))malloc(size*sizeof(T));
+		}
+		length=size;
+	}
+	//访问数据
+	T* data(size_t index)const{
+		return index<length ? &dataPtr[index] : nullptr;
+	}
+	void clear(){
+		if(dataPtr){
+			delete []dataPtr;
+			dataPtr=nullptr;
+		}
+		length=0;
+	}
+protected:
+	size_t length;
+	T *dataPtr;
+};
+
+//二维数组模板
+template<typename T>
+struct Array2D{
 	explicit Array2D():width(0),height(0){}
 	explicit Array2D(int length,int width):width(length),height(width){newData(length,width);}
 	explicit Array2D(const Array2D &another){newData(another);}

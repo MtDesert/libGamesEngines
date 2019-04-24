@@ -22,8 +22,6 @@ public:
 	Point2D<float> anchorPoint;//锚点(百分比)
 
 	//以下函数有可能子类差异化
-	virtual void setPosition(int x,int y);//子类可能要动态改变子节点的位置
-	virtual void setPosition(const decltype(position) &pos);
 	virtual void render()const;//渲染texture
 	virtual void renderX()const;//子类特殊的渲染方式
 	void renderRectBorder()const;//渲染矩形边线,可用于在视觉上确认精灵的大小

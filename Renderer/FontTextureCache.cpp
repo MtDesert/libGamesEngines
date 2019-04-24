@@ -16,8 +16,6 @@ Texture FontTextureCache::renderCharCode(uint16 character){
 			bitmapFontGb2312.renderCharCode(character);//绘制文字,绘制的结果在内存中
 			tex.texImage2D(bitmapFontGb2312.charPixmap);//生成纹理,此时数据在显存中
 		}
-		//rendererTTF.renderCharCode(character);//绘制文字,绘制的结果在内存中
-		//tex.texImage2D(rendererTTF.charPixmap);//生成纹理,此时数据在显存中
 		mapTextures.insert(character,tex);//缓存起来,以防重复绘制
 	}
 	return tex;

@@ -70,12 +70,6 @@ bool Charset::newString(const char *srcStr,EnumCharset fromCharset,EnumCharset t
 
 	toStr = *destStr;
 	toLen = prefixLen + charAmount(srcStr,fromCharset) * bytesPerChar;//测字符数,确定需要的转换空间
-	//申请空间,不保证空间一定能用完
-	if(toStr){
-		toStr=(char*)::realloc(toStr,toLen);
-	}else{
-		toStr=(char*)::malloc(toLen);
-	}
 	//申请成功就开始转换
 	if(toStr){
 		*destStr = toStr;
@@ -87,11 +81,6 @@ bool Charset::newString(const char *srcStr,EnumCharset fromCharset,EnumCharset t
 		convert=iconv_open(strCharset[toCharset],strCharset[fromCharset]);
 		iconv(convert,&fromStr,&fromLen,&toStr,&toLen);
 		iconv_close(convert);
-		//清除没用到的空间
-		if(toLen){
-			*destStr = (char*)::realloc(*destStr,destLen-toLen);
-			destLen -= toLen;
-		}
 	}
 	return true;
 }

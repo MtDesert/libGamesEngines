@@ -13,7 +13,8 @@ void GameMenu::updateRenderParameters(){
 		renderItemStart=selectingItemIndex;
 	}else{
 		auto renderEnd = renderItemStart + renderItemAmount;
-		if(renderEnd>rowAmount())renderEnd=rowAmount();
+		auto amount=rowAmount();
+		if(renderEnd>amount)renderEnd=amount;
 		if(selectingItemIndex>=renderEnd){
 			renderItemStart=selectingItemIndex - renderItemAmount + 1;
 		}

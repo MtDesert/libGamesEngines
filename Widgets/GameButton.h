@@ -34,7 +34,6 @@ public:
 	~GameButton_String();
 
 	void setString(const string &str);
-	virtual void setPosition(int x,int y);
 	virtual void setIsPressed(bool pressed);
 };
 

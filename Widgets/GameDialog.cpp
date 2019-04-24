@@ -1,23 +1,24 @@
 #include"GameDialog.h"
-#include"ShapeRenderer.h"
+#include"Game.h"
+#include"extern.h"
 
-static ShapeRenderer sr;
 const int border=16;
-uint GameDialog::maxLineCharAmount = 40;
+uint GameDialog::maxLineCharAmount = 36;
 
 GameDialog::GameDialog(){
 	subObjects.push_back(&mGameText);
 	subObjects.push_back(&mGameButton);
+	mGameButton.setString(Game::currentGame()->translate("Confirm"));
 }
 GameDialog::~GameDialog(){}
 
 void GameDialog::renderX()const{
 	//画底板
-	sr.hasEdge=true;
-	sr.edgeColor=0xFFFFFFFF;
-	sr.hasFill=true;
-	sr.fillColor=0xFF000000;
-	sr.drawRectangle(rectF());
+	shapeRenderer.hasEdge=true;
+	shapeRenderer.edgeColor=0xFFFFFFFF;
+	shapeRenderer.hasFill=true;
+	shapeRenderer.fillColor=0xFF000000;
+	shapeRenderer.drawRectangle(rectF());
 }
 
 Point2D<float> GameDialog::sizeF()const{
@@ -37,12 +38,10 @@ void GameDialog::setText(const string &text){
 	}else{
 		mGameText.lineCharAmount = strWidth / mGameText.charSize.x();
 	}
-	mGameText.refresh();
+	mGameText.updateRenderParameter();
 	//设置mGameText的几何位置
 	auto rct=rectF();
-	auto center=rct.center();
-	mGameText.position.x()=center.x();
 	mGameText.position.y()=rct.p1.y() - border - mGameText.sizeF().y()/2;
 	//设置mGameButton的几何位置
-	mGameButton.setPosition(center.x(),rct.p0.y() + border + mGameButton.sizeF().y()/2);
+	mGameButton.position.y()=rct.p0.y() + border + mGameButton.sizeF().y()/2;
 }

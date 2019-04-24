@@ -52,10 +52,7 @@ void GameButton::setIsPressed(bool pressed){isPressed=pressed;}
 void GameButton_String::setString(const string &str){
 	mGameString.setString(str);
 }
-void GameButton_String::setPosition(int x,int y){
-	GameButton::setPosition(x,y);
-	mGameString.setPosition(x,y);
-}
+
 void GameButton_String::setIsPressed(bool pressed){
 	GameButton::setIsPressed(pressed);
 	mGameString.color=(isPressed ? bgColor : color);

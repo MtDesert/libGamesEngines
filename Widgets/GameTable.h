@@ -23,6 +23,6 @@ public:
 	//渲染
 	virtual void renderX()const;
 	virtual Point2D<float> sizeF()const;
-	virtual void renderItem(uint x,uint y)const;
+	virtual void renderItem(uint x,uint y,const Rectangle2D<float> &rectArea)const;
 };
 #endif

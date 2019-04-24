@@ -5,36 +5,29 @@ GameMenu_String::GameMenu_String(){}
 GameMenu_String::~GameMenu_String(){}
 
 void GameMenu_String::addString(const string &str){
-	DataBlock block;
-	GameString::charset.newString(str.data(),block);
-	stringCodeList.push_back(block);
+	gameStringList.push_back(GameString());
+	auto gString=gameStringList.data(gameStringList.size()-1);
+	gString->setString(str);
 }
 
-uint GameMenu_String::rowAmount()const{return stringCodeList.size();}
+uint GameMenu_String::rowAmount()const{return gameStringList.size();}
 void GameMenu_String::renderX()const{
 	//绘制每一项内容
-	point2D=rect.topCenter();
-	gameString.position.x()=point2D.x();
 	decltype(renderItemStart) i=0,j=0;
-	for(auto &stringCode:stringCodeList){
+	for(auto &gString:gameStringList){
 		if(i>=renderItemStart){
-			gameString.position.y() = point2D.y() - itemHeight*j - itemHeight/2;
-			gameString.stringCode=stringCode;
 			//根据选择状态调整颜色
 			if(selectingItemIndex==i){
 				shapeRenderer.hasFill=true;
 				shapeRenderer.fillColor=0xFFFFFFFF;
-				gameString.color=0xFF000000;
 				//计算矩形选择区域
-				rect=gameString.rectF();
-				rect.p0.y()+=gameString.position.y();
-				rect.p1.y()+=gameString.position.y();
+				rect=gString.rectF();
+				rect.p0.y()+=gString.position.y();
+				rect.p1.y()+=gString.position.y();
 				shapeRenderer.drawRectangle(rect);
-			}else{
-				gameString.color=0xFFFFFFFF;
 			}
 			//开始绘制文字
-			gameString.render();
+			gString.render();
 			++j;
 		}
 		if(j>=renderItemAmount)break;
@@ -42,4 +35,20 @@ void GameMenu_String::renderX()const{
 	}
 	//绘制菜单边框
 	renderRectBorder();
+}
+void GameMenu_String::updateRenderParameters(){
+	GameMenu::updateRenderParameters();
+	//调整渲染状态
+	point2D=rectF().topCenter();
+	decltype(renderItemStart) i=0,j=0;
+	for(auto &gString:gameStringList){
+		if(i>=renderItemStart){
+			gString.position.y() = point2D.y() - itemHeight*j - itemHeight/2;
+			//根据选择状态调整颜色
+			gString.color=(selectingItemIndex==i ? 0xFF000000 : 0xFFFFFFFF);
+			++j;
+		}
+		if(j>=renderItemAmount)break;
+		++i;//下一个
+	}
 }

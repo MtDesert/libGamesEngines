@@ -1,8 +1,8 @@
 #ifndef EXTERN_H
 #define EXTERN_H
 
+#include"Texture.h"
 #include"ShapeRenderer.h"
-#include"GameString.h"
 
 //所有要用到的外部变量,主要在于在各种模块中当临时变量用
 //语句块的变量都存在栈中,在用的时候申请内存,用完后释放
@@ -12,8 +12,7 @@ MACRO(Point2D<float>,point2D)\
 MACRO(Point2D<float>,size2D)\
 MACRO(Rectangle2D<float>,rect)\
 MACRO(Texture,texture)\
-MACRO(ShapeRenderer,shapeRenderer)\
-MACRO(GameString,gameString)\
+MACRO(ShapeRenderer,shapeRenderer)
 
 #define EXTERN_DECLARATION(type,name) extern type name;
 

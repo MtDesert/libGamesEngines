@@ -28,7 +28,7 @@ class BitmapFont_Ascii:public BitmapFont{
 public:
 	BitmapFont_Ascii();
 	~BitmapFont_Ascii();
-	
+
 	bool renderCharCode(uint8 charCode);//charCode是ASCII字符
 	DataBlock charBlock;//字形数据
 };
@@ -43,7 +43,7 @@ public:
 	//数据源
 	DataBlock symbolBlock;//符号区
 	DataBlock lv1Chinese;//一级汉字
-	DataBlock lv2Chinese;//符号区
+	DataBlock lv2Chinese;//二级汉字
 };
 
 #endif

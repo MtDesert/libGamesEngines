@@ -19,7 +19,6 @@ public:
 	~GameString();
 
 	//成员变量
-	DataBlock stringCode;//文本的代码,可以有无数种解读方法,具体请看实现
 	Point2D<uint> charSize;//文字宽高,请注意这里的宽是ASCII字符的宽度,汉字的话则是两倍此宽度
 	//成员函数
 	virtual void setString(const string &str);//设置文本内容
@@ -30,6 +29,15 @@ public:
 	//静态变量
 	static Charset charset;//GameString共用的字符集转化方案,暂时还没提供换字符集的方案
 	static FontTextureCache fontTextureCache;//GameString共用的文字缓存,暂时还没提供换字体的方案
+protected:
+	struct CharAttr{//控制文字渲染的结构
+		bool isAscii;
+		Texture tex;
+	};
+	Array<CharAttr> arrayCharAttr;
+	uint strWidth;//文字物理宽度
+	//渲染部分文字,从arrayCharAttr的from下标开始,渲染amount个字符
+	void renderX(uint from,uint amount)const;
 };
 
 #endif
