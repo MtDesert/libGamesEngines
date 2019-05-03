@@ -2,7 +2,6 @@
 #define FONTTEXTURECACHE_H
 
 #include"Texture.h"
-#include"RendererTTF.h"
 #include"BitmapFont.h"
 #include"Charset.h"
 #include"Map.h"
@@ -16,7 +15,6 @@ public:
 	~FontTextureCache();
 
 	//成员对象
-	RendererTTF rendererTTF;//TTF字体生成模块,负责从字体文件中取出并绘制字体
 	BitmapFont_Ascii bitmapFontAscii;
 	BitmapFont_GB2312 bitmapFontGb2312;//点阵字体生成模块,负责读取点阵数据(暂时使用gb2312)
 	Map<uint16,Texture> mapTextures;//存放纹理的容器

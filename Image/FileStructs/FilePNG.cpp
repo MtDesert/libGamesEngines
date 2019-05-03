@@ -1,6 +1,4 @@
 #include"FilePNG.h"
-#include"DataBlock_zlib.h"
-#include"FileGZIP.h"
 #include"Number.h"
 
 #include"zlib.h"

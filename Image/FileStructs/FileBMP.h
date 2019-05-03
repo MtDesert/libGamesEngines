@@ -1,7 +1,6 @@
 #ifndef FILEBMP_H
 #define FILEBMP_H
 
-#include"BitBlock.h"
 #include"ColorRGB.h"
 #include"Bitmap.h"
 #include<string>
@@ -135,7 +134,7 @@ struct FileBMP:public DataBlock{
 	FileBMP_InfoHeader infoHeader;//信息头,一般40字节
 	FileBMP_BGRAsList bgrasList;//颜色表,一般来说BitCount为1,4,8的图会包含此表
 	DataBlock unknownBlockBefore;//可能存在的未知数据
-	BitBlock bitmapData;//图像数据
+	DataBlock bitmapData;//图像数据
 	DataBlock unknownBlockAfter;//可能存在的未知数据
 	//有效性
 	bool isValid_FileSize()const;
