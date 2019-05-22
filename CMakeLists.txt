@@ -6,6 +6,7 @@ set(INCLUDE_LIST
 	. #当前目录
 	Cpp11 Cpp11/Containers #C++11模块,主要调用系统函数
 	Lua #Lua读取游戏配置的模块,用于解读Lua数据并存入C++内存中
+	Network #网络模块,有可能会封装系统模块或者第三方库
 	Math #数学模块,定义数学上常用的概念,可能包含一些常用算法
 	WarChess #战棋模块,战棋游戏专用
 )
@@ -17,9 +18,9 @@ endforeach()
 
 #默认库(包括源码编译的第三方库)
 if(${TARGET_SYSTEM_NAME} STREQUAL Windows)
-	set(LIBS_LIST lua53 z iconv pthread opengl32)
+	set(LIBS_LIST lua53 curl z iconv pthread opengl32)
 else()
-	set(LIBS_LIST lua5.3 z GL) #lua5.3是当前版本,请自行修改lua的版本号
+	set(LIBS_LIST lua5.3 curl z GL) #lua5.3是当前版本,请自行修改lua的版本号
 endif()
 
 #编译过程

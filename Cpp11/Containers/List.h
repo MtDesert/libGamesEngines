@@ -48,6 +48,25 @@ protected:
 		--amount;
 		return true;
 	}
+	void swapNode(ListNode<T> *nodeA,ListNode<T> *nodeB){
+		if(!nodeA || !nodeB || nodeA==nodeB)return;
+		//修改首项
+		if(head==nodeA)head=nodeB;
+		else if(head==nodeB)head=nodeA;
+		//修改前后项
+		if(nodeA->prev)nodeA->prev->next=nodeB;
+		if(nodeA->next)nodeA->next->prev=nodeB;
+		if(nodeB->prev)nodeB->prev->next=nodeA;
+		if(nodeB->next)nodeB->next->prev=nodeA;
+		//修改next
+		auto tmp=nodeA->next;
+		nodeA->next=nodeB->next;
+		nodeB->next=tmp;
+		//修改prev
+		tmp=nodeA->prev;
+		nodeA->prev=nodeB->prev;
+		nodeB->prev=tmp;
+	}
 public:
 	//构造/析构函数
 	List():head(nullptr),amount(0){}
@@ -62,6 +81,7 @@ public:
 		bool operator!=(const iterator &itr)const{return node!=itr.node;}
 		iterator& operator++(){node=node->next;return *this;}
 		T& operator*()const{return node->data;}
+		T* operator->()const{return &node->data;}
 	};
 	iterator begin()const{
 		iterator itr;
@@ -149,7 +169,7 @@ public:
 		head=nullptr;
 		amount=0;
 	}
-	//删除数据(根据值),返回删除的个数
+	//删除数据(根据值)
 	void remove(const T &value){
 		auto node=head,next=node;
 		while(node){
@@ -164,13 +184,34 @@ public:
 	void unique(){
 		auto n1=head,n2=head,next=head;
 		for(;n1;n1=n1->next){
-			n2=n1->next;
+			n2=n1->next;//两两比较
 			while(n2){
-				next=n2->next;
-				if(n1->data==n2->data){
+				if(n1->data==n2->data){//删除重复
+					next=n2->next;
 					removeNode(n2);
+					n2=next;
+				}else{
+					n2=n2->next;
 				}
-				n2=next;
+			}
+		}
+	}
+	void sort(bool (*compareFunc)(const T &a,const T &b)){
+		auto n1=head,n2=head,nd=head;//nd为最值
+		for(;n1;n1=n1->next){
+			n2=n1->next;//两两比较
+			nd=n1;
+			while(n2){
+				//比较,决定排序顺序
+				if(!compareFunc(nd->data,n2->data)){
+					nd=n2;//更换最值
+				}
+				//下一个
+				n2=n2->next;
+			}
+			//最值发生变化,则需要交换
+			if(nd && nd!=n1){
+				swapNode(nd,n1);
 			}
 		}
 	}
