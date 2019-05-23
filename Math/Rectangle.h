@@ -59,6 +59,13 @@ inline Point2D<T> name()const{return Point2D<T>(x,y);}
 	RECTANGLE_INLINE_POINT2D(topCenter,RECTANGLE_INLINE_POINT2D_CENTER_X,top())
 	RECTANGLE_INLINE_POINT2D(center,RECTANGLE_INLINE_POINT2D_CENTER_X,RECTANGLE_INLINE_POINT2D_CENTER_Y)
 
+	//平移
+	void translate(const T x,const T y){
+		p0.x()+=x;
+		p0.y()+=y;
+		p1.x()+=x;
+		p1.y()+=y;
+	}
 	//成员变量
 	Point2D<T> p0,p1;//p0和p1是对角关系
 };
