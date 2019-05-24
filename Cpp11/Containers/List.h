@@ -89,6 +89,15 @@ public:
 		return itr;
 	}
 	iterator end()const{return iterator();}
+	//获取迭代器
+	iterator getIterator(uint pos)const{
+		auto itr=begin();
+		for(uint i=0;i<pos;++i){
+			if(itr!=end())++itr;
+			else break;
+		}
+		return itr;
+	}
 
 	//查询数据
 	const T* data(uint pos)const{
@@ -175,6 +184,17 @@ public:
 		while(node){
 			next=node->next;
 			if(node->data==value){
+				removeNode(node);
+			}
+			node=next;
+		};
+	}
+	//删除数据(根据条件)
+	void remove_if(bool (*condition)(const T &value)){
+		auto node=head,next=node;
+		while(node){
+			next=node->next;
+			if(condition(node->data)){
 				removeNode(node);
 			}
 			node=next;

@@ -13,7 +13,7 @@ struct DirectoryEntry:public dirent,public stat{
 	DirectoryEntry();
 	DirectoryEntry(const dirent &dirEnt);
 	~DirectoryEntry();
-	
+
 	bool operator==(const DirectoryEntry &directoryEntry)const;
 
 	decltype(d_ino) indexNode()const;//索引节点号
@@ -70,8 +70,8 @@ private:
 	void parseAndSaveDirName(const string &dirName);
 	static bool isDotStr(const string &str);
 	static bool isDotDotStr(const string &str);
-	static bool isDotEntry(const dirent &entry);
-	static bool isDotDotEntry(const dirent &entry);
+	static bool isDotEntry(const DirectoryEntry &entry);
+	static bool isDotDotEntry(const DirectoryEntry &entry);
 };
 
 #endif // DIRECTORY_H

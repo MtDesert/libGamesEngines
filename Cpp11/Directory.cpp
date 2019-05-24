@@ -40,17 +40,17 @@ string DirectoryEntry::directoryTypename()const{
 
 string DirectoryEntry::name()const{return d_name;}
 string DirectoryEntry::strSize()const{
-	char str[8],ch='B';
-	decltype(st_size) sz(st_size);
-	if(sz>=1000000){//转换成K为单位
+	char str[16],ch='B';
+	float sz(st_size);
+	if(sz>=1000){//转换成K为单位
 		sz/=1000;
 		ch='K';
 	}
-	if(sz>=1000000){//转换成K为单位
+	if(sz>=1000){//转换成M为单位
 		sz/=1000;
 		ch='M';
 	}
-	sprintf(str,"%ld%c",st_size,ch);
+	sprintf(str,"%.2f%c",sz,ch);
 	return str;
 }
 string DirectoryEntry::strModifyDate()const{
@@ -116,8 +116,8 @@ bool Directory::readDir(DirentList &entryList)const{return readDir(toString(),en
 
 bool Directory::isDotStr(const string &str){return str.compare(".")==0;}
 bool Directory::isDotDotStr(const string &str){return str.compare("..")==0;}
-bool Directory::isDotEntry(const dirent &entry){return isDotStr(entry.d_name);}
-bool Directory::isDotDotEntry(const dirent &entry){return isDotDotStr(entry.d_name);}
+bool Directory::isDotEntry(const DirectoryEntry &entry){return isDotStr(entry.d_name);}
+bool Directory::isDotDotEntry(const DirectoryEntry &entry){return isDotDotStr(entry.d_name);}
 
 bool Directory::readDir(const string &dirName,StringList &stringList){
 	DIR *dir=opendir(dirName.data());
@@ -147,7 +147,9 @@ bool Directory::readDir(const string &dirName,DirentList &entryList){
 	}
 	//移除.和..
 	entryList.remove_if(isDotEntry);
-	//entryList.remove_if(isDotDotEntry);
+	if(dirName=="."){
+		entryList.remove_if(isDotDotEntry);
+	}
 	//完成
 	return closedir(dir)==0;
 }
