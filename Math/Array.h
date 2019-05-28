@@ -13,19 +13,19 @@ using namespace std;
 //一维数组模板
 template<typename T>
 struct Array{
-	Array():length(0),dataPtr(nullptr){}
+	Array():length(0),usedLength(0),dataPtr(nullptr){}
 	~Array(){clear();}
 
 	//设置存储空间
-	size_t size()const{return length;}
+	size_t size()const{return usedLength;}
 	void setSize(size_t size){
-		if(size==length)return;
-		if(dataPtr){
-			dataPtr=(decltype(dataPtr))realloc(dataPtr,size*sizeof(T));
-		}else{
-			dataPtr=(decltype(dataPtr))malloc(size*sizeof(T));
+		if(size>length){//扩容,
+			clear();
+			dataPtr=new T[size];
+			usedLength=length=size;
+		}else if(size<length){//缩短容量
+			usedLength=size;
 		}
-		length=size;
 	}
 	//访问数据
 	T* data(size_t index)const{
@@ -36,10 +36,11 @@ struct Array{
 			delete []dataPtr;
 			dataPtr=nullptr;
 		}
-		length=0;
+		usedLength=length=0;
 	}
 protected:
-	size_t length;
+	size_t length;//长度,占内存的T类型数据个数
+	size_t usedLength;//实际使用的数量,不要大于长度,否则会发生越界
 	T *dataPtr;
 };
 
