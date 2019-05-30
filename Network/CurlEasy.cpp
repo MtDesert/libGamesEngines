@@ -14,7 +14,7 @@ int CurlEasy::downloadFile(const string &url,const string &filename)const{
 	FILE *file=fopen(filename.data(),"wb");
 	if(!file){
 		printf("文件写入失败\n");
-		return errno;
+		return -1;
 	}
 	//设置curl参数
 	curl_easy_setopt(curl,CURLOPT_URL,url.data());
@@ -32,16 +32,16 @@ int CurlEasy::downloadFile(const string &url,const string &filename)const{
 	//关闭文件
 	fflush(file);
 	fclose(file);
-	return errno;
+	return result;
 }
 
-//解析内容(源数据行,开始标志,结束标志),返回解析结果,解析不出返回nullptr
-/*char* parseContent(char *line,const char *startMark,const char *finMark){
+string CurlEasy::parseContent(char *line,const char *startMark,const char *finMark){
+	//搜索数据起始位置
 	char *start=strstr(line,startMark);//搜索数据起始位置
-	if(!start)return nullptr;
+	if(!start)return"";
 	start+=strlen(startMark);
+	//搜索数据结束位置
 	char *fin=strstr(start,finMark);
-	if(!fin)return nullptr;
-	*fin='\0';//让start变成字符串
-	return start;
-}*/
+	if(!fin)return"";
+	return string(start,fin-start);
+}
