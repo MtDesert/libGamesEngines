@@ -1,13 +1,5 @@
 #include"LuaState.h"
 
-//此宏用于table的遍历,用code处理每一个table的元素
-#define TABLE_FOREACH(code)\
-lua_pushnil(luaState);\
-while(lua_next(luaState,-2)){\
-	code;\
-	lua_pop(luaState,1);/*下一个*/\
-}\
-
 //此宏用于code会返回LUA_OK的代码,返回非LUA_OK则会告诉上层出错了
 #define LUASTATE_EXECUTE(code)\
 if(code!=LUA_OK){\
@@ -52,10 +44,6 @@ bool LuaState::getGlobalString(const string &name,string &value){
 	}else return false;
 	return true;
 }
-bool LuaState::getGlobalTable(const string &name){
-	lua_getglobal(luaState,name.data());
-	return lua_istable(luaState,1);
-}
 bool LuaState::toInteger(int index,int &value){
 	bool b=lua_isinteger(luaState,index);
 	if(b)value=lua_tointeger(luaState,index);
@@ -67,7 +55,7 @@ bool LuaState::readEnum(const string &enumName,EnumType &enumType){
 	ASSERT(lua_istable(luaState,-1),"\""+enumName+"\" is not a table");//必须是表
 	//统计个数
 	EnumType::amountType amount=0;
-	TABLE_FOREACH(
+	LUASTATE_TABLE_FOREACH(luaState,
 		ASSERT(lua_isnumber(luaState,-2)&&lua_isstring(luaState,-1),
 			"\""+enumName+"["+lua_tostring(luaState,-2)+"]\" is not enum value?");
 		++amount;
@@ -75,12 +63,16 @@ bool LuaState::readEnum(const string &enumName,EnumType &enumType){
 	//开始添加
 	enumType.setAmount(amount);
 	amount=0;//循环用
-	TABLE_FOREACH(
+	LUASTATE_TABLE_FOREACH(luaState,
 		enumType.setEnumName(amount,lua_tostring(luaState,-1));
 		++amount;
 	);
 	lua_pop(luaState,1);
 	return true;
+}
+bool LuaState::getGlobalTable(const string &name){
+	lua_getglobal(luaState,name.data());
+	return lua_istable(luaState,1);
 }
 void LuaState::clearStack(){
 	lua_pop(luaState,lua_gettop(luaState));

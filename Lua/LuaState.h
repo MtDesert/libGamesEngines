@@ -8,6 +8,23 @@
 #include<string>
 using namespace std;
 
+//创建lua的state并打开文件
+#define LUASTATE_OPENFILE(filename)\
+/*创建state*/\
+auto state=luaL_newstate();\
+/*加载文件*/\
+luaL_loadfile(state,filename);\
+lua_pcall(state,0,LUA_MULTRET,0)
+
+
+//此宏用于table的遍历,用code处理每一个table的元素
+#define LUASTATE_TABLE_FOREACH(state,code)\
+lua_pushnil(state);\
+while(lua_next(state,-2)){\
+	code;\
+	lua_pop(state,1);\
+}
+
 //对code进行断言,断言失败则会返回错误信息
 #define LUASTATE_ASSERT(code,errStr)\
 if(code);else{\
@@ -29,10 +46,11 @@ struct LuaState{
 	bool getGlobalInteger(const string &name,int &value);//获取全局数字
 	bool setGlobalString(const string &name,const string &value);//设置全局字符串
 	bool getGlobalString(const string &name,string &value);//读取全局字符串
-	bool getGlobalTable(const string &name);//读取全局表
 	bool toInteger(int index,int &value);//数字转换,非数字可能转换失败
 	//枚举
 	bool readEnum(const string &enumName,EnumType &enumType);//读取枚举类型enumName,存储到enumType中
+	//表
+	bool getGlobalTable(const string &name);//读取全局表
 	//清理
 	void clearStack();
 	//错误信息

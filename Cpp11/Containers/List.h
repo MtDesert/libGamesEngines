@@ -268,6 +268,7 @@ public:
 			}
 		}
 	}
+	//排序
 	void sort(bool (*compareFunc)(const T &a,const T &b)){
 		auto n1=head,n2=head,nd=head;//nd为最值
 		for(;n1;n1=n1->next){
