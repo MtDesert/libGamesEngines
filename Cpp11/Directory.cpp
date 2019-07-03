@@ -7,9 +7,9 @@ DirectoryEntry::DirectoryEntry(){}
 DirectoryEntry::DirectoryEntry(const dirent &dirEnt):dirent(dirEnt){}
 DirectoryEntry::~DirectoryEntry(){}
 
-bool DirectoryEntry::operator==(const DirectoryEntry &directoryEntry)const{
+/*bool DirectoryEntry::operator==(const DirectoryEntry &directoryEntry)const{
 	return *this==directoryEntry;
-}
+}*/
 
 decltype(dirent::d_ino) DirectoryEntry::indexNode()const{return d_ino;}
 decltype(dirent::d_reclen) DirectoryEntry::nameLength()const{return d_reclen;}

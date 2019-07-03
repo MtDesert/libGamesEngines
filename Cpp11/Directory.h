@@ -14,7 +14,7 @@ struct DirectoryEntry:public dirent,public stat{
 	DirectoryEntry(const dirent &dirEnt);
 	~DirectoryEntry();
 
-	bool operator==(const DirectoryEntry &directoryEntry)const;
+	//bool operator==(const DirectoryEntry &directoryEntry)const;
 
 	decltype(d_ino) indexNode()const;//索引节点号
 	decltype(d_reclen) nameLength()const;//文件名长度

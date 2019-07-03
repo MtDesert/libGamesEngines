@@ -1,59 +1,62 @@
 #include"Keyboard.h"
 #include<stdio.h>
 
+#define KEYBOARD_ASCII(a,b,name)\
+asciiKey[(int)a]=asciiKey[(int)b]=Key_##name;
+
 Keyboard::Keyboard(){
 	for(int i=0;i<256;++i)asciiKey[i]=Amount_KeyboardKey;
-	asciiKey['0']=asciiKey[')']=Key_0;
-	asciiKey['1']=asciiKey['!']=Key_1;
-	asciiKey['2']=asciiKey['@']=Key_2;
-	asciiKey['3']=asciiKey['#']=Key_3;
-	asciiKey['4']=asciiKey['$']=Key_4;
-	asciiKey['5']=asciiKey['%']=Key_5;
-	asciiKey['6']=asciiKey['^']=Key_6;
-	asciiKey['7']=asciiKey['&']=Key_7;
-	asciiKey['8']=asciiKey['*']=Key_8;
-	asciiKey['9']=asciiKey['(']=Key_9;
+    KEYBOARD_ASCII('0',')',0)
+	KEYBOARD_ASCII('1','!',0)
+	KEYBOARD_ASCII('2','@',0)
+	KEYBOARD_ASCII('3','#',0)
+	KEYBOARD_ASCII('4','$',0)
+	KEYBOARD_ASCII('5','%',0)
+	KEYBOARD_ASCII('6','^',0)
+	KEYBOARD_ASCII('7','&',0)
+	KEYBOARD_ASCII('8','*',0)
+	KEYBOARD_ASCII('9','(',0)
 
-	asciiKey['A']=asciiKey['a']=Key_A;
-	asciiKey['B']=asciiKey['b']=Key_B;
-	asciiKey['C']=asciiKey['c']=Key_C;
-	asciiKey['D']=asciiKey['d']=Key_D;
-	asciiKey['E']=asciiKey['e']=Key_E;
-	asciiKey['F']=asciiKey['f']=Key_F;
-	asciiKey['G']=asciiKey['g']=Key_G;
-	asciiKey['H']=asciiKey['h']=Key_H;
-	asciiKey['I']=asciiKey['i']=Key_I;
-	asciiKey['J']=asciiKey['j']=Key_J;
-	asciiKey['K']=asciiKey['k']=Key_K;
-	asciiKey['L']=asciiKey['l']=Key_L;
-	asciiKey['M']=asciiKey['m']=Key_M;
-	asciiKey['N']=asciiKey['n']=Key_N;
-	asciiKey['O']=asciiKey['o']=Key_O;
-	asciiKey['P']=asciiKey['p']=Key_P;
-	asciiKey['Q']=asciiKey['q']=Key_Q;
-	asciiKey['R']=asciiKey['r']=Key_R;
-	asciiKey['S']=asciiKey['s']=Key_S;
-	asciiKey['T']=asciiKey['t']=Key_T;
-	asciiKey['U']=asciiKey['u']=Key_U;
-	asciiKey['V']=asciiKey['v']=Key_V;
-	asciiKey['W']=asciiKey['w']=Key_W;
-	asciiKey['X']=asciiKey['x']=Key_X;
-	asciiKey['Y']=asciiKey['y']=Key_Y;
-	asciiKey['Z']=asciiKey['z']=Key_Z;
+	KEYBOARD_ASCII('A','a',A)
+	KEYBOARD_ASCII('B','b',B)
+	KEYBOARD_ASCII('C','c',C)
+	KEYBOARD_ASCII('D','d',D)
+	KEYBOARD_ASCII('E','e',E)
+	KEYBOARD_ASCII('F','f',F)
+	KEYBOARD_ASCII('G','g',G)
+	KEYBOARD_ASCII('H','h',H)
+	KEYBOARD_ASCII('I','i',I)
+	KEYBOARD_ASCII('J','j',J)
+	KEYBOARD_ASCII('K','k',K)
+	KEYBOARD_ASCII('L','l',L)
+	KEYBOARD_ASCII('M','m',M)
+	KEYBOARD_ASCII('N','n',N)
+	KEYBOARD_ASCII('O','o',O)
+	KEYBOARD_ASCII('P','p',P)
+	KEYBOARD_ASCII('Q','q',Q)
+	KEYBOARD_ASCII('R','r',R)
+	KEYBOARD_ASCII('S','s',S)
+	KEYBOARD_ASCII('T','t',T)
+	KEYBOARD_ASCII('U','u',U)
+	KEYBOARD_ASCII('V','v',V)
+	KEYBOARD_ASCII('W','w',W)
+	KEYBOARD_ASCII('X','x',X)
+	KEYBOARD_ASCII('Y','y',Y)
+	KEYBOARD_ASCII('Z','z',Z)
 
-	asciiKey['`']=asciiKey['~']=Key_QuoteLeft;
-	asciiKey['-']=asciiKey['_']=Key_Minus;
-	asciiKey['=']=asciiKey['+']=Key_Equal;
-	asciiKey['\\']=asciiKey['|']=Key_BackSLash;
-	asciiKey['[']=asciiKey['{']=Key_BracketLeft;
-	asciiKey[']']=asciiKey['}']=Key_BracketRight;
-	asciiKey[';']=asciiKey[':']=Key_Semicolon;
-	asciiKey['\'']=asciiKey['\"']=Key_Apostrophe;
-	asciiKey[',']=asciiKey['<']=Key_Comma;
-	asciiKey['.']=asciiKey['>']=Key_Period;
-	asciiKey['/']=asciiKey['?']=Key_Slash;
+	KEYBOARD_ASCII('`','~',QuoteLeft)
+	KEYBOARD_ASCII('-','_',Minus)
+	KEYBOARD_ASCII('=','+',Equal)
+	KEYBOARD_ASCII('\\','|',BackSlash)
+	KEYBOARD_ASCII('[','{',BracketLeft)
+	KEYBOARD_ASCII(']','}',BracketRight)
+	KEYBOARD_ASCII(';',':',Semicolon)
+	KEYBOARD_ASCII('\'','\"',Apostrophe)
+	KEYBOARD_ASCII(',','<',Comma)
+	KEYBOARD_ASCII('.','>',Period)
+	KEYBOARD_ASCII('/','?',Slash)
 
-	asciiKey[' ']=Key_Space;
+	asciiKey[(int)' ']=Key_Space;
 	asciiKey[0x08]=Key_Backspace;
 	asciiKey[0x09]=Key_Tab;
 	asciiKey[0x0D]=Key_Enter;
