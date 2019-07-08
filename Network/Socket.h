@@ -23,15 +23,19 @@ struct IPAddress{
 	string toStdString()const;
 };
 
+#define SOCKET_IPADDRESS_PORT(name) \
+void name(const IPAddress &ipAddress,uint16 port);\
+void name(const string &ipAddress,uint16 port);\
+void name(const char *ipAddress,uint16 port);\
+void name(uint32 ipAddress,uint16 port);
+
 //套接字,原意为"插座"
 class Socket{
 public:
 	Socket();
-	//连接特定地址
-	void connect(const IPAddress &ipAddress,uint16 port);
-	void connect(const string &ipAddress,uint16 port);
-	void connect(const char *ipAddress,uint16 port);
-	void connect(uint32 ipAddress,uint16 port);
+
+	SOCKET_IPADDRESS_PORT(connect)//连接特定地址
+	SOCKET_IPADDRESS_PORT(bind)//绑定
 
 	//状态
 	error_t errorNumber;//错误号,出错的原因保存在此
@@ -40,9 +44,10 @@ public:
 	void (*whenConnected)();//连接成功时候调用此函数
 private:
 	bool createSocket();//创建套接字,返回是否创建成功
-	bool checkError();//检查错误,返回是否无错误
+	void setSocketAddress(const IPAddress &ipAddress,uint16 port);
+	void connect();
 
-	//回调函数
+	//pthread回调函数
 	static void* connect(void *socket);
 	//变量
 	int descriptor;//socket描述符
