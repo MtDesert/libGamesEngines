@@ -11,7 +11,13 @@ if(errorNumber && whenError)whenError();
 IPAddress::IPAddress(uint32 addr){address.s_addr=addr;}
 IPAddress::IPAddress(const char *str){setAddress(str);}
 IPAddress::IPAddress(const string &str){setAddress(str);}
-Socket::Socket():descriptor(0){}
+
+#define SOCKET_WHEN(name) when##name(NULL),whenSocket##name(NULL)
+Socket::Socket():descriptor(0),errorNumber(0),
+	SOCKET_WHEN(Error),//错误处理
+	SOCKET_WHEN(Connected),//主动连接成功
+	SOCKET_WHEN(Accepted)//被动连接成功
+{}
 
 void IPAddress::setAddress(const char *str){address.s_addr=inet_addr(str);}
 void IPAddress::setAddress(const string &str){setAddress(str.data());}
@@ -44,10 +50,18 @@ SOCKET_CPP_IPADDRESS_PORT(name,uint32)
 SOCKET_CPP_IPADDRESS_PORT_ALL(connect)
 SOCKET_CPP_IPADDRESS_PORT_ALL(bind)
 
+void Socket::listen(int maxConnection){
+	SOCKET_CHECK_ERROR(::listen(descriptor,maxConnection));
+}
+void Socket::accept(){
+	thread.whenError=whenError;
+	thread.start(Socket::accept,this);
+}
+
 bool Socket::createSocket(){
 	if(descriptor>0)return true;
 	//创建socket
-	descriptor=::socket(AF_INET,SOCK_STREAM,0);
+	descriptor=::socket(AF_INET,SOCK_STREAM,0);//默认使用TCP
 	SOCKET_CHECK_ERROR(descriptor)
 	return errorNumber==0;
 }
@@ -61,7 +75,10 @@ void Socket::connect(){
 	if(!errorNumber && whenConnected)whenConnected();
 }
 
-void* Socket::connect(void *arg){
-	((Socket*)arg)->connect();
+void* Socket::connect(void *socket){
+	((Socket*)socket)->connect();
+	return NULL;
+}
+void* Socket::accept(void *socket){
 	return NULL;
 }
