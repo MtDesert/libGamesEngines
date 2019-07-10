@@ -18,7 +18,7 @@ endforeach()
 
 #默认库(包括源码编译的第三方库)
 if(${TARGET_SYSTEM_NAME} STREQUAL Windows)
-	set(LIBS_LIST lua53 curl z iconv pthread opengl32)
+	set(LIBS_LIST lua53 curl ws2_32 z iconv pthread opengl32)
 else()
 	set(LIBS_LIST lua5.3 curl z GL) #lua5.3是当前版本,请自行修改lua的版本号
 endif()

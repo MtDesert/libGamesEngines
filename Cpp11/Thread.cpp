@@ -1,7 +1,11 @@
 #include "Thread.h"
 #include<errno.h>
 
-Thread::Thread():threadID(0),errorNumber(0),whenError(NULL),whenThreadError(NULL){}
+Thread::Thread():
+#ifndef __MINGW32__
+threadID(0),
+#endif
+errorNumber(0),whenError(NULL),whenThreadError(NULL){}
 Thread::~Thread(){}
 
 void Thread::start(void* (*threadFunction)(void *),void *arguments){

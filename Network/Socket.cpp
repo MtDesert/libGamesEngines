@@ -1,5 +1,5 @@
 #include "Socket.h"
-#include<arpa/inet.h>
+//#include<arpa/inet.h>
 
 #define SOCKET_CONNECT_ARGUMENTS \
 descriptor,(const sockaddr*)&socketAddress,sizeof(socketAddress)

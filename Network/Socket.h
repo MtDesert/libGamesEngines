@@ -4,8 +4,13 @@
 #include"typedef.h"
 #include"Thread.h"
 
+#ifdef __MINGW32__
+#include<winsock2.h>
+#else
 #include<sys/socket.h>
 #include<netinet/in.h>
+#endif
+
 #include<string>
 using namespace std;
 
@@ -56,7 +61,7 @@ void name(uint32 ipAddress,uint16 port);
 	void listen(int maxConnection=65535);//监听(最大可连接数)
 
 	//状态
-	error_t errorNumber;//错误号,出错的原因保存在此
+	int errorNumber;//错误号,出错的原因保存在此
 	//回调函数
 #define SOCKET_WHEN(name) \
 	void (*when##name)();\
