@@ -4,9 +4,13 @@
 #define SOCKET_CONNECT_ARGUMENTS \
 descriptor,(const sockaddr*)&socketAddress,sizeof(socketAddress)
 
+#define SOCKET_WHEN_CALLBACK(name)\
+if(when##name)when##name();\
+if(whenSocket##name)when##name();
+
 #define SOCKET_CHECK_ERROR(code) \
 errorNumber = ((code)==-1 ? errno :0);\
-if(errorNumber && whenError)whenError();
+if(errorNumber){SOCKET_WHEN_CALLBACK(Error)}
 
 IPAddress::IPAddress(uint32 addr){address.s_addr=addr;}
 IPAddress::IPAddress(const char *str){setAddress(str);}
@@ -24,17 +28,21 @@ void IPAddress::setAddress(const string &str){setAddress(str.data());}
 char *IPAddress::toString()const{return inet_ntoa(address);}
 string IPAddress::toStdString()const{return toString();}
 
+#define SOCKET_SET_ADDRESS \
+if(!createSocket())return;/*创建套接字*/\
+setSocketAddress(ipAddress,port);/*设置连接数据*/\
+thread.whenError=whenError;/*设定出错函数*/
+
 void Socket::connect(const IPAddress &ipAddress,uint16 port){
-	if(!createSocket())return;//创建套接字
-	setSocketAddress(ipAddress,port);//设置连接数据
-	//线程
-	thread.whenError=whenError;//设定出错函数
+	SOCKET_SET_ADDRESS
 	thread.start(Socket::connect,this);//开始连接
 }
 
-void Socket::bind(const IPAddress &ipAddress,uint16 port){
-	setSocketAddress(ipAddress,port);
+void Socket::accept(const IPAddress &ipAddress,uint16 port){
+	SOCKET_SET_ADDRESS
 	SOCKET_CHECK_ERROR(::bind(SOCKET_CONNECT_ARGUMENTS));
+	SOCKET_CHECK_ERROR(::listen(descriptor,0xFFFF));
+	thread.start(Socket::accept,this);//开始连接
 }
 
 #define SOCKET_CPP_IPADDRESS_PORT(name,type) \
@@ -48,15 +56,9 @@ SOCKET_CPP_IPADDRESS_PORT(name,const char*)\
 SOCKET_CPP_IPADDRESS_PORT(name,uint32)
 
 SOCKET_CPP_IPADDRESS_PORT_ALL(connect)
-SOCKET_CPP_IPADDRESS_PORT_ALL(bind)
+SOCKET_CPP_IPADDRESS_PORT_ALL(accept)
 
-void Socket::listen(int maxConnection){
-	SOCKET_CHECK_ERROR(::listen(descriptor,maxConnection));
-}
-void Socket::accept(){
-	thread.whenError=whenError;
-	thread.start(Socket::accept,this);
-}
+void Socket::accept(uint16 port){accept((uint32)0,port);}
 
 bool Socket::createSocket(){
 	if(descriptor>0)return true;
@@ -70,15 +72,29 @@ void Socket::setSocketAddress(const IPAddress &ipAddress,uint16 port){
 	socketAddress.sin_addr=ipAddress.address;
 	socketAddress.sin_port=htons(port);
 }
-void Socket::connect(){
-	SOCKET_CHECK_ERROR(::connect(SOCKET_CONNECT_ARGUMENTS));
-	if(!errorNumber && whenConnected)whenConnected();
-}
 
+void Socket::connect(){
+	SOCKET_CHECK_ERROR(::connect(SOCKET_CONNECT_ARGUMENTS));//连接过程
+	if(!errorNumber){//连接成功
+		SOCKET_WHEN_CALLBACK(Connected)
+	}
+}
+void Socket::accept(){
+	while(true){//不断监听连接
+		int len=sizeof(socketAddress);
+		int fd=::accept(descriptor,(sockaddr*)&socketAddress,&len);//等待连接
+		SOCKET_CHECK_ERROR(fd)
+		if(!errorNumber){//接受连接成功
+			SOCKET_WHEN_CALLBACK(Accepted)
+		}
+	}
+}
+//pthread线程函数
 void* Socket::connect(void *socket){
 	((Socket*)socket)->connect();
 	return NULL;
 }
 void* Socket::accept(void *socket){
+	((Socket*)socket)->accept();
 	return NULL;
 }

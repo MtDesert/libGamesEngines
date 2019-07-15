@@ -56,9 +56,9 @@ void name(const char *ipAddress,uint16 port);\
 void name(uint32 ipAddress,uint16 port);
 
 	SOCKET_IPADDRESS_PORT(connect)//连接特定地址
-	SOCKET_IPADDRESS_PORT(bind)//绑定
+	SOCKET_IPADDRESS_PORT(accept)//接受外部连接
 #undef SOCKET_IPADDRESS_PORT
-	void listen(int maxConnection=65535);//监听(最大可连接数)
+	void accept(uint16 port);//开始接受端口port连进来的连接
 
 	//状态
 	int errorNumber;//错误号,出错的原因保存在此
