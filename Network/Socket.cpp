@@ -1,5 +1,7 @@
 #include "Socket.h"
-//#include<arpa/inet.h>
+#ifndef __MINGW32__
+#include<arpa/inet.h>
+#endif
 
 #define SOCKET_CONNECT_ARGUMENTS \
 descriptor,(const sockaddr*)&socketAddress,sizeof(socketAddress)
@@ -81,7 +83,7 @@ void Socket::connect(){
 }
 void Socket::accept(){
 	while(true){//不断监听连接
-		int len=sizeof(socketAddress);
+		socklen_t len=sizeof(socketAddress);
 		int fd=::accept(descriptor,(sockaddr*)&socketAddress,&len);//等待连接
 		SOCKET_CHECK_ERROR(fd)
 		if(!errorNumber){//接受连接成功
