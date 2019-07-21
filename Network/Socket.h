@@ -28,9 +28,12 @@ struct IPAddress{
 	string toStdString()const;
 };
 
-//套接字,原意为"插座"
+//套接字,原意为"插座",主要用于主动和被动连接
+//主动连接的方法为connect,需要提供目标IP地址和端口
+//被动连接的方法为accept,需要提供监听的端口号
+//发送数据的方法为send,需要提供数据地址和长度
+//接收数据的方法为receive,需要提供缓冲地址和长度
 class Socket{
-	bool createSocket();//创建套接字,返回是否创建成功
 	void setSocketAddress(const IPAddress &ipAddress,uint16 port);
 
 	//pthread回调函数,用线程处理阻塞函数
@@ -38,17 +41,34 @@ class Socket{
 	static void* name(void *socket);\
 	void name();
 
-	SOCKET_PTHREAD(connect)
+	SOCKET_PTHREAD(commandLoop)
 	SOCKET_PTHREAD(accept)
 #undef SOCKET_PTHREAD
 	//变量
 	int descriptor;//socket描述符
 	sockaddr_in socketAddress;//套接字信息
 	Thread thread;//线程,连接监听等动作通过线程进行异步操作
+	//缓冲区
+	Socket *newAcceptedSocket;//新接收到的套接字,具体请看accept相关过程
+	struct Data{//内存数据结构
+		void *addr;//数据地址
+		size_t size;//数据长度
+	};
+	Data sendData,recvData;//发送接收的数据长度
 public:
 	Socket();
 
-//对IP地址和端口进行操作
+	//命令
+	enum Command{
+		Command_None,//无操作
+		Command_Connect,//连接命令
+		Command_Send,//发送数据
+		Command_Receive,//接收数据
+		Command_Close//关闭连接
+	};
+	Command command;
+
+//对IP地址和端口进行主动被动连接
 #define SOCKET_IPADDRESS_PORT(name) \
 void name(const IPAddress &ipAddress,uint16 port);\
 void name(const string &ipAddress,uint16 port);\
@@ -58,7 +78,14 @@ void name(uint32 ipAddress,uint16 port);
 	SOCKET_IPADDRESS_PORT(connect)//连接特定地址
 	SOCKET_IPADDRESS_PORT(accept)//接受外部连接
 #undef SOCKET_IPADDRESS_PORT
-	void accept(uint16 port);//开始接受端口port连进来的连接
+	void listenPort(uint16 port);//开始接受端口port连进来的连接
+	Socket* acceptedSocket()const;//获取刚连进来的套接字
+
+	//收发数据
+	void send(const void *buffer,size_t size);
+	void receive(void *buffer,size_t size);
+	//关闭连接
+	void close();
 
 	//状态
 	int errorNumber;//错误号,出错的原因保存在此
@@ -70,6 +97,8 @@ void name(uint32 ipAddress,uint16 port);
 	SOCKET_WHEN(Error)//错误处理
 	SOCKET_WHEN(Connected)//主动连接成功
 	SOCKET_WHEN(Accepted)//被动连接成功
+	SOCKET_WHEN(Sent)//数据发送
+	SOCKET_WHEN(Received)//数据接收
 #undef SOCKET_WHEN
 };
 #endif

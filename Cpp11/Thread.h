@@ -13,6 +13,11 @@ public:
 	~Thread();
 
 	void start(void* (*threadFunction)(void*),void *arguments);//线程开始(线程函数,参数)
+	//pthread动作
+	void create(void* (*threadFunction)(void*),void *arguments);
+	void detach();
+	int join();
+	int cancel();
 
 	//状态
 	int errorNumber;//错误号
