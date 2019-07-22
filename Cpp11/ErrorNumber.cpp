@@ -1,6 +1,11 @@
 #include "ErrorNumber.h"
 #include<errno.h>
 
+#ifdef __MINGW32__
+#define ENOTBLK 15
+#define ETXTBSY 26
+#endif
+
 #define ERROR_NUMBER_STRING(MACRO,chinese) \
 errorString[MACRO]=#chinese;
 
@@ -50,6 +55,9 @@ ErrorNumber::ErrorNumber(){
 	ERROR_NUMBER_STRING(ENOLCK,无记录锁可用)
 	ERROR_NUMBER_STRING(ENOSYS,无效系统调用数)
 	ERROR_NUMBER_STRING(ENOTEMPTY,目录非空)
+#ifdef __MINGW32__
+	ERROR_NUMBER_STRING(EILSEQ,非法字节序列)
+#else
 	ERROR_NUMBER_STRING(ELOOP,遇到太多符号链接)
 	ERROR_NUMBER_STRING(41,操作会阻塞)
 	ERROR_NUMBER_STRING(ENOMSG,无所需类型消息)
@@ -144,6 +152,7 @@ ErrorNumber::ErrorNumber(){
 	ERROR_NUMBER_STRING(ENOTRECOVERABLE,状态不可恢复)
 	ERROR_NUMBER_STRING(ERFKILL,由于rfkill而不可操作)
 	ERROR_NUMBER_STRING(EHWPOISON,内存页存在硬件错误)
+#endif
 }
 
 const char* ErrorNumber::getErrorString(int errorNumber){

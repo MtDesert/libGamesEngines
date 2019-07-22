@@ -1,11 +1,13 @@
 #include "Thread.h"
 #include<stdio.h>
 
-Thread::Thread():
-#ifndef __MINGW32__
-threadID(0),
+Thread::Thread():errorNumber(0),whenError(NULL),whenThreadError(NULL){
+#ifdef __MINGW32__
+	threadID.p=NULL;threadID.x=0;
+#else
+	threadID=0;
 #endif
-errorNumber(0),whenError(NULL),whenThreadError(NULL){}
+}
 Thread::~Thread(){}
 
 #define THREAD_CHECK_ERROR(code) \
@@ -16,7 +18,11 @@ if(errorNumber){\
 }
 
 void Thread::start(void* (*threadFunction)(void *),void *arguments){
+#ifdef __MINGW32__
+	if(threadID.p)return;
+#else
 	if(threadID)return;
+#endif
 	//启动线程
 	THREAD_CHECK_ERROR(::pthread_create(&threadID,NULL,threadFunction,arguments))
 	//分离线程
