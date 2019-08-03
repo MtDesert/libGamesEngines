@@ -1,28 +1,40 @@
 #include "Socket.h"
 #include<unistd.h>
-#ifndef __MINGW32__
+
+#ifdef __MINGW32__ //MinGW编译环境
+#include<ws2tcpip.h>
+#define SOCK_NONBLOCK 0
+#define EINPROGRESS WSAEWOULDBLOCK
+#define ERR_NO WSAGetLastError()
+#define PTHREAD_YIELD
+#define SOCKET_SHUTDOWN ::close(descriptor);
+static WSADATA wsaData;
+static bool wsaStartedUp=false;
+#else //Linux默认
 #include<arpa/inet.h>
+#define ERR_NO errno
+#define PTHREAD_YIELD pthread_yield();
+#define SOCKET_SHUTDOWN ::shutdown(descriptor,SHUT_RDWR);
 #endif
 
 #define SOCKET_CONNECT_ARGUMENTS \
 descriptor,(const sockaddr*)&socketAddress,sizeof(socketAddress)
-
 #define SOCKET_WHEN_CALLBACK(name)\
 if(when##name)when##name();\
 if(whenSocket##name)whenSocket##name(this);
 
 //检查错误,如果有错误则直接调用错误处理函数并返回
 #define SOCKET_CHECK_ERROR(code) \
-errorNumber = ((code)==-1 ? errno :0);\
+errorNumber = ((code)==-1 ? ERR_NO :0);\
 if(errorNumber){\
 SOCKET_WHEN_CALLBACK(Error)\
 return;\
 }
 
 #define SOCKET_CHECK_ERRNO(code,correctErrno,successName) \
-errorNumber = ((code)==-1 ? errno :0);\
+errorNumber = ((code)==-1 ? ERR_NO :0);\
 if(errorNumber == correctErrno){/*运行状态*/\
-	pthread_yield();\
+	PTHREAD_YIELD\
 }else{/*完成状态*/\
 	command=Command_None;\
 	if(errorNumber){/*完成,但失败*/\
@@ -50,43 +62,50 @@ void IPAddress::setAddress(const string &str){setAddress(str.data());}
 char *IPAddress::toString()const{return inet_ntoa(address);}
 string IPAddress::toStdString()const{return toString();}
 
-#define SOCKET_SET_ADDRESS \
-if(descriptor<=0){\
-	descriptor=::socket(AF_INET,SOCK_STREAM|SOCK_NONBLOCK,0);\
-	SOCKET_CHECK_ERROR(descriptor)\
-}\
-setSocketAddress(ipAddress,port);/*设置连接数据*/\
-thread.whenError=whenError;/*设定出错函数*/
-
 void Socket::connect(const IPAddress &ipAddress,uint16 port){
-	SOCKET_SET_ADDRESS
+	SOCKET_CHECK_ERROR(createSocket())
+	setSocketAddress(ipAddress,port);
+	//准备启动线程
 	command=Command_Connect;
+	thread.whenError=whenError;
 	thread.start(Socket::commandLoop,this);//开始连接
 }
 
-void Socket::accept(const IPAddress &ipAddress,uint16 port){
-	SOCKET_SET_ADDRESS
+#define SOCKET_CONNECT(type) \
+void Socket::connect(type ipAddress,uint16 port){connect(IPAddress(ipAddress),port);}
+
+SOCKET_CONNECT(const string&)
+SOCKET_CONNECT(const char*)
+SOCKET_CONNECT(uint32)
+#undef SOCKET_CONNECT
+
+void Socket::listenPort(uint16 port){
+	SOCKET_CHECK_ERROR(createSocket())
+	setSocketAddress(IPAddress(),port);
 	SOCKET_CHECK_ERROR(::bind(SOCKET_CONNECT_ARGUMENTS));
 	SOCKET_CHECK_ERROR(::listen(descriptor,0xFFFF));
-	thread.start(Socket::accept,this);//开始连接
+	thread.start(Socket::acceptLoop,this);//开始连接
 }
-
-#define SOCKET_CPP_IPADDRESS_PORT(name,type) \
-void Socket::name(type ipAddress,uint16 port){\
-	name(IPAddress(ipAddress),port);\
+void Socket::waitListenFinish(){
+	thread.join();
 }
-
-#define SOCKET_CPP_IPADDRESS_PORT_ALL(name) \
-SOCKET_CPP_IPADDRESS_PORT(name,const string&)\
-SOCKET_CPP_IPADDRESS_PORT(name,const char*)\
-SOCKET_CPP_IPADDRESS_PORT(name,uint32)
-
-SOCKET_CPP_IPADDRESS_PORT_ALL(connect)
-SOCKET_CPP_IPADDRESS_PORT_ALL(accept)
-
-void Socket::listenPort(uint16 port){accept((uint32)0,port);}
 Socket* Socket::acceptedSocket()const{return newAcceptedSocket;}
 
+int Socket::createSocket(){
+#ifdef __MINGW32__ //Windows下要初始化
+	if(!wsaStartedUp){
+		errorNumber=WSAStartup(MAKEWORD(2,2),&wsaData);
+		wsaStartedUp=(errorNumber==0);
+		if(!wsaStartedUp){
+			return -1;
+		}
+	}
+#endif
+	if(descriptor<=0){
+		descriptor=::socket(AF_INET,SOCK_STREAM|SOCK_NONBLOCK,0);
+	}
+	return descriptor;
+}
 void Socket::setSocketAddress(const IPAddress &ipAddress,uint16 port){
 	socketAddress.sin_family=AF_INET;
 	socketAddress.sin_addr=ipAddress.address;
@@ -101,27 +120,27 @@ void Socket::commandLoop(){
 				SOCKET_CHECK_ERRNO(::connect(SOCKET_CONNECT_ARGUMENTS),EINPROGRESS,Connected)
 			}break;
 			case Command_Send:{
-				::send(descriptor,sendData.addr,sendData.size,0);
+				//::send(descriptor,sendData.addr,sendData.size,0);
 				command=Command_None;
 			}break;
 			case Command_Receive:{
-				SOCKET_CHECK_ERRNO(::recv(descriptor,recvData.addr,recvData.size,0),EAGAIN,Received)
+				//SOCKET_CHECK_ERRNO(::recv(descriptor,recvData.addr,recvData.size,0),EAGAIN,Received)
 			}break;
 			//啥也没干
-			default:pthread_yield();
+			default:PTHREAD_YIELD;
 		}
 	}
 	//循环结束
-	::shutdown(descriptor,SHUT_RDWR);
+	SOCKET_SHUTDOWN
 	if(newAcceptedSocket==this)delete this;//由accept函数new出来的
 }
-void Socket::accept(){
+void Socket::acceptLoop(){
 	while(command!=Command_Close){//不断监听连接
 		socklen_t len=sizeof(socketAddress);
 		int fd=::accept(descriptor,(sockaddr*)&socketAddress,&len);//等待连接
 		if(fd==-1){
-			if(errno==EAGAIN){
-				pthread_yield();
+			if(ERR_NO==EAGAIN){
+				PTHREAD_YIELD
 			}else{
 				command=Command_Close;
 				SOCKET_WHEN_CALLBACK(Error)
@@ -144,15 +163,15 @@ void Socket::accept(){
 		}
 	}
 	//循环结束
-	::shutdown(descriptor,SHUT_RDWR);
+	SOCKET_SHUTDOWN
 }
 //pthread线程函数
 void* Socket::commandLoop(void *socket){
 	((Socket*)socket)->commandLoop();
 	return NULL;
 }
-void* Socket::accept(void *socket){
-	((Socket*)socket)->accept();
+void* Socket::acceptLoop(void *socket){
+	((Socket*)socket)->acceptLoop();
 	return NULL;
 }
 

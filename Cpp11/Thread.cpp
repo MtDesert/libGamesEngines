@@ -24,11 +24,7 @@ void Thread::start(void* (*threadFunction)(void *),void *arguments){
 	if(threadID)return;
 #endif
 	//启动线程
-	THREAD_CHECK_ERROR(::pthread_create(&threadID,NULL,threadFunction,arguments))
-	//分离线程
-	else{
-		THREAD_CHECK_ERROR(::pthread_detach(threadID))
-	}
+	create(threadFunction,arguments);
 }
 
 void Thread::create(void *(*threadFunction)(void *), void *arguments){

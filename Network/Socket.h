@@ -34,6 +34,7 @@ struct IPAddress{
 //发送数据的方法为send,需要提供数据地址和长度
 //接收数据的方法为receive,需要提供缓冲地址和长度
 class Socket{
+	int createSocket();
 	void setSocketAddress(const IPAddress &ipAddress,uint16 port);
 
 	//pthread回调函数,用线程处理阻塞函数
@@ -42,7 +43,7 @@ class Socket{
 	void name();
 
 	SOCKET_PTHREAD(commandLoop)
-	SOCKET_PTHREAD(accept)
+	SOCKET_PTHREAD(acceptLoop)
 #undef SOCKET_PTHREAD
 	//变量
 	int descriptor;//socket描述符
@@ -50,7 +51,7 @@ class Socket{
 	Thread thread;//线程,连接监听等动作通过线程进行异步操作
 	//缓冲区
 	Socket *newAcceptedSocket;//新接收到的套接字,具体请看accept相关过程
-	struct Data{//内存数据结构
+	struct Data{//收发用的内存数据结构
 		void *addr;//数据地址
 		size_t size;//数据长度
 	};
@@ -68,17 +69,15 @@ public:
 	};
 	Command command;
 
-//对IP地址和端口进行主动被动连接
-#define SOCKET_IPADDRESS_PORT(name) \
-void name(const IPAddress &ipAddress,uint16 port);\
-void name(const string &ipAddress,uint16 port);\
-void name(const char *ipAddress,uint16 port);\
-void name(uint32 ipAddress,uint16 port);
+	//对IP地址和端口进行主动连接
+	void connect(const IPAddress &ipAddress,uint16 port);
+	void connect(const string &ipAddress,uint16 port);
+	void connect(const char *ipAddress,uint16 port);
+	void connect(uint32 ipAddress,uint16 port);
 
-	SOCKET_IPADDRESS_PORT(connect)//连接特定地址
-	SOCKET_IPADDRESS_PORT(accept)//接受外部连接
-#undef SOCKET_IPADDRESS_PORT
+	//被动连接
 	void listenPort(uint16 port);//开始接受端口port连进来的连接
+	void waitListenFinish();//等待连接完成,可能阻塞
 	Socket* acceptedSocket()const;//获取刚连进来的套接字
 
 	//收发数据
