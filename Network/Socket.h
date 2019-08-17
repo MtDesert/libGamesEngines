@@ -18,9 +18,9 @@ using namespace std;
 struct IPAddress{
 	in_addr address;
 
-	IPAddress(uint32 addr=INADDR_ANY);
-	IPAddress(const char *str);
-	IPAddress(const string &str);
+	explicit IPAddress(uint32 addr=INADDR_ANY);
+	explicit IPAddress(const char *str);
+	explicit IPAddress(const string &str);
 	//字符串
 	void setAddress(const char *str);
 	void setAddress(const string &str);
@@ -45,6 +45,7 @@ class Socket{
 	SOCKET_PTHREAD(commandLoop)
 	SOCKET_PTHREAD(acceptLoop)
 #undef SOCKET_PTHREAD
+	static void whenThreadError(Thread *thread);
 	//变量
 	int descriptor;//socket描述符
 	sockaddr_in socketAddress;//套接字信息
@@ -52,22 +53,22 @@ class Socket{
 	//缓冲区
 	Socket *newAcceptedSocket;//新接收到的套接字,具体请看accept相关过程
 	struct Data{//收发用的内存数据结构
-		void *addr;//数据地址
+		const void *addr;//数据地址
 		size_t size;//数据长度
+		void set(decltype(addr) addr=nullptr,decltype(size) size=0);
 	};
-	Data sendData,recvData;//发送接收的数据长度
-public:
-	Socket();
+	Data toSendData;//要发送的数据
 
 	//命令
 	enum Command{
 		Command_None,//无操作
 		Command_Connect,//连接命令
 		Command_Send,//发送数据
-		Command_Receive,//接收数据
 		Command_Close//关闭连接
 	};
 	Command command;
+public:
+	Socket();
 
 	//对IP地址和端口进行主动连接
 	void connect(const IPAddress &ipAddress,uint16 port);
@@ -82,15 +83,17 @@ public:
 
 	//收发数据
 	void send(const void *buffer,size_t size);
-	void receive(void *buffer,size_t size);
+	Data sentData;//已发送的数据,请在whenSocketSent中读取
+	Data recvData;//已收到的数据,请在whenSocketReceived中读取
 	//关闭连接
 	void close();
 
 	//状态
 	int errorNumber;//错误号,出错的原因保存在此
+	IPAddress getIPaddress()const;
+	uint16 getPort()const;
 	//回调函数
 #define SOCKET_WHEN(name) \
-	void (*when##name)();\
 	void (*whenSocket##name)(Socket *socket);
 
 	SOCKET_WHEN(Error)//错误处理

@@ -19,8 +19,8 @@ static bool wsaStartedUp=false;
 
 #define SOCKET_CONNECT_ARGUMENTS \
 descriptor,(const sockaddr*)&socketAddress,sizeof(socketAddress)
+
 #define SOCKET_WHEN_CALLBACK(name)\
-if(when##name)when##name();\
 if(whenSocket##name)whenSocket##name(this);
 
 //检查错误,如果有错误则直接调用错误处理函数并返回
@@ -48,7 +48,7 @@ IPAddress::IPAddress(uint32 addr){address.s_addr=addr;}
 IPAddress::IPAddress(const char *str){setAddress(str);}
 IPAddress::IPAddress(const string &str){setAddress(str);}
 
-#define SOCKET_WHEN(name) when##name(NULL),whenSocket##name(NULL)
+#define SOCKET_WHEN(name) whenSocket##name(NULL)
 Socket::Socket():descriptor(0),newAcceptedSocket(NULL),command(Command_None),errorNumber(0),
 	SOCKET_WHEN(Error),//错误处理
 	SOCKET_WHEN(Connected),//主动连接成功
@@ -67,7 +67,7 @@ void Socket::connect(const IPAddress &ipAddress,uint16 port){
 	setSocketAddress(ipAddress,port);
 	//准备启动线程
 	command=Command_Connect;
-	thread.whenError=whenError;
+	thread.whenThreadError=whenThreadError;
 	thread.start(Socket::commandLoop,this);//开始连接
 }
 
@@ -111,6 +111,13 @@ void Socket::setSocketAddress(const IPAddress &ipAddress,uint16 port){
 	socketAddress.sin_addr=ipAddress.address;
 	socketAddress.sin_port=htons(port);
 }
+void Socket::whenThreadError(Thread *thread){
+	printf("socket thread error: %d\n",thread->errorNumber);
+}
+void Socket::Data::set(decltype(addr) addr,decltype(size) size){
+	this->addr=addr;
+	this->size=size;
+}
 
 void Socket::commandLoop(){
 	//循环收发
@@ -120,14 +127,36 @@ void Socket::commandLoop(){
 				SOCKET_CHECK_ERRNO(::connect(SOCKET_CONNECT_ARGUMENTS),EINPROGRESS,Connected)
 			}break;
 			case Command_Send:{
-				//::send(descriptor,sendData.addr,sendData.size,0);
+				//发送数据
+				int sndAmount=::send(descriptor,toSendData.addr,toSendData.size,0);
+				if(sndAmount>0){
+					sentData.set(toSendData.addr,sndAmount);
+					SOCKET_WHEN_CALLBACK(Sent)
+					sentData.set();
+				}else if(sndAmount==-1){
+					errorNumber=ERR_NO;
+					SOCKET_WHEN_CALLBACK(Error);
+				}else{
+					PTHREAD_YIELD
+				}
+				//命令终止
 				command=Command_None;
-			}break;
-			case Command_Receive:{
-				//SOCKET_CHECK_ERRNO(::recv(descriptor,recvData.addr,recvData.size,0),EAGAIN,Received)
 			}break;
 			//啥也没干
 			default:PTHREAD_YIELD;
+		}
+		//接收数据(注意,如果不做接收处理,则数据会被立刻废弃)
+		uint8 buf[BUFSIZ];
+		int rcvAmount=::recv(descriptor,buf,BUFSIZ,0);
+		if(rcvAmount>0){
+			recvData.set(buf,rcvAmount);
+			SOCKET_WHEN_CALLBACK(Received)
+			recvData.set();
+		}else if(rcvAmount==-1){
+			errorNumber=ERR_NO;
+			SOCKET_WHEN_CALLBACK(Error);
+		}else{
+			PTHREAD_YIELD
 		}
 	}
 	//循环结束
@@ -177,14 +206,12 @@ void* Socket::acceptLoop(void *socket){
 
 //收发数据
 void Socket::send(const void *buffer,size_t size){
-	sendData.addr=(void*)buffer;
-	sendData.size=size;
+	toSendData.addr=buffer;
+	toSendData.size=size;
 	command=Command_Send;
-}
-void Socket::receive(void *buffer,size_t size){
-	recvData.addr=buffer;
-	recvData.size=size;
-	command=Command_Receive;
 }
 //关闭连接
 void Socket::close(){command=Command_Close;}
+
+IPAddress Socket::getIPaddress()const{return IPAddress(socketAddress.sin_addr.s_addr);}
+uint16 Socket::getPort()const{return ntohs(socketAddress.sin_port);}

@@ -22,7 +22,6 @@ public:
 	//状态
 	int errorNumber;//错误号
 	//回调函数
-	void (*whenError)();//出错时候调用此函数
 	void (*whenThreadError)(Thread *thread);//出错时,如果需要读写本对象,请设置此函数
 };
 

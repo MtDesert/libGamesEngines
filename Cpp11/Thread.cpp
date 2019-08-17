@@ -1,7 +1,7 @@
 #include "Thread.h"
 #include<stdio.h>
 
-Thread::Thread():errorNumber(0),whenError(NULL),whenThreadError(NULL){
+Thread::Thread():errorNumber(0),whenThreadError(NULL){
 #ifdef __MINGW32__
 	threadID.p=NULL;threadID.x=0;
 #else
@@ -13,7 +13,6 @@ Thread::~Thread(){}
 #define THREAD_CHECK_ERROR(code) \
 errorNumber=(code);\
 if(errorNumber){\
-	if(whenError)whenError();\
 	if(whenThreadError)whenThreadError(this);\
 }
 
