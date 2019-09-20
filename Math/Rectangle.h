@@ -11,16 +11,16 @@ struct Rectangle2D{
 	Rectangle2D(const T &x0,const T &y0,const T &x1,const T &y1):p0(x0,y0),p1(x1,y1){}
 
 	//特征
-	inline T width()const{return abs(p1.x()-p0.x());}
-	inline T height()const{return abs(p1.y()-p0.y());}
+	inline T width()const{return abs(p1.x-p0.x);}
+	inline T height()const{return abs(p1.y-p0.y);}
 	inline T perimeter()const{return (width()+height())*2;}//周长
 	inline T area()const{return width()*height();}//面积
 	bool isRectangle()const{return area()>0;}
 
 	//坐标访问
 #define RECTANGLE_INLINE_T_REF(name,xORy,gtORlt) \
-inline T& name(){return (p0.xORy() gtORlt p1.xORy()?p0.xORy():p1.xORy());}\
-inline const T& name()const{return (p0.xORy() gtORlt p1.xORy()?p0.xORy():p1.xORy());}
+inline T& name(){return (p0.xORy gtORlt p1.xORy?p0.xORy:p1.xORy);}\
+inline const T& name()const{return (p0.xORy gtORlt p1.xORy?p0.xORy:p1.xORy);}
 
 	RECTANGLE_INLINE_T_REF(left,x,<)
 	RECTANGLE_INLINE_T_REF(right,x,>)
@@ -29,10 +29,10 @@ inline const T& name()const{return (p0.xORy() gtORlt p1.xORy()?p0.xORy():p1.xORy
 
 	Rectangle2D normalized()const{//坐标标准化
 		Rectangle2D ret;
-		ret.p0.x()=min(p0.x(),p1.x());
-		ret.p1.x()=max(p0.x(),p1.x());
-		ret.p0.y()=min(p0.y(),p1.y());
-		ret.p1.y()=max(p0.y(),p1.y());
+		ret.p0.x=min(p0.x,p1.x);
+		ret.p1.x=max(p0.x,p1.x);
+		ret.p0.y=min(p0.y,p1.y);
+		ret.p1.y=max(p0.y,p1.y);
 		return ret;
 	}
 	//是否包含点
@@ -40,7 +40,7 @@ inline const T& name()const{return (p0.xORy() gtORlt p1.xORy()?p0.xORy():p1.xORy
 		return left()<x && x<right() && bottom()<y && y<top();
 	}
 	bool containPoint(const Point2D<T> &p)const{
-		return containPoint(p.x(),p.y());
+		return containPoint(p.x,p.y);
 	}
 
 	//特征点
@@ -61,10 +61,10 @@ inline Point2D<T> name()const{return Point2D<T>(x,y);}
 
 	//平移
 	void translate(const T x,const T y){
-		p0.x()+=x;
-		p0.y()+=y;
-		p1.x()+=x;
-		p1.y()+=y;
+		p0.x+=x;
+		p0.y+=y;
+		p1.x+=x;
+		p1.y+=y;
 	}
 	//成员变量
 	Point2D<T> p0,p1;//p0和p1是对角关系

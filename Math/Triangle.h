@@ -8,14 +8,12 @@
 #define TRIANGLE2D_LENGTHS_SQUARE double aa=a*a;double bb=b*b;double cc=c*c;
 
 //三角形,可以在2维和3维中使用
-template<typename T,size_t d>
-struct Triangle{
-	//特征
-	size_t dimension()const{return d;}//维度
+template<typename T>
+struct Triangle2D{
 	//线
-	Line<T,d> line0()const{return Line<T,d>(p0,p1);}
-	Line<T,d> line1()const{return Line<T,d>(p1,p2);}
-	Line<T,d> line2()const{return Line<T,d>(p2,p0);}
+	Line2D<T> line0()const{return Line2D<T>(p0,p1);}
+	Line2D<T> line1()const{return Line2D<T>(p1,p2);}
+	Line2D<T> line2()const{return Line2D<T>(p2,p0);}
 	//边长的平方
 	T length0_2()const{return (p1-p0).distance2();}
 	T length1_2()const{return (p2-p1).distance2();}
@@ -57,13 +55,7 @@ struct Triangle{
 		return a==b&&b==c;
 	}
 	//成员变量
-	Point<T,d> p0,p1,p2;
+	Point2D<T> p0,p1,p2;
 };
-
-template<typename T>
-struct Triangle2D:public Triangle<T,2>{};
-
-template<typename T>
-struct Triangle3D:public Triangle<T,3>{};
 
 #endif // TRIANGLE_H

@@ -25,13 +25,13 @@ public:
 	//放棋子(横坐标,纵坐标,棋子),被引用的棋子坐标会被修改,返回是否成功
 	bool putChessPiece(uint x,uint y,ChessPieceType &cpt){
 		if(!this->isInRange(x,y))return false;//放入失败
-		cpt.coordinate.x()=x;
-		cpt.coordinate.y()=y;
+		cpt.coordinate.x=x;
+		cpt.coordinate.y=y;
 		chessPieces.push_back(cpt);
 		return true;
 	}
 	//放棋子(坐标,棋子),被引用的棋子坐标会被修改,返回是否成功
-	bool putChessPiece(const Point2D<uint> &p,ChessPieceType &cpt){return putChessPiece(p.x(),p.y(),cpt);}
+	bool putChessPiece(const Point2D<uint> &p,ChessPieceType &cpt){return putChessPiece(p.x,p.y,cpt);}
 	
 	//移除棋子
 	bool removeChessPiece(uint x,uint y){
@@ -42,7 +42,7 @@ public:
 	//获取棋子(横坐标,纵坐标,查询结果),返回是否查询成功
 	bool getChessPiece(uint x,uint y,ChessPieceType &cpt)const{
 		for(auto &cp:chessPieces){
-			if(cp.coordinate.x()==x && cp.coordinate.y()==y){
+			if(cp.coordinate.x==x && cp.coordinate.y==y){
 				cpt=cp;
 				return true;
 			}
@@ -50,12 +50,12 @@ public:
 		return false;//查不到
 	}
 	//获取棋子(坐标,查询结果),返回是否查询成功
-	bool getChessPiece(const Point2D<uint> &p,ChessPieceType &cpt){return getChessPiece(p.x(),p.y(),cpt);}
+	bool getChessPiece(const Point2D<uint> &p,ChessPieceType &cpt){return getChessPiece(p.x,p.y,cpt);}
 	//获取棋子(横坐标,纵坐标,查询结果),返回查询到的个数,注意:cptList不会被清空
 	size_t getChessPieces(uint x,uint y,list<ChessPieceType> &cptList)const{
 		size_t ret=0;
 		for(auto &cp:chessPieces){
-			if(cp.coordinate.x()==x && cp.coordinate.y()==y){
+			if(cp.coordinate.x==x && cp.coordinate.y==y){
 				cptList.push_back(cp);
 				++ret;
 			}
@@ -63,7 +63,7 @@ public:
 		return ret;
 	}
 	size_t getChessPieces(const Point2D<uint> &p,ChessPieceType &cptList)const{
-		return getChessPieces(p.x(),p.y(),cptList);
+		return getChessPieces(p.x,p.y,cptList);
 	}
 };
 
