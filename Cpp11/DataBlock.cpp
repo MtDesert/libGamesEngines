@@ -8,64 +8,36 @@
 #include<sys/mman.h>
 #endif
 
-DataBlock::DataBlock():dataPointer(nullptr),dataLength(0),dataFile(nullptr),dataOffset(0){}
+DataBlock::DataBlock(){set();}
 DataBlock::DataBlock(const DataBlock &dataBlock){*this=dataBlock;}
 DataBlock::~DataBlock(){}
 
-bool DataBlock::openFile(const string &filename,const string &mode){
-	dataFile=::fopen(filename.data(),mode.data());
-	if(dataFile){//打开成功,那就获取文件大小先存起来
-		if(::fseek(dataFile,0,SEEK_END))return false;
-		set_DataLength(::ftell(dataFile));//得到大小
-		if(::fseek(dataFile,0,SEEK_SET))return false;
-	}else{
-		::perror(("DataBlock::openFile(\""+filename+"\"):").data());//输出系统错误信息
-	}
-	return dataFile;
-}
-bool DataBlock::openFileRead(const string &filename){
-	return openFile(filename,"rb");
-}
-bool DataBlock::openFileReadUpdate(const string &filename){
-	return openFile(filename,"r+b");
-}
 bool DataBlock::openFileWrite(const string &filename,const string &mode)const{
 	FILE *file=::fopen(filename.data(),mode.data());
-	if(!file){
-		::perror(("DataBlock::openFileWrite(\""+filename+"\")--fopen():").data());
-		return false;
+	if(file){
+		::fwrite(dataPointer,dataLength,1,file);
+		::fflush(file);
+		return ::fclose(file)==0;
 	}
-	if(::fwrite(dataPointer,dataLength,1,file)!=1){
-		::perror(("DataBlock::openFileWrite(\""+filename+"\")--fwrite():").data());
-	}
-	if(::fflush(file)==EOF){
-		::perror(("DataBlock::openFileWrite(\""+filename+"\")--fflush():").data());
-		return false;
-	}
-	return ::fclose(file)==0;
-}
-
-bool DataBlock::closeFile(){
-	if(dataFile){
-		auto ret=::fclose(dataFile);//关闭文件
-		dataFile=nullptr;
-		if(ret==EOF){
-			::perror("DataBlock::closeFile(): ");
-		}
-		return ret!=EOF;
-	}return false;
+	return false;
 }
 
 bool DataBlock::loadFile(const string &filename){
-	if(openFileRead(filename)){//打开文件
+	auto dataFile=::fopen(filename.data(),"rb");
+	if(dataFile){
+		//获取内容大小
+		if(::fseek(dataFile,0,SEEK_END))return false;
+		set_DataLength(::ftell(dataFile));//得到大小
+		if(::fseek(dataFile,0,SEEK_SET))return false;
+		//申请内存,存储读取的数据
 		if(newDataPointer(dataLength)){//申请存储空间
 			if(::fread(dataPointer,dataLength,1,dataFile)!=1){
 				::perror(("DataBlock::loadFile(\""+filename+"\"):").data());//读取出现问题
-				return false;
 			}
 		}
-		return closeFile();
-	}return false;
+		::fclose(dataFile);
+	}
+	return false;
 }
 bool DataBlock::saveFile(const string &filename)const{
 	return openFileWrite(filename,"wb");
@@ -73,52 +45,8 @@ bool DataBlock::saveFile(const string &filename)const{
 bool DataBlock::appendFile(const string &filename)const{
 	return openFileWrite(filename,"ab");
 }
+bool DataBlock::fileWrite(FILE *file)const{return ::fwrite(dataPointer,dataLength,1,file);}
 
-bool DataBlock::memoryMap(const string &name){
-#ifdef __MINGW32__
-	return false;//mingw has not sys/mmap.h
-#else
-	struct stat theStat;
-	int ret=stat(name.data(),&theStat);
-	if(ret==-1){//stat()出错
-		char strErrno[10];
-		sprintf(strErrno,"%d",errno);
-		::perror(("DataBlock::memoryMap(\""+name+"\")--stat():errno=="+strErrno).data());//出现问题
-		return false;
-	}
-
-	auto fd=open(name.data(),O_RDWR);//读写模式打开
-	if(fd==-1){
-		char strErrno[10];
-		sprintf(strErrno,"%d",errno);
-		::perror(("DataBlock::memoryMap(\""+name+"\")--open():errno=="+strErrno).data());//出现问题
-		return false;
-	}
-
-	dataPointer=(uchar*)::mmap(0,theStat.st_size,PROT_READ|PROT_WRITE,MAP_SHARED,fd,0);
-	if(dataPointer==MAP_FAILED){
-		char strErrno[10];
-		sprintf(strErrno,"%d",errno);
-		::perror(("DataBlock::memoryMap(\""+name+"\")--mmap():errno=="+strErrno).data());//出现问题
-		return false;
-	}
-	set_DataLength(theStat.st_size);
-
-	return true;
-#endif
-}
-bool DataBlock::memoryUnmap(){
-#ifdef __MINGW32__
-	return false;//mingw has not sys/mmap.h
-#else
-	return munmap(dataPointer,dataLength)!=(long)MAP_FAILED;
-#endif
-}
-
-//stdio.h
-bool DataBlock::fileWrite(FILE *file)const{
-	return fwrite(dataPointer,dataLength,1,file);
-}
 //stdlib.h
 bool DataBlock::memoryCAllocate(size_t n,size_t size){
 	dataPointer=(uchar*)::calloc(n,size);
@@ -216,16 +144,9 @@ bool DataBlock::deleteDataPointer(){
 	return ret;
 }
 
-/*int DataBlock::debug()const{
-	return printf("DataBlock: ptr=%p file=%p off=%lu len=%lu\n",dataPointer,dataFile,dataOffset,dataLength);
-}*/
-
-DataBlock::SizeType DataBlock::reset(){
-	dataPointer=nullptr;
-	dataFile=nullptr;
-	dataLength=0;
-	dataOffset=0;
-	return 0;
+void DataBlock::set(const void *ptr, SizeType length){
+	dataPointer=(decltype(dataPointer))ptr;
+	dataLength=length;
 }
 
 DATABLOCK_TYPE_CPP(int8)
@@ -251,25 +172,11 @@ DataBlock DataBlock::subDataBlock(SizeType offset, SizeType length)const{
 }
 bool DataBlock::subDataBlock(SizeType offset, SizeType length, DataBlock &subBlock, bool copy)const{
 	if(offset+length>dataLength)return false;
-	if(dataFile){
-		subBlock.dataFile=dataFile;
-		subBlock.dataOffset=dataOffset+offset;//影响fread/fwrite
-		if(copy){
-			::fseek(dataFile,subBlock.dataOffset,SEEK_SET);
-			return ::fread(subBlock.dataPointer,1,length,dataFile)==length;
-		}else{
-			subBlock.dataPointer=dataPointer;//可能null
-			subBlock.set_DataLength(length);
-		}
+	if(copy){
+		return ::memcpy(subBlock.dataPointer,&dataPointer[offset],length);
 	}else{
-		if(copy){
-			return ::memcpy(subBlock.dataPointer,&dataPointer[offset],length);
-		}else{
-			subBlock.dataPointer=&dataPointer[offset];
-			subBlock.set_DataLength(length);
-		}
-		subBlock.dataFile=dataFile;//may be null
-		subBlock.dataOffset=dataOffset+offset;//no affect if not use fread/fwrite
+		subBlock.dataPointer=&dataPointer[offset];
+		subBlock.set_DataLength(length);
 	}
 	return true;
 }

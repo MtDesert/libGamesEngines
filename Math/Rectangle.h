@@ -69,5 +69,4 @@ inline Point2D<T> name()const{return Point2D<T>(x,y);}
 	//成员变量
 	Point2D<T> p0,p1;//p0和p1是对角关系
 };
-
 #endif

@@ -31,19 +31,6 @@ SOCKET_WHEN_CALLBACK(Error)\
 return;\
 }
 
-#define SOCKET_CHECK_ERRNO(code,correctErrno,successName) \
-errorNumber = ((code)==-1 ? ERR_NO :0);\
-if(errorNumber == correctErrno){/*运行状态*/\
-	PTHREAD_YIELD\
-}else{/*完成状态*/\
-	command=Command_None;\
-	if(errorNumber){/*完成,但失败*/\
-		SOCKET_WHEN_CALLBACK(Error)\
-	}else{/*完成,成功*/\
-		SOCKET_WHEN_CALLBACK(successName)\
-	}\
-}
-
 IPAddress::IPAddress(uint32 addr){address.s_addr=addr;}
 IPAddress::IPAddress(const char *str){setAddress(str);}
 IPAddress::IPAddress(const string &str){setAddress(str);}
@@ -54,8 +41,8 @@ Socket::Socket():descriptor(0),newAcceptedSocket(NULL),command(Command_None),err
 	SOCKET_WHEN(Connected),//主动连接成功
 	SOCKET_WHEN(Accepted),//被动连接成功
 	SOCKET_WHEN(Sent),//数据发送
-	SOCKET_WHEN(Received)//数据接收
-{}
+	SOCKET_WHEN(Received),//数据接收
+connectStatus(Unconnected){}
 
 void IPAddress::setAddress(const char *str){address.s_addr=inet_addr(str);}
 void IPAddress::setAddress(const string &str){setAddress(str.data());}
@@ -63,6 +50,7 @@ char *IPAddress::toString()const{return inet_ntoa(address);}
 string IPAddress::toStdString()const{return toString();}
 
 void Socket::connect(const IPAddress &ipAddress,uint16 port){
+	if(connectStatus!=Unconnected)return;
 	SOCKET_CHECK_ERROR(createSocket())
 	setSocketAddress(ipAddress,port);
 	//准备启动线程
@@ -91,6 +79,8 @@ void Socket::waitListenFinish(){
 }
 Socket* Socket::acceptedSocket()const{return newAcceptedSocket;}
 
+Socket::ConnectStatus Socket::getConnectStatus()const{return connectStatus;}
+
 int Socket::createSocket(){
 #ifdef __MINGW32__ //Windows下要初始化
 	if(!wsaStartedUp){
@@ -114,23 +104,34 @@ void Socket::setSocketAddress(const IPAddress &ipAddress,uint16 port){
 void Socket::whenThreadError(Thread *thread){
 	printf("socket thread error: %d\n",thread->errorNumber);
 }
-void Socket::Data::set(decltype(addr) addr,decltype(size) size){
-	this->addr=addr;
-	this->size=size;
-}
 
 void Socket::commandLoop(){
 	//循环收发
 	while(command!=Command_Close){
 		switch(command){
 			case Command_Connect:{
-				SOCKET_CHECK_ERRNO(::connect(SOCKET_CONNECT_ARGUMENTS),EINPROGRESS,Connected)
+				auto code=::connect(SOCKET_CONNECT_ARGUMENTS);
+				errorNumber = ((code)==-1 ? ERR_NO :0);
+				if(errorNumber == EINPROGRESS || errorNumber == EAGAIN){//运行状态
+					connectStatus=Connecting;
+					PTHREAD_YIELD
+				}else{//完成状态
+					if(errorNumber){//完成,但失败
+						command=Command_Close;
+						connectStatus=Unconnected;
+						SOCKET_WHEN_CALLBACK(Error)
+					}else{//完成,成功
+						command=Command_None;
+						connectStatus=Connected;
+						SOCKET_WHEN_CALLBACK(Connected)
+					}
+				}
 			}break;
 			case Command_Send:{
 				//发送数据
-				int sndAmount=::send(descriptor,toSendData.addr,toSendData.size,0);
+				int sndAmount=::send(descriptor,toSendData.dataPointer,toSendData.dataLength,0);
 				if(sndAmount>0){
-					sentData.set(toSendData.addr,sndAmount);
+					sentData.set(toSendData.dataPointer,sndAmount);
 					SOCKET_WHEN_CALLBACK(Sent)
 					sentData.set();
 				}else if(sndAmount==-1){
@@ -146,17 +147,23 @@ void Socket::commandLoop(){
 			default:PTHREAD_YIELD;
 		}
 		//接收数据(注意,如果不做接收处理,则数据会被立刻废弃)
-		uint8 buf[BUFSIZ];
-		int rcvAmount=::recv(descriptor,buf,BUFSIZ,0);
-		if(rcvAmount>0){
-			recvData.set(buf,rcvAmount);
-			SOCKET_WHEN_CALLBACK(Received)
-			recvData.set();
-		}else if(rcvAmount==-1){
-			errorNumber=ERR_NO;
-			SOCKET_WHEN_CALLBACK(Error);
-		}else{
-			PTHREAD_YIELD
+		if(connectStatus==Connected){
+			uint8 buf[BUFSIZ];
+			int rcvAmount=::recv(descriptor,buf,BUFSIZ,0);
+			if(rcvAmount>0){
+				recvData.set(buf,rcvAmount);
+				SOCKET_WHEN_CALLBACK(Received)
+				recvData.set();
+			}else if(rcvAmount==-1){
+				errorNumber=ERR_NO;
+				if(errorNumber==EAGAIN || errorNumber==EWOULDBLOCK){
+					PTHREAD_YIELD
+				}else{
+					SOCKET_WHEN_CALLBACK(Error);
+				}
+			}else{
+				PTHREAD_YIELD
+			}
 		}
 	}
 	//循环结束
@@ -206,8 +213,7 @@ void* Socket::acceptLoop(void *socket){
 
 //收发数据
 void Socket::send(const void *buffer,size_t size){
-	toSendData.addr=buffer;
-	toSendData.size=size;
+	toSendData.set(buffer,size);
 	command=Command_Send;
 }
 //关闭连接

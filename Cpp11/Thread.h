@@ -8,13 +8,16 @@
 而Thread可以先创建,然后在需要的时候再调用start即可*/
 class Thread{
 	pthread_t threadID;//线程ID
+	void* (*threadFunction)(void*);//运行时候的函数
+	void* threadArguments;//运行时候的参数
+	static void* threadStart(void *threadPtr);
 public:
 	Thread();
 	~Thread();
 
-	void start(void* (*threadFunction)(void*),void *arguments);//线程开始(线程函数,参数)
+	void start(void* (*threadFunc)(void*),void *arguments);//线程开始(线程函数,参数)
 	//pthread动作
-	void create(void* (*threadFunction)(void*),void *arguments);
+	void create(void* (*threadFunc)(void*),void *arguments);
 	void detach();
 	int join();
 	int cancel();

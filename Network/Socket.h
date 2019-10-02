@@ -11,8 +11,7 @@
 #include<netinet/in.h>
 #endif
 
-#include<string>
-using namespace std;
+#include<DataBlock.h>
 
 //IP地址
 struct IPAddress{
@@ -52,12 +51,7 @@ class Socket{
 	Thread thread;//线程,连接监听等动作通过线程进行异步操作
 	//缓冲区
 	Socket *newAcceptedSocket;//新接收到的套接字,具体请看accept相关过程
-	struct Data{//收发用的内存数据结构
-		const void *addr;//数据地址
-		size_t size;//数据长度
-		void set(decltype(addr) addr=nullptr,decltype(size) size=0);
-	};
-	Data toSendData;//要发送的数据
+	DataBlock toSendData;//要发送的数据
 
 	//命令
 	enum Command{
@@ -83,8 +77,8 @@ public:
 
 	//收发数据
 	void send(const void *buffer,size_t size);
-	Data sentData;//已发送的数据,请在whenSocketSent中读取
-	Data recvData;//已收到的数据,请在whenSocketReceived中读取
+	DataBlock sentData;//已发送的数据,请在whenSocketSent中读取
+	DataBlock recvData;//已收到的数据,请在whenSocketReceived中读取
 	//关闭连接
 	void close();
 
@@ -92,6 +86,13 @@ public:
 	int errorNumber;//错误号,出错的原因保存在此
 	IPAddress getIPaddress()const;
 	uint16 getPort()const;
+	//状态
+	enum ConnectStatus{
+		 Unconnected,//未链接
+		 Connecting,//连接中
+		 Connected//已连接
+	};
+	ConnectStatus getConnectStatus()const;
 	//回调函数
 #define SOCKET_WHEN(name) \
 	void (*whenSocket##name)(Socket *socket);
@@ -102,5 +103,7 @@ public:
 	SOCKET_WHEN(Sent)//数据发送
 	SOCKET_WHEN(Received)//数据接收
 #undef SOCKET_WHEN
+private:
+	ConnectStatus connectStatus;
 };
 #endif

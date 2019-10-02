@@ -19,5 +19,4 @@ struct ChessPiece{
 		return corpType==cp.corpType && color==cp.color && coordinate==cp.coordinate;
 	}
 };
-
 #endif

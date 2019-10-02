@@ -15,25 +15,12 @@ bool set_##Type(SizeType offset,const Type &value);
 #define DATABLOCK_TYPE_CPP(Type)\
 bool DataBlock::get_##Type(SizeType offset,Type &value)const{\
 	if(offset+sizeof(Type)>dataLength)return false;\
-	if(dataFile){\
-		auto off=dataOffset+offset;\
-		if((SizeType)::ftell(dataFile)!=off)::fseek(dataFile,off,SEEK_SET);\
-		return ::fread(&value,1,sizeof(Type),dataFile)==sizeof(Type);\
-	}else{\
-		value=*((Type*)(&dataPointer[offset]));\
-	}\
+	value=*((Type*)(&dataPointer[offset]));\
 	return true;\
 }\
 bool DataBlock::set_##Type(SizeType offset,const Type &value){\
-	if(dataFile){\
-		auto off=dataOffset+offset;\
-		if(off+sizeof(Type)>dataLength)return false;\
-		if((SizeType)::ftell(dataFile)!=off)::fseek(dataFile,off,SEEK_SET);\
-		return ::fwrite(&value,1,sizeof(Type),dataFile)==sizeof(Type);\
-	}else{\
-		if(offset+sizeof(Type)>dataLength)return false;\
-		*((Type*)(&dataPointer[offset]))=value;\
-	}\
+	if(offset+sizeof(Type)>dataLength)return false;\
+	*((Type*)(&dataPointer[offset]))=value;\
 	return true;\
 }
 
@@ -80,7 +67,7 @@ bool ClassName::get##Name(bool &value)const{return getBool(byteOffset,bitOffset,
 bool ClassName::set##Name(bool value){return setBool(byteOffset,bitOffset,value);}
 
 /**
-*此类名为"数据块",用来描述一段内存中连续的字节,也可以描述文件中的一段连续的数据字节
+*此类名为"数据块",用来描述一段内存中连续的字节
 *设计初衷：用来分析一段原始数据(定长或不定长)的结构内容,主要提供通用的读写支持
 数据可能来源于文件,网络套接字,其他程序提供,甚至某些不完整的数据(比如被截断的文件)
 有些数据的结构是根据一些控制数据来动态变化的,我们可以在分析的时候用各种不同的数据块子类来指向不同的位置,这样主要用来避免多次大量复制数据块内容(有些未经分析的数据块可能都有好几M)
@@ -90,12 +77,10 @@ bool ClassName::set##Name(bool value){return setBool(byteOffset,bitOffset,value)
 早期很多游戏机的游戏就是通过调色版来进行调色,使得一个精灵可以显示成不同的颜色,以表达出敌我、自身状态等各种用意)
 
 本类的复制构造函数不进行深拷贝(除非子类做了这个事情),也就是说此类可以当作普通变量来传递
-本类支持通过文件访问,可以打开后慢慢读取,也可以一次性读取到内存中操作,也可以用映射的方式(某些编译环境可能不支持映射)打开文件访问
 本类简单扩展了一些C语言下的stdlib.h和string.h中的内存操作函数,用于支持类似的操作,C++的new和delete也进行了封装,用于申请和释放内存
 本类的大量函数的返回值类型为bool,如果true表示成功,因为我们有可能进行越界操作,或者故意进行一些不稳定的操作
 */
-class DataBlock
-{
+class DataBlock{
 public:
 	//构造/析构函数
 	DataBlock();
@@ -111,21 +96,13 @@ public:
 	typedef size_t SizeType;
 
 	//打开/关闭文件
-	bool openFile(const string &filename,const string &mode);//封装fopen(),打开成功的时候获取大小,返回是否成功
-	bool openFileRead(const string &filename);//二进制只读方式调用openFile(),返回openFile()的返回值
-	bool openFileReadUpdate(const string &filename);//二进制读写方式调用openFile(),返回openFile()的返回值
 	bool openFileWrite(const string &filename,const string &mode)const;//二进制只写方式调用fopen(),mode决定写入方式,返回是否成功
-	bool closeFile();//关闭文件,返回是否关闭成功
 	//保存/加载/附加文件
 	bool loadFile(const string &filename);//从文件中读取所有数据到内存中,返回是否成功(读大文件的时候很吃内存)
 	bool saveFile(const string &filename)const;//从内存中写入所有数据到文件中,返回是否成功
 	bool appendFile(const string &filename)const;//从内存中写入所有数据到文件中,从文件尾添加,返回是否成功
-	//内存映射(某些编译环境不支持内存映射,会使以下两个函数返回false)
-	bool memoryMap(const string &name);//以内存映射方式访问文件,返回是否成功
-	bool memoryUnmap();//解除内存映射,返回是否成功
-
-	//stdio.h的部分封装
 	bool fileWrite(FILE *file)const;
+
 	//stdlib.h的部分封装
 	bool memoryCAllocate(size_t n,size_t size);//calloc()
 	bool memoryAllocate(size_t size);//malloc()
@@ -145,8 +122,6 @@ public:
 	//c++ new & delete
 	bool newDataPointer(size_t size);//封装new关键字
 	bool deleteDataPointer();//封装delete关键字
-	//调试
-	//int debug()const;//输出成员变量信息
 
 	//数据分析
 	/** @brief parseData 自行分析,子类可以重写此函数,主要目的是根据分析结果重新调整数据,比如调整能识别的数据长度,或调整子类的其他成员变量
@@ -157,7 +132,7 @@ public:
 		如果调用了newDataPointer()等申请内存的函数,或者调用了openFile()等打开文件的函数时候,请不要调用此函数,请调用对应的清理函数
 		否则可能造成内存泄漏,除非你知道你在干什么
 		@return 默认返回0,可以在子类中对此值的意义进行重新定义*/
-	virtual SizeType reset();
+	void set(const void *ptr=nullptr,SizeType length=0);
 
 	//子数据块操作
 	DataBlock subDataBlock(SizeType offset,SizeType length)const;//根据offset和length获取特定位置的数据块,返回子数据块
@@ -250,12 +225,5 @@ public:
 	uchar* dataPointer;
 	/** @brief dataLength 数据块的长度,可自行设定.打开文件或申请内存的时候,这个变量会自动设定*/
 	SizeType dataLength;
-	/** @brief dataFile 数据块所关联的源文件,如果数据块是内存数据块的时候,此值应该为空.打开文件成功的时候会设置此变量,不建议手动修改此变量
-	此变量会影响各种get/set的操作,具体请看本文件开头定义的宏*/
-	FILE *dataFile;
-	/** @brief dataOffset 数据块在文件中的位置,和dataPointer的作用很相似,可以指定从特定位置开始作为首数据的地址
-	此变量会影响各种get/set的操作,具体请看本文件开头定义的宏*/
-	SizeType dataOffset;
 };
-
 #endif
