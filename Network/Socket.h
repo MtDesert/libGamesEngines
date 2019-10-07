@@ -1,8 +1,8 @@
 #ifndef SOCKET_H
 #define SOCKET_H
 
-#include"typedef.h"
 #include"Thread.h"
+#include"DataBlock.h"
 
 #ifdef __MINGW32__
 #include<winsock2.h>
@@ -10,8 +10,6 @@
 #include<sys/socket.h>
 #include<netinet/in.h>
 #endif
-
-#include<DataBlock.h>
 
 //IP地址
 struct IPAddress{
@@ -25,6 +23,35 @@ struct IPAddress{
 	void setAddress(const string &str);
 	char* toString()const;
 	string toStdString()const;
+};
+
+//客户端数据包结构体,用于发数据
+class SocketDataBlock:public DataBlock{
+public:
+	SizeType rwSize;//已经读写的数据的大小
+	SocketDataBlock();
+
+	void readyReadWrite();//准备进行读写
+	inline void readWrote(int delta){rwSize+=delta;}//修改已经读写的数据量
+
+#define BLOCK_ADD(Type) SocketDataBlock& add(const Type &val);
+	BLOCK_ADD(int8)
+	BLOCK_ADD(int16)
+	BLOCK_ADD(int32)
+	BLOCK_ADD(int64)
+
+	BLOCK_ADD(uint8)
+	BLOCK_ADD(uint16)
+	BLOCK_ADD(uint32)
+	BLOCK_ADD(uint64)
+
+	BLOCK_ADD(wchar_t)
+	BLOCK_ADD(char16_t)
+	BLOCK_ADD(char32_t)
+	BLOCK_ADD(float)
+	BLOCK_ADD(double)
+#undef BLOCK_ADD
+	SocketDataBlock& add(const string &val);
 };
 
 //套接字,原意为"插座",主要用于主动和被动连接
@@ -63,6 +90,7 @@ class Socket{
 	Command command;
 public:
 	Socket();
+	~Socket();
 
 	//对IP地址和端口进行主动连接
 	void connect(const IPAddress &ipAddress,uint16 port);
@@ -77,6 +105,7 @@ public:
 
 	//收发数据
 	void send(const void *buffer,size_t size);
+	void send(const DataBlock &block);
 	DataBlock sentData;//已发送的数据,请在whenSocketSent中读取
 	DataBlock recvData;//已收到的数据,请在whenSocketReceived中读取
 	//关闭连接
@@ -86,8 +115,7 @@ public:
 	int errorNumber;//错误号,出错的原因保存在此
 	IPAddress getIPaddress()const;
 	uint16 getPort()const;
-	//状态
-	enum ConnectStatus{
+	enum ConnectStatus{//连接状态
 		 Unconnected,//未链接
 		 Connecting,//连接中
 		 Connected//已连接
@@ -103,6 +131,7 @@ public:
 	SOCKET_WHEN(Sent)//数据发送
 	SOCKET_WHEN(Received)//数据接收
 #undef SOCKET_WHEN
+	void *userData;//用户数据,可在回调函数中获得
 private:
 	ConnectStatus connectStatus;
 };

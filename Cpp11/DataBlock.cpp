@@ -111,12 +111,7 @@ void *DataBlock::memmoveFrom(void *src,size_t num){
 void* DataBlock::memset(int val,size_t len){return ::memset(dataPointer,val,len?len:dataLength);}
 
 string DataBlock::toString()const{
-	string ret;
-	ret.resize(dataLength);
-	DataBlock tmp;
-	tmp.dataPointer=(uchar*)ret.data();//hack!!!!
-	subDataBlock(0,dataLength,tmp,true);
-	return ret;
+	return dataPointer ? string((char*)dataPointer,dataLength):string();
 }
 
 //#define DATABLOK_NEWDATAPOINTER_NOTHROW
@@ -148,6 +143,7 @@ void DataBlock::set(const void *ptr, SizeType length){
 	dataPointer=(decltype(dataPointer))ptr;
 	dataLength=length;
 }
+void DataBlock::set(const DataBlock &block){set(block.dataPointer,block.dataLength);}
 
 DATABLOCK_TYPE_CPP(int8)
 DATABLOCK_TYPE_CPP(int16)
@@ -164,6 +160,17 @@ DATABLOCK_TYPE_CPP(char16_t)
 DATABLOCK_TYPE_CPP(char32_t)
 DATABLOCK_TYPE_CPP(float)
 DATABLOCK_TYPE_CPP(double)
+
+bool DataBlock::get_string(SizeType offset,string &value)const{
+	if(dataPointer==nullptr || offset>=dataLength)return false;
+	value=(char*)&dataPointer[offset];
+	return true;
+}
+bool DataBlock::set_string(SizeType offset,const string &value){
+	if(dataPointer==nullptr || offset>=dataLength)return false;
+	SizeType sz=min(dataLength-offset,value.size());
+	return memcpy(&dataPointer[offset],value.data(),sz);
+}
 
 DataBlock DataBlock::subDataBlock(SizeType offset, SizeType length)const{
 	DataBlock block;
@@ -356,3 +363,12 @@ DATABLOCK_CPP_TO_ARRAY(8)
 DATABLOCK_CPP_TO_ARRAY(16)
 DATABLOCK_CPP_TO_ARRAY(32)
 DATABLOCK_CPP_TO_ARRAY(64)
+
+void DataBlock::debug()const{
+	printf("DataBlock:%p %lu\n",dataPointer,dataLength);
+	if(!dataPointer)return;
+	for(SizeType i=0;i<dataLength;++i){
+		printf("%.2X ",dataPointer[i]);
+	}
+	printf("\n");
+}

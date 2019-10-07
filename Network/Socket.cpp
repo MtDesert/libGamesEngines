@@ -42,12 +42,47 @@ Socket::Socket():descriptor(0),newAcceptedSocket(NULL),command(Command_None),err
 	SOCKET_WHEN(Accepted),//被动连接成功
 	SOCKET_WHEN(Sent),//数据发送
 	SOCKET_WHEN(Received),//数据接收
+	userData(nullptr),
 connectStatus(Unconnected){}
+Socket::~Socket(){command=Command_Close;}
 
+//ip address
 void IPAddress::setAddress(const char *str){address.s_addr=inet_addr(str);}
 void IPAddress::setAddress(const string &str){setAddress(str.data());}
 char *IPAddress::toString()const{return inet_ntoa(address);}
 string IPAddress::toStdString()const{return toString();}
+
+//data block
+SocketDataBlock::SocketDataBlock(){readyReadWrite();}
+//SocketDataBlock类
+void SocketDataBlock::readyReadWrite(){rwSize=0;}
+#define BLOCK_ADD(Type)\
+SocketDataBlock& SocketDataBlock::add(const Type &val){\
+	if(set_##Type(rwSize,val)){\
+		readWrote(sizeof(Type));\
+	}return *this;\
+}
+BLOCK_ADD(int8)
+BLOCK_ADD(int16)
+BLOCK_ADD(int32)
+BLOCK_ADD(int64)
+
+BLOCK_ADD(uint8)
+BLOCK_ADD(uint16)
+BLOCK_ADD(uint32)
+BLOCK_ADD(uint64)
+
+BLOCK_ADD(wchar_t)
+BLOCK_ADD(char16_t)
+BLOCK_ADD(char32_t)
+BLOCK_ADD(float)
+BLOCK_ADD(double)
+#undef BLOCK_ADD
+SocketDataBlock& SocketDataBlock::add(const string &val){
+	if(set_string(rwSize,val)){
+		readWrote(val.size()+1);
+	}return *this;
+}
 
 void Socket::connect(const IPAddress &ipAddress,uint16 port){
 	if(connectStatus!=Unconnected)return;
@@ -152,7 +187,7 @@ void Socket::commandLoop(){
 			int rcvAmount=::recv(descriptor,buf,BUFSIZ,0);
 			if(rcvAmount>0){
 				recvData.set(buf,rcvAmount);
-				SOCKET_WHEN_CALLBACK(Received)
+				SOCKET_WHEN_CALLBACK(Received)//自定义回调函数
 				recvData.set();
 			}else if(rcvAmount==-1){
 				errorNumber=ERR_NO;
@@ -191,6 +226,7 @@ void Socket::acceptLoop(){
 			newSocket->whenSocketSent=whenSocketSent;
 			newSocket->whenSocketReceived=whenSocketReceived;
 			//连接成功
+			newSocket->connectStatus=Connected;
 			newAcceptedSocket=newSocket;
 			SOCKET_WHEN_CALLBACK(Accepted)//连接成功
 			newAcceptedSocket=NULL;
@@ -216,6 +252,7 @@ void Socket::send(const void *buffer,size_t size){
 	toSendData.set(buffer,size);
 	command=Command_Send;
 }
+void Socket::send(const DataBlock &block){send(block.dataPointer,block.dataLength);}
 //关闭连接
 void Socket::close(){command=Command_Close;}
 

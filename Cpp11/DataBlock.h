@@ -128,11 +128,9 @@ public:
 		@return 默认为0,子类可以用于表示有多少数据是可识别的或者合法的,不同的子类可以定义不同的返回值*/
 	virtual SizeType parseData(){return 0;}
 	virtual void set_DataLength(SizeType length){dataLength=length;}//设定长度,支持子类的函数,比如BitBlock,会重新计算bitLength
-	/** @brief reset 重置数据块,这会让数据块的成员变量变回初值
-		如果调用了newDataPointer()等申请内存的函数,或者调用了openFile()等打开文件的函数时候,请不要调用此函数,请调用对应的清理函数
-		否则可能造成内存泄漏,除非你知道你在干什么
-		@return 默认返回0,可以在子类中对此值的意义进行重新定义*/
+	//设置数据块内容(请留意原来的指针是否用于申请内存)
 	void set(const void *ptr=nullptr,SizeType length=0);
+	void set(const DataBlock &block);
 
 	//子数据块操作
 	DataBlock subDataBlock(SizeType offset,SizeType length)const;//根据offset和length获取特定位置的数据块,返回子数据块
@@ -189,6 +187,7 @@ public:
 	DATABLOCK_TYPE(float)
 	DATABLOCK_TYPE(double)
 
+	DATABLOCK_TYPE(string)
 	//bool操作
 	static void normalizedOffset(SizeType &byte,SizeType &bit);//将byte和bit表示的位置进行规范化
 	bool getBool(SizeType bitOffset,bool &value)const;//获取bitOffset位置的位(bool),返回是否读写成功
@@ -218,6 +217,7 @@ public:
 	DATABLOCK_TO_ARRAY(32)
 	DATABLOCK_TO_ARRAY(64)
 #undef DATABLOCK_TO_ARRAY
+	virtual void debug()const;
 
 	/** @brief dataPointer 指向内存数据的指针,指向数据块的首字节
 	这个指针可以任意改变,只要你知道你在干什么.和操作普通指针一样,访问野指针可能会造成程序崩溃
