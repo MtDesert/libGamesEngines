@@ -4,10 +4,6 @@
 #include<fcntl.h>
 #include<stdio.h>
 
-#ifndef __MINGW32__
-#include<sys/mman.h>
-#endif
-
 DataBlock::DataBlock(){set();}
 DataBlock::DataBlock(const DataBlock &dataBlock){*this=dataBlock;}
 DataBlock::~DataBlock(){}
@@ -296,7 +292,7 @@ bool DataBlock::toUint##bit##Array(uint8 bitLen,SizeType amount,bool littleEndia
 	/*开始解数据*/\
 	SizeType offset=0;\
 	uint##bit value;\
-	uint8 byte,remainBits=0,valueSize=0;\
+	uint8 byte=0,remainBits=0,valueSize=0;\
 	for(decltype(amount) i=0;i<amount;++i){\
 		value=valueSize=0;\
 		while(valueSize<bitLen){/*生成需要的数值*/\
