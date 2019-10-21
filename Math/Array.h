@@ -55,9 +55,9 @@ struct Array2D{
 	//operator
 	Array2D& operator=(const Array2D<T> &another){newData(another);return *this;}
 	//init and clear
-	virtual void newData(uint length,uint width,const T &val=T()){}
-	virtual void newData(const Array2D<T> &another){}
-	virtual void deleteData(){}
+	void newData(uint length,uint width,const T &val=T()){}
+	void newData(const Array2D<T> &another){}
+	void deleteData(){}
 	//size
 	uint getWidth()const{return width;}
 	uint getHeight()const{return height;}
@@ -227,45 +227,4 @@ protected:
 	T **data;
 };
 
-/*template<typename T>
-class Array3D:public Array2D_LV1_Pointer<T>
-{
-public:
-	explicit Array3D():Array2D<T>(),height(0){}
-	explicit Array3D(int length,int width,int height)
-	{
-		this->length=length;
-		this->width=width;
-		this->height=height;
-		this->data=new T[length*width*height];
-	}
-	//size
-	uint getHeight()const{return height;}
-	uint getSize()const{return Array2D<T>::getSize()*height;}
-	//range
-	bool isZInRange(uint z)const{return z<height;}
-	bool isInRange(uint x,uint y,uint z)const{return this->isInRange(x,y)&&isZInRange(z);}
-	bool isInRange(const Point3D<uint> &p)const{return isInRange(p.x,p.y,p.z);}
-	//locate
-	uint offset(uint x,uint y,uint z)const{return Array2D<T>::offset(x,y)*height+z;}
-	uint offset(const Point3D<uint> &p)const{return offset(p.x,p.y,p.z);}
-	//read/write
-	bool getValue(uint x,uint y,uint z,T& value)const
-	{
-		if(!isInRange(x,y,z))return false;
-		value=this->data[offset(x,y,z)];
-		return true;
-	}
-	bool getValue(const Point3D<uint> &p,T &value)const{return getValue(p.x,p.y,p.z,value);}
-	bool setValue(uint x,uint y,uint z,const T &value)
-	{
-		if(!isInRange(x,y,z))return false;
-		this->data[offset(x,y,z)]=value;
-		return true;
-	}
-	bool setValue(const Point3D<uint> &p,const T &value){return setValue(p.x,p.y,p.z,value);}
-protected:
-	uint height;
-};*/
-
-#endif // ARRAY_H
+#endif

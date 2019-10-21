@@ -46,4 +46,3 @@ void Thread::detach(){
 	THREAD_CHECK_ERROR(::pthread_detach(threadID))
 }
 int Thread::join(){return pthread_join(threadID,NULL);}
-int Thread::cancel(){return pthread_cancel(threadID);}

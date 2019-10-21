@@ -20,7 +20,6 @@ public:
 	void create(void* (*threadFunc)(void*),void *arguments);
 	void detach();
 	int join();
-	int cancel();
 
 	//状态
 	int errorNumber;//错误号

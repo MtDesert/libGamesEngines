@@ -23,7 +23,7 @@ struct Point2D{
 	POINT_RETURN_P(Point2D,*)
 	POINT_RETURN_P(Point2D,/)
 	//关系运算符
-	bool operator==(const Point2D &p)const{return *this==p;}
+	bool operator==(const Point2D &p)const{return this->x==p.x&&this->y==p.y;}
 	bool operator!=(T val)const{return !(*this==val);}
 	bool operator!=(const Point2D &p)const{return !(*this==p);}
 	//特征

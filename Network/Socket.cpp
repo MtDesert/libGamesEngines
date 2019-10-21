@@ -1,5 +1,6 @@
 #include "Socket.h"
 #include<unistd.h>
+#include<errno.h>
 
 #ifdef __MINGW32__ //MinGW编译环境
 #include<ws2tcpip.h>
@@ -15,6 +16,11 @@ static bool wsaStartedUp=false;
 #define ERR_NO errno
 #define PTHREAD_YIELD pthread_yield();
 #define SOCKET_SHUTDOWN ::shutdown(descriptor,SHUT_RDWR);
+#endif
+
+#ifdef __ANDROID__
+#undef PTHREAD_YIELD
+#define PTHREAD_YIELD usleep(1);
 #endif
 
 #define SOCKET_CONNECT_ARGUMENTS \

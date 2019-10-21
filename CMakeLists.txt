@@ -16,11 +16,18 @@ foreach(name ../lua/src)
 	include_directories(${name})
 endforeach()
 
+if(${TARGET_SYSTEM_NAME} STREQUAL Android)
+	include_directories(${NDK_ROOT}/sysroot/usr/include/GLES)
+elseif(${TARGET_SYSTEM_NAME} STREQUAL Windows)
+else()
+	include_directories(/usr/include/GL)
+endif()
+
 #默认库(包括源码编译的第三方库)
 if(${TARGET_SYSTEM_NAME} STREQUAL Windows)
 	set(LIBS_LIST lua53 curl ws2_32 z iconv pthread opengl32)
 else()
-	set(LIBS_LIST lua5.3 curl) #lua5.3是当前版本,请自行修改lua的版本号
+	set(LIBS_LIST lua z GLESv1_CM) #lua5.3是当前版本,请自行修改lua的版本号
 endif()
 
 #编译过程

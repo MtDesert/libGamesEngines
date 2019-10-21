@@ -114,7 +114,7 @@ string DataBlock::toString()const{
 	return dataPointer ? string((char*)dataPointer,dataLength):string();
 }
 
-//#define DATABLOK_NEWDATAPOINTER_NOTHROW
+#define DATABLOK_NEWDATAPOINTER_NOTHROW
 bool DataBlock::newDataPointer(size_t size){
 	if(dataPointer)return false;//指针必须是空的
 #ifdef DATABLOK_NEWDATAPOINTER_NOTHROW //非异常版本
@@ -364,11 +364,11 @@ DATABLOCK_CPP_TO_ARRAY(16)
 DATABLOCK_CPP_TO_ARRAY(32)
 DATABLOCK_CPP_TO_ARRAY(64)
 
-void DataBlock::debug()const{
+/*void DataBlock::debug()const{
 	printf("DataBlock:%p %lu\n",dataPointer,dataLength);
 	if(!dataPointer)return;
 	for(SizeType i=0;i<dataLength;++i){
 		printf("%.2X ",dataPointer[i]);
 	}
 	printf("\n");
-}
+}*/
