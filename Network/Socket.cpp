@@ -5,6 +5,7 @@
 #ifdef __MINGW32__ //MinGW编译环境
 #include<ws2tcpip.h>
 #define SOCK_NONBLOCK 0
+#define EWOULDBLOCK WSAEWOULDBLOCK
 #define EINPROGRESS WSAEWOULDBLOCK
 #define ERR_NO WSAGetLastError()
 #define PTHREAD_YIELD
@@ -170,7 +171,7 @@ void Socket::commandLoop(){
 			}break;
 			case Command_Send:{
 				//发送数据
-				int sndAmount=::send(descriptor,toSendData.dataPointer,toSendData.dataLength,0);
+				int sndAmount=::send(descriptor,(char*)toSendData.dataPointer,toSendData.dataLength,0);
 				if(sndAmount>0){
 					sentData.set(toSendData.dataPointer,sndAmount);
 					SOCKET_WHEN_CALLBACK(Sent)
@@ -190,7 +191,7 @@ void Socket::commandLoop(){
 		//接收数据(注意,如果不做接收处理,则数据会被立刻废弃)
 		if(connectStatus==Connected){
 			uint8 buf[BUFSIZ];
-			int rcvAmount=::recv(descriptor,buf,BUFSIZ,0);
+			int rcvAmount=::recv(descriptor,(char*)buf,BUFSIZ,0);
 			if(rcvAmount>0){
 				recvData.set(buf,rcvAmount);
 				SOCKET_WHEN_CALLBACK(Received)//自定义回调函数

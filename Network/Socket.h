@@ -1,15 +1,18 @@
 #ifndef SOCKET_H
 #define SOCKET_H
 
+#ifdef __MINGW32__
+	//必须得有如下判定,否则编译的时候会报非常无聊的错误
+	#ifndef _WINSOCK_H
+		#include<winsock2.h>
+	#endif
+#else
+	#include<sys/socket.h>
+	#include<netinet/in.h>
+#endif
+
 #include"Thread.h"
 #include"DataBlock.h"
-
-#ifdef __MINGW32__
-#include<winsock2.h>
-#else
-#include<sys/socket.h>
-#include<netinet/in.h>
-#endif
 
 //IP地址
 struct IPAddress{
