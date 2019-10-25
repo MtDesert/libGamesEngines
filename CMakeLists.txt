@@ -24,10 +24,11 @@ else()
 endif()
 
 #默认库(包括源码编译的第三方库)
+set(LIBS_LIST lua z)
 if(${TARGET_SYSTEM_NAME} STREQUAL Windows)
-	set(LIBS_LIST lua53 curl ws2_32 z iconv pthread opengl32)
+	set(LIBS_LIST ${LIBS_LIST} ws2_32 iconv pthread opengl32)
 else()
-	set(LIBS_LIST lua z GLESv1_CM) #lua5.3是当前版本,请自行修改lua的版本号
+	set(LIBS_LIST ${LIBS_LIST} GLESv1_CM)
 endif()
 
 #编译过程
