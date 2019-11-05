@@ -27,9 +27,7 @@ bool DataBlock::loadFile(const string &filename){
 		if(::fseek(dataFile,0,SEEK_SET))return false;
 		//申请内存,存储读取的数据
 		if(newDataPointer(dataLength)){//申请存储空间
-			if(::fread(dataPointer,dataLength,1,dataFile)!=1){
-				::perror(("DataBlock::loadFile(\""+filename+"\"):").data());//读取出现问题
-			}
+			if(::fread(dataPointer,dataLength,1,dataFile)!=1);
 		}
 		::fclose(dataFile);
 	}
@@ -45,18 +43,14 @@ bool DataBlock::fileWrite(FILE *file)const{return ::fwrite(dataPointer,dataLengt
 
 //stdlib.h
 bool DataBlock::memoryCAllocate(size_t n,size_t size){
+	if(dataPointer)return false;
 	dataPointer=(uchar*)::calloc(n,size);
-	if(!dataPointer){
-		::perror("DataBlock::memoryCAllocate(): ");
-	}
 	set_DataLength(dataPointer?n*size:0);
 	return dataPointer;
 }
 bool DataBlock::memoryAllocate(size_t size){
+	if(dataPointer)return false;
 	dataPointer=(uchar*)::malloc(size);
-	if(!dataPointer){
-		::perror("DataBlock::memoryAllocate(): ");
-	}
 	set_DataLength(dataPointer?size:0);
 	return dataPointer;
 }
@@ -67,7 +61,6 @@ bool DataBlock::memoryReallocate(size_t size){
 		set_DataLength(size);
 		return true;
 	}else if(size==0){//free!!!!
-		::perror("DataBlock::memoryReallocate(): ");
 		set_DataLength(0);
 	}//else do nothing(keep)
 	return false;
@@ -115,9 +108,6 @@ bool DataBlock::newDataPointer(size_t size){
 	if(dataPointer)return false;//指针必须是空的
 #ifdef DATABLOK_NEWDATAPOINTER_NOTHROW //非异常版本
 	dataPointer=new(std::nothrow) uchar[size];
-	if(!dataPointer){
-		::perror("Error DataBlock::newDataPointer(): ");
-	}
 #else //扔异常版本
 	try{
 		dataPointer=new uchar[size];
