@@ -55,15 +55,9 @@ bool DataBlock::memoryAllocate(size_t size){
 	return dataPointer;
 }
 bool DataBlock::memoryReallocate(size_t size){
-	uchar *ptr=(uchar*)realloc(dataPointer,size);
-	if(ptr){
-		dataPointer=ptr;
-		set_DataLength(size);
-		return true;
-	}else if(size==0){//free!!!!
-		set_DataLength(0);
-	}//else do nothing(keep)
-	return false;
+	dataPointer=(uchar*)realloc(dataPointer,size);
+	set_DataLength(size);
+	return dataPointer;
 }
 void DataBlock::memoryFree(){
 	if(dataPointer)free(dataPointer);

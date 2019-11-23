@@ -25,13 +25,6 @@ while(lua_next(state,-2)){\
 	lua_pop(state,1);\
 }
 
-//对code进行断言,断言失败则会返回错误信息
-#define LUASTATE_ASSERT(code,errStr)\
-if(code);else{\
-errorString=errStr;\
-return false;\
-}
-
 /*基于lua_State工作的类,本类可以操作一个state,并封装常用的操作,
 设计初衷是将一切和Lua交互的部分都放在这里
 基本上每个方法的返回值都是bool类型,如果返回false则代表不成功,需要去查查errorString的内容
@@ -40,6 +33,8 @@ struct LuaState{
 	LuaState();
 	~LuaState();
 
+	bool loadFile(const string &filename);//加载文件,不执行
+	bool protectCall();
 	bool doFile(const string &filename);//加载并执行filename文件
 	//读写变量
 	bool setGlobalInteger(const string &name,int value);//设置全局数字
@@ -51,10 +46,12 @@ struct LuaState{
 	bool readEnum(const string &enumName,EnumType &enumType);//读取枚举类型enumName,存储到enumType中
 	//表
 	bool getGlobalTable(const string &name);//读取全局表
+	//函数
+	void registerFunction(const char *name,lua_CFunction func);//注册函数
 	//清理
 	void clearStack();
 	//错误信息
-	string errorString;//错误信息,可以保存lua的信息,也可以保存自定义信息
+	void (*whenError)(const string &errorString);//错误信息回调函数
 private:
 	lua_State *luaState;//Lua的栈
 };

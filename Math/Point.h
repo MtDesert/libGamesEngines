@@ -17,6 +17,8 @@ struct Point2D{
 		this->y=y;
 	}
 	Point2D(const Point2D &p):Point2D(p.x,p.y){}
+
+	void setXY(T x,T y){this->x=x;this->y=y;}
 	//算术运算符
 	POINT_RETURN_P(Point2D,+)
 	POINT_RETURN_P(Point2D,-)
@@ -46,5 +48,7 @@ struct Point3D:public Point2D<T>{
 		this->z=z;
 	}
 	Point3D(const Point3D &p):Point3D(p.x,p.y,p.z){}
+
+	void setXYZ(T x,T y,T z){setXY(x,y);this->z=z;}
 };
 #endif
