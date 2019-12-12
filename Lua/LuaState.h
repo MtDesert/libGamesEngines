@@ -2,7 +2,6 @@
 #define LUASTATE_H
 
 #include"EnumType.h"
-#include"TranslationMap.h"
 
 #include"lua.hpp"
 #include<string>

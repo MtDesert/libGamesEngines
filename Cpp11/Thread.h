@@ -15,10 +15,10 @@ public:
 	Thread();
 	~Thread();
 
-	void start(void* (*threadFunc)(void*),void *arguments);//线程开始(线程函数,参数)
+	bool start(void* (*threadFunc)(void*),void *arguments);//线程开始(线程函数,参数)
 	//pthread动作
-	void create(void* (*threadFunc)(void*),void *arguments);
-	void detach();
+	bool create(void* (*threadFunc)(void*),void *arguments);
+	bool detach();
 	int join();
 
 	//状态

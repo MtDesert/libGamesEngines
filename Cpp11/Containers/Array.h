@@ -1,47 +1,145 @@
 #ifndef ARRAY_H
 #define ARRAY_H
 
-#include<stddef.h>
-#include<string.h>
+#include"Point.h"
+#include"DataBlock.h"
+
 #include<list>
 #include<functional>
 using namespace std;
+#include<string.h>
 
-#include"typedef.h"
-#include"Point.h"
+//如果定义了该宏
+#define ARRAY_USE_ALLOC
 
-//一维数组模板
+//数组,存储空间连续
+//和std::array不同的是,本类可以在存数据前先设定尺寸
 template<typename T>
 struct Array{
-	Array():length(0),usedLength(0),dataPtr(nullptr){}
-	~Array(){clear();}
+protected:
+	//类型
+	typedef bool (*condition)(const T &val);//条件函数,用于判断val是否满足condition
+	//变量
+	T *dataPtr;//数据指针
+	SizeType length;//长度,占内存的T类型数据个数
+	SizeType usedLength;//实际使用的数量,不要大于长度,否则会发生越界
+public:
+	Array():dataPtr(nullptr),length(0),usedLength(0){}
+	~Array(){deleteData();}
 
-	//设置存储空间
-	size_t size()const{return usedLength;}
-	void setSize(size_t size){
-		if(size>length){//扩容,
-			clear();
-			dataPtr=new T[size];
-			usedLength=length=size;
-		}else if(size<length){//缩短容量
-			usedLength=size;
-		}
+	//迭代器(正向)
+	class iterator{
+	protected:
+		const Array<T> *arr;
+		SizeType pos;
+	public:
+		iterator(const Array<T> *arr=nullptr,SizeType pos=0):arr(arr),pos(pos){}
+		bool operator!=(const iterator &itr)const{return pos!=itr.pos;}
+		T& operator*()const{return *(iterator::operator->());}
+		T* operator->()const{return arr->data(pos);}
+		iterator& operator--(){--pos;return *this;}
+		iterator& operator++(){++pos;return *this;}
+	};
+	//迭代函数
+	iterator begin()const{return iterator(this,0);}
+	iterator end()const{return iterator(this,this->size());}
+
+	//存储空间
+	SizeType arraySize()const{return length;}//能存的元素个数
+	void setArraySize(SizeType size){//设置数组空间,注意:数组大小改变的话会清除内部的数据
+		if(length==size)return;//无变化
+#ifdef ARRAY_USE_ALLOC
+		DataBlock block(dataPtr,length*sizeof(T));
+		block.memoryAllocate(size*sizeof(T));
+		dataPtr=reinterpret_cast<T*>(block.dataPointer);
+#else
+		deleteData();
+		dataPtr=new T[size];
+#endif
+		length=size;
+		usedLength=0;
 	}
+	//元素个数
+	SizeType size()const{return usedLength;}//当前存储的元素个数
+	void setSize(SizeType size,bool needResetArraySize=false){//设置需要存储的元素个数
+		if(size>length){//考虑是否需要扩容
+			if(!needResetArraySize)return;
+			setArraySize(size);
+		}
+		usedLength=size;
+	}
+	bool isFull()const{return usedLength>=length;}
 	//访问数据
-	T* data(size_t index)const{
-		return index<length ? &dataPtr[index] : nullptr;
-	}
-	void clear(){
-		if(dataPtr){
-			delete []dataPtr;
-			dataPtr=nullptr;
+	T* data(SizeType pos)const{//根据位置获取数据
+		if(dataPtr && pos<usedLength){
+			return &dataPtr[pos];
 		}
+		return nullptr;
+	}
+	T* data(condition con)const{//根据条件获取数据
+		for(SizeType i=0;i<usedLength;++i){
+			if(con(dataPtr[i]))return &dataPtr[i];//找到了
+		}
+		return nullptr;//没找到
+	}
+	int indexOf(const T &value,SizeType from=0){
+		if(from<usedLength){
+			for(auto i=from;i<usedLength;++i){
+				if(dataPtr[i]==value)return i;
+			}
+		}
+		return -1;
+	}
+	//添加
+	void insert(SizeType pos,const T &value){
+		if(isFull()){
+			setArraySize(length+1);
+			usedLength=length;
+		}else{
+			++usedLength;
+		}
+		//数据后移(多次复制)
+		for(SizeType i=usedLength-1;i>pos;--i){
+			dataPtr[i]=dataPtr[i-1];
+		}
+		dataPtr[pos]=value;
+	}
+	void push_front(const T &value){insert(0,value);}
+	void push_back(const T &value){insert(usedLength,value);}
+	//删除
+	void erase(SizeType pos){
+		if(!dataPtr || usedLength<=0)return;
+		for(SizeType i=pos+1;i<usedLength;++i){//数据前移
+			dataPtr[i-1]=dataPtr[i];
+		}
+		--usedLength;
+	}
+	void remove(const T &val){
+		auto pos=indexOf(val);
+		if(pos>=0)erase(pos);
+	}
+	void remove_if(condition con){
+		SizeType pos=0;
+		while(pos<usedLength){
+			if(con(dataPtr[pos])){//符合删除条件
+				erase(pos);
+			}else{//不符合条件
+				++pos;
+			}
+		}
+	}
+	void clear(){usedLength=0;}//清除,但不释放所占内存
+	void deleteData(){//删除数据,释放数组所占内存
+		if(dataPtr){
+#ifdef ARRAY_USE_ALLOC
+			free(dataPtr);
+#else
+			delete []dataPtr;
+#endif
+		}
+		dataPtr=nullptr;
 		usedLength=length=0;
 	}
-protected:
-	size_t length;//长度,占内存的T类型数据个数
-	size_t usedLength;//实际使用的数量,不要大于长度,否则会发生越界
-	T *dataPtr;
 };
 
 //二维数组模板

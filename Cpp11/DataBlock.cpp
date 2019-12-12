@@ -1,62 +1,55 @@
 #include"DataBlock.h"
 #include<string.h>
-#include<sys/stat.h>
-#include<fcntl.h>
 #include<stdio.h>
 
-DataBlock::DataBlock(){set();}
+DataBlock::DataBlock(const void *ptr,SizeType length){set(ptr,length);}
 DataBlock::DataBlock(const DataBlock &dataBlock){*this=dataBlock;}
 DataBlock::~DataBlock(){}
 
 bool DataBlock::openFileWrite(const string &filename,const string &mode)const{
 	FILE *file=::fopen(filename.data(),mode.data());
 	if(file){
-		::fwrite(dataPointer,dataLength,1,file);
+		fileWrite(file);
 		::fflush(file);
 		return ::fclose(file)==0;
 	}
 	return false;
 }
 
-bool DataBlock::loadFile(const string &filename){
+DataBlock DataBlock::loadFile(const string &filename){
+	DataBlock ret;
+	//打开文件
 	auto dataFile=::fopen(filename.data(),"rb");
 	if(dataFile){
-		//获取内容大小
-		if(::fseek(dataFile,0,SEEK_END))return false;
-		set_DataLength(::ftell(dataFile));//得到大小
-		if(::fseek(dataFile,0,SEEK_SET))return false;
-		//申请内存,存储读取的数据
-		if(newDataPointer(dataLength)){//申请存储空间
-			if(::fread(dataPointer,dataLength,1,dataFile)!=1);
+		::fseek(dataFile,0,SEEK_END);
+		SizeType size=ftell(dataFile);//获取文件大小
+		//设定缓存大小(内存自动增长)
+		if(memoryAllocate(size,true)){//内存没问题,读取数据
+			::fseek(dataFile,0,SEEK_SET);
+			if(::fread(dataPointer,size,1,dataFile)!=1);
+			ret.set(dataPointer,size);
 		}
+		//读取完毕
 		::fclose(dataFile);
 	}
-	return false;
+	return ret;
 }
-bool DataBlock::saveFile(const string &filename)const{
-	return openFileWrite(filename,"wb");
-}
-bool DataBlock::appendFile(const string &filename)const{
-	return openFileWrite(filename,"ab");
-}
+bool DataBlock::saveFile(const string &filename)const{return openFileWrite(filename,"wb");}
+bool DataBlock::appendFile(const string &filename)const{return openFileWrite(filename,"ab");}
 bool DataBlock::fileWrite(FILE *file)const{return ::fwrite(dataPointer,dataLength,1,file);}
 
 //stdlib.h
-bool DataBlock::memoryCAllocate(size_t n,size_t size){
-	if(dataPointer)return false;
-	dataPointer=(uchar*)::calloc(n,size);
-	set_DataLength(dataPointer?n*size:0);
-	return dataPointer;
-}
-bool DataBlock::memoryAllocate(size_t size){
-	if(dataPointer)return false;
-	dataPointer=(uchar*)::malloc(size);
+bool DataBlock::memoryAllocate(SizeType size,bool enlargeOnly){
+	if(dataLength==size)return true;//无变化
+	if(enlargeOnly && dataLength>size)return true;//容量充足
+	if(dataPointer){
+		//printf("realloc(%p,%lu)\n",dataPointer,size);
+		dataPointer=(uchar*)::realloc(dataPointer,size);
+	}else{
+		//printf("malloc(%lu)\n",size);
+		dataPointer=(uchar*)::malloc(size);
+	}
 	set_DataLength(dataPointer?size:0);
-	return dataPointer;
-}
-bool DataBlock::memoryReallocate(size_t size){
-	dataPointer=(uchar*)realloc(dataPointer,size);
-	set_DataLength(size);
 	return dataPointer;
 }
 void DataBlock::memoryFree(){
@@ -66,57 +59,35 @@ void DataBlock::memoryFree(){
 }
 
 //string.h
-void* DataBlock::memchr(int chr,size_t num)const{
+void* DataBlock::memchr(int chr,SizeType num)const{
 	if(num>dataLength)num=dataLength;
 	return ::memchr(dataPointer,chr,num?num:dataLength);
 }
-int DataBlock::memcmp(const void *ptr,size_t num)const{
+int DataBlock::memcmp(const void *ptr,SizeType num)const{
 	if(num>dataLength)num=dataLength;
 	return ::memcmp(dataPointer,ptr,num);
 }
 int DataBlock::memcmp(const DataBlock &block)const{return memcmp(block.dataPointer,block.dataLength);}
-void* DataBlock::memcpyTo(void *dest,size_t num)const{
+void* DataBlock::memcpyTo(void *dest,SizeType num)const{
 	if(num>dataLength)num=dataLength;
 	return ::memcpy(dest,dataPointer,num);
 }
-void *DataBlock::memcpyFrom(const void *src,size_t num){
+void *DataBlock::memcpyFrom(const void *src,SizeType num){
 	if(num>dataLength)num=dataLength;
 	return ::memcpy(dataPointer,src,num);
 }
-void* DataBlock::memmoveTo(void *dest,size_t num) const{
+void* DataBlock::memmoveTo(void *dest,SizeType num) const{
 	if(num>dataLength)num=dataLength;
 	return ::memmove(dest,dataPointer,num);
 }
-void *DataBlock::memmoveFrom(void *src,size_t num){
+void *DataBlock::memmoveFrom(void *src,SizeType num){
 	if(num>dataLength)num=dataLength;
 	return ::memmove(dataPointer,src,num);
 }
-void* DataBlock::memset(int val,size_t len){return ::memset(dataPointer,val,len?len:dataLength);}
+void* DataBlock::memset(int val,SizeType len){return ::memset(dataPointer,val,len?len:dataLength);}
 
 string DataBlock::toString()const{
 	return dataPointer ? string((char*)dataPointer,dataLength):string();
-}
-
-#define DATABLOK_NEWDATAPOINTER_NOTHROW
-bool DataBlock::newDataPointer(size_t size){
-	if(dataPointer)return false;//指针必须是空的
-#ifdef DATABLOK_NEWDATAPOINTER_NOTHROW //非异常版本
-	dataPointer=new(std::nothrow) uchar[size];
-#else //扔异常版本
-	try{
-		dataPointer=new uchar[size];
-	}catch(const bad_alloc& e){
-		::printf("Error DataBlock::newDataPointer(): %s",e.what());
-	}
-#endif
-	set_DataLength(size);
-	return dataPointer;
-}
-bool DataBlock::deleteDataPointer(){
-	bool ret=dataPointer;
-	if(dataPointer)delete []dataPointer;
-	dataPointer=nullptr;
-	return ret;
 }
 
 void DataBlock::set(const void *ptr, SizeType length){

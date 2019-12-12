@@ -14,6 +14,7 @@ Thread::~Thread(){}
 errorNumber=(code);\
 if(errorNumber){\
 	if(whenThreadError)whenThreadError(this);\
+	return false;\
 }
 
 void* Thread::threadStart(void *threadPtr){
@@ -27,22 +28,24 @@ void* Thread::threadStart(void *threadPtr){
 	return nullptr;
 }
 
-void Thread::start(void* (*threadFunc)(void*),void *arguments){
+bool Thread::start(void* (*threadFunc)(void*),void *arguments){
 #ifdef __MINGW32__
-	if(threadID.p)return;
+	if(threadID.p)return false;
 #else
-	if(threadID)return;
+	if(threadID)return false;
 #endif
 	threadFunction=threadFunc;
 	threadArguments=arguments;
 	//启动线程
-	create(threadStart,this);
+	return create(threadStart,this);
 }
 
-void Thread::create(void *(*threadFunc)(void *),void *arguments){
+bool Thread::create(void *(*threadFunc)(void *),void *arguments){
 	THREAD_CHECK_ERROR(::pthread_create(&threadID,NULL,threadFunc,arguments))
+	return true;
 }
-void Thread::detach(){
+bool Thread::detach(){
 	THREAD_CHECK_ERROR(::pthread_detach(threadID))
+	return true;
 }
 int Thread::join(){return pthread_join(threadID,NULL);}

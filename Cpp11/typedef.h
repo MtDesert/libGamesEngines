@@ -30,4 +30,7 @@ typedef float Float;
 typedef double Double;
 typedef long double LongDouble;
 
-#endif // TYPEDEF_H
+#include<stddef.h>
+typedef size_t SizeType;
+
+#endif

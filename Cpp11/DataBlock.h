@@ -83,45 +83,32 @@ bool ClassName::set##Name(bool value){return setBool(byteOffset,bitOffset,value)
 class DataBlock{
 public:
 	//构造/析构函数
-	DataBlock();
+	DataBlock(const void *ptr=nullptr,SizeType length=0);
 	DataBlock(const DataBlock &dataBlock);
 	virtual ~DataBlock();
-
-	//尺寸类型,这是用来衡量文件大小的数据类型,某些场合下可以用无符号类型来兼容内存操作函数,也可以用有符号的类型来兼容文件操作函数
-	//请根据实际情况进行调整
-	//typedef int SizeType;
-	//typedef uint SizeType;
-	//typedef long SizeType;
-	//typedef ulong SizeType;
-	typedef size_t SizeType;
 
 	//打开/关闭文件
 	bool openFileWrite(const string &filename,const string &mode)const;//二进制只写方式调用fopen(),mode决定写入方式,返回是否成功
 	//保存/加载/附加文件
-	bool loadFile(const string &filename);//从文件中读取所有数据到内存中,返回是否成功(读大文件的时候很吃内存)
+	DataBlock loadFile(const string &filename);//从文件filename中读取所有数据到buffer中,返回是否成功(读大文件的时候很吃内存)
 	bool saveFile(const string &filename)const;//从内存中写入所有数据到文件中,返回是否成功
 	bool appendFile(const string &filename)const;//从内存中写入所有数据到文件中,从文件尾添加,返回是否成功
 	bool fileWrite(FILE *file)const;
 
 	//stdlib.h的部分封装
-	bool memoryCAllocate(size_t n,size_t size);//calloc()
-	bool memoryAllocate(size_t size);//malloc()
-	bool memoryReallocate(size_t size);//realloc()
+	bool memoryAllocate(SizeType size,bool enlargeOnly=false);//malloc(),realloc(),enlargeOnly表示只扩充不减少
 	void memoryFree();//free()
 	//string.h的部分封装
-	void* memchr(int chr,size_t num=0)const;
-	int memcmp(const void *ptr,size_t num)const;
+	void* memchr(int chr,SizeType num=0)const;
+	int memcmp(const void *ptr,SizeType num)const;
 	int memcmp(const DataBlock &block)const;
-	void* memcpyTo(void *dest,size_t num)const;//memcpy()
-	void* memcpyFrom(const void *src,size_t num);//memcpy()
-	void* memmoveTo(void *dest,size_t num)const;//memmove()
-	void* memmoveFrom(void *src,size_t num);//memmove()
-	void* memset(int val,size_t len=0);
+	void* memcpyTo(void *dest,SizeType num)const;//memcpy()
+	void* memcpyFrom(const void *src,SizeType num);//memcpy()
+	void* memmoveTo(void *dest,SizeType num)const;//memmove()
+	void* memmoveFrom(void *src,SizeType num);//memmove()
+	void* memset(int val,SizeType len=0);
 	//string类相关
 	string toString()const;
-	//c++ new & delete
-	bool newDataPointer(size_t size);//封装new关键字
-	bool deleteDataPointer();//封装delete关键字
 
 	//数据分析
 	/** @brief parseData 自行分析,子类可以重写此函数,主要目的是根据分析结果重新调整数据,比如调整能识别的数据长度,或调整子类的其他成员变量

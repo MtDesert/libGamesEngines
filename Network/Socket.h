@@ -107,7 +107,7 @@ public:
 	Socket* acceptedSocket()const;//获取刚连进来的套接字
 
 	//收发数据
-	void send(const void *buffer,size_t size);
+	void send(const void *buffer,SizeType size);
 	void send(const DataBlock &block);
 	DataBlock sentData;//已发送的数据,请在whenSocketSent中读取
 	DataBlock recvData;//已收到的数据,请在whenSocketReceived中读取

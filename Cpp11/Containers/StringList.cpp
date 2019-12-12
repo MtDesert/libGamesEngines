@@ -1,4 +1,5 @@
 #include"StringList.h"
+#include"typedef.h"
 
 //升降序的判断函数(函数名,先行代码,最终左代码,最终右代码)
 #define STRINGLIST_COMPARE(name,code,codeL,codeR)\
@@ -23,7 +24,7 @@ STRINGLIST_SORT(Suffix)
 void StringList::splitString(const string &str,const string &splt,bool clearBeforeDo){
 	if(str.length()==0)return;
 	if(clearBeforeDo)clear();
-	size_t start=0,fin=0;
+	SizeType start=0,fin=0;
 	do{
 		fin=str.find(splt,start);
 		push_back(str.substr(start,fin));

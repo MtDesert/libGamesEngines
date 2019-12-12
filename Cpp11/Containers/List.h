@@ -2,7 +2,6 @@
 #define LIST_H
 
 #include"typedef.h"
-#include<stdio.h>
 
 template<typename T>
 struct ListNode{//表项
@@ -16,18 +15,23 @@ struct ListNode{//表项
 template<typename T>
 class List{
 protected:
+	//类型
+	typedef bool (*condition)(const T &val);//条件函数,用于判断val是否满足condition
 	//变量
 	ListNode<T> *head,*tail;//表头指针
-	uint amount;//列表中的项数
+	SizeType amount;//列表中的项数
 
 	//获取pos位置的节点,没有则返回空
-	ListNode<T>* node(uint pos)const{
+	ListNode<T>* node(SizeType pos)const{
 		if(pos>=amount)return nullptr;
-		uint p=0;
-		auto n=head;
-		while(n->next && p<pos){
-			n=n->next;++p;
-		};
+		bool forward=pos<amount/2;//确定搜索方向
+		SizeType p = forward ? 0 : amount-1;
+		auto n = forward ? head : tail;
+		if(forward){
+			while(n->next && p<pos){n=n->next;++p;};
+		}else{
+			while(n->prev && p>pos){n=n->prev;--p;};
+		}
 		return n;
 	}
 	//获取值为value的首个节点
@@ -35,6 +39,15 @@ protected:
 		auto n=head;
 		while(n){
 			if(n->data==value)break;
+			n=n->next;
+		};
+		return n;
+	}
+	//获取满足条件con的首个节点
+	ListNode<T>* nodeCondition(condition con)const{
+		auto n=head;
+		while(n){
+			if(con(n->data))break;
 			n=n->next;
 		};
 		return n;
@@ -77,6 +90,7 @@ protected:
 		if(node.next)node.next->prev = node.prev;//有后项的情况
 		--amount;
 	}
+	//删除节点
 	bool deleteNode(ListNode<T> *node){//删除节点
 		if(!node)return false;
 		//移出队列并删除
@@ -84,7 +98,8 @@ protected:
 		delete node;
 		return true;
 	}
-	bool moveNodePrev(ListNode<T> &node){//节点前移
+	//节点前移
+	bool moveNodePrev(ListNode<T> &node){
 		auto prevNode=node.prev;
 		if(prevNode){
 			removeNode(node);//从老位置移除
@@ -93,7 +108,8 @@ protected:
 		}
 		return false;
 	}
-	bool moveNodeNext(ListNode<T> &node){//节点后移
+	//节点后移
+	bool moveNodeNext(ListNode<T> &node){
 		auto nextNode=node.next;
 		if(nextNode){
 			removeNode(node);//从老位置移除
@@ -102,8 +118,8 @@ protected:
 		}
 		return false;
 	}
-
-	void swapNode(ListNode<T> *nodeA,ListNode<T> *nodeB){//交换节点
+	//交换节点
+	void swapNode(ListNode<T> *nodeA,ListNode<T> *nodeB){
 		if(!nodeA || !nodeB || nodeA==nodeB)return;
 		//修改前后项
 		if(nodeA->prev==nodeB){
@@ -136,27 +152,28 @@ public:
 	List():head(nullptr),tail(nullptr),amount(0){}
 	~List(){clear();}
 
-	//迭代器,用于支持C++11的for(auto item:list){...}
+	//迭代器(正向)
 	class iterator{
+	protected:
 		ListNode<T> *node;
-		iterator():node(nullptr){}
-		friend class List;
 	public:
+		iterator(ListNode<T> *nd=nullptr):node(nd){}
 		bool operator!=(const iterator &itr)const{return node!=itr.node;}
-		iterator& operator++(){node=node->next;return *this;}
 		T& operator*()const{return node->data;}
 		T* operator->()const{return &node->data;}
+		iterator& operator--(){node=node->prev;return *this;}
+		iterator& operator++(){node=node->next;return *this;}
 	};
-	iterator begin()const{
-		iterator itr;
-		itr.node=head;
-		return itr;
-	}
+	//迭代函数
+	iterator begin()const{return iterator(head);}
 	iterator end()const{return iterator();}
+	//容量函数
+	inline SizeType size()const{return amount;}//元素数量
+
 	//获取迭代器
-	iterator getIterator(uint pos)const{
+	iterator getIterator(SizeType pos)const{
 		auto itr=begin();
-		for(uint i=0;i<pos;++i){
+		for(SizeType i=0;i<pos;++i){
 			if(itr!=end())++itr;
 			else break;
 		}
@@ -164,15 +181,19 @@ public:
 	}
 
 	//查询数据
-	const T* data(uint pos)const{
+	const T* data(SizeType pos)const{//返回pos位置的数据的地址
 		auto n=node(pos);
 		return n?(&n->data):nullptr;
 	}
-	T* data(uint pos){//返回pos位置的数据的地址,可以用此方法直接修改List中的数据
+	T* data(SizeType pos){//返回pos位置的数据的地址,可以用此方法直接修改List中的数据
 		auto n=node(pos);
 		return n?(&n->data):nullptr;
 	}
-	bool data(uint pos,T &value)const{//返回pos位置的数据的副本,修改副本不影响List的数据
+	T* data(condition con){//返回满足con条件的首个数据
+		auto n=node(con);
+		return n?(&n->data):nullptr;
+	}
+	bool data(SizeType pos,T &value)const{//返回pos位置的数据的副本,修改副本不影响List的数据
 		auto dataPtr=data(pos);
 		if(dataPtr){
 			value=dataPtr->data;
@@ -191,11 +212,9 @@ public:
 		}
 		return -1;//找不到
 	}
-	//表当前项数
-	inline uint size()const{return amount;}
 
 	//插入数据(在pos位置之前)
-	bool insert(uint pos,const T &newData){
+	bool insert(SizeType pos,const T &newData){
 		if(pos>amount)return false;
 		auto newNode=new ListNode<T>();
 		newNode->data=newData;
@@ -216,7 +235,7 @@ public:
 	bool push_front(const T &newData){return insert(0,newData);}
 	bool push_back(const T &newData){return insert(amount,newData);}
 	//删除数据(删除pos位置的数据)
-	bool erase(uint pos){return deleteNode(node(pos));}
+	bool erase(SizeType pos){return deleteNode(node(pos));}
 	inline bool pop_front(){return erase(0);}
 	inline bool pop_back(){return amount>0?erase(amount-1):false;}
 	//清除数据
@@ -242,11 +261,11 @@ public:
 		};
 	}
 	//删除数据(根据条件)
-	void remove_if(bool (*condition)(const T &value)){
+	void remove_if(condition con){
 		auto node=head,next=node;
 		while(node){
 			next=node->next;
-			if(condition(node->data)){
+			if(con(node->data)){
 				deleteNode(node);
 			}
 			node=next;

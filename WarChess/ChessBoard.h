@@ -52,8 +52,8 @@ public:
 	//获取棋子(坐标,查询结果),返回是否查询成功
 	bool getChessPiece(const Point2D<uint> &p,ChessPieceType &cpt){return getChessPiece(p.x,p.y,cpt);}
 	//获取棋子(横坐标,纵坐标,查询结果),返回查询到的个数,注意:cptList不会被清空
-	size_t getChessPieces(uint x,uint y,list<ChessPieceType> &cptList)const{
-		size_t ret=0;
+	SizeType getChessPieces(uint x,uint y,list<ChessPieceType> &cptList)const{
+		SizeType ret=0;
 		for(auto &cp:chessPieces){
 			if(cp.coordinate.x==x && cp.coordinate.y==y){
 				cptList.push_back(cp);
@@ -62,7 +62,7 @@ public:
 		}
 		return ret;
 	}
-	size_t getChessPieces(const Point2D<uint> &p,ChessPieceType &cptList)const{
+	SizeType getChessPieces(const Point2D<uint> &p,ChessPieceType &cptList)const{
 		return getChessPieces(p.x,p.y,cptList);
 	}
 };

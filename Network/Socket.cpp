@@ -255,7 +255,7 @@ void* Socket::acceptLoop(void *socket){
 }
 
 //收发数据
-void Socket::send(const void *buffer,size_t size){
+void Socket::send(const void *buffer,SizeType size){
 	toSendData.set(buffer,size);
 	command=Command_Send;
 }
