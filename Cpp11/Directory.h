@@ -73,5 +73,4 @@ private:
 	static bool isDotEntry(const DirectoryEntry &entry);
 	static bool isDotDotEntry(const DirectoryEntry &entry);
 };
-
-#endif // DIRECTORY_H
+#endif

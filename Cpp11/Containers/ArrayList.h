@@ -10,8 +10,8 @@
 template<typename T>
 class ArrayList{
 	//类型
-	typedef bool (*condition)(const T &val);//条件函数,用于判断val是否满足condition
-	typedef void (*forEachCallback)(T &val);//遍历函数
+	typedef function<bool(const T &val)> condition;//条件函数,用于判断val是否满足condition
+	typedef function<void(T &val)> forEachCallback;//遍历函数
 	//变量
 	List< Array<T> > arrayList;
 public:

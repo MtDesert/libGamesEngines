@@ -4,12 +4,22 @@
 #include"LuaState.h"
 #include"Thread.h"
 
-//#define GAME_SCRIPT_FUNCTION_DECL(name) static int name(lua_State *state);
-
+//脚本解读变量,根据需求可自行添加变量
 #define GAMESCRIPT_ALL_STRING_VAR(MACRO)\
-MACRO(strSay)\
-MACRO(strBody)\
-MACRO(strSceneName)
+MACRO(scriptName)/*脚本内容*/\
+MACRO(strSay)/*说话内容*/\
+MACRO(strName)/*名字*/\
+MACRO(strHead)/*头像*/\
+MACRO(strBody)/*身体形象*/
+
+//提供给脚本文件执行的函数,根据需求自行添加函数
+#define GAMESCRIPT_ALL_FUNCTIONS(MACRO)\
+MACRO(loadScript)\
+MACRO(doScript)\
+MACRO(say)\
+MACRO(nameSay)\
+MACRO(headSay)\
+MACRO(bodySay)
 
 //游戏脚本,用于执行特定的游戏代码
 //工作原理:基于lua脚本,以lua调用C++代码的方式执行,并且以线程的方式去执行调度
@@ -18,7 +28,7 @@ class GameScript{
 public:
 	GameScript();
 	~GameScript();
-	//
+
 	static GameScript *gameScript;
 
 	//脚本变量,从脚本中解读的结果,提供给控件读取
@@ -38,5 +48,9 @@ protected:
 	Thread senarioScriptThread;//脚本线程
 	bool isScriptWaiting;//脚本线程暂停,控制剧情脚本执行速度
 	virtual void scriptInit();//执行脚本前先对环境进行初始化(子类初始化)
+	//脚本函数
+#define FUNCTION_DECL(name) static int name(lua_State *state);
+	GAMESCRIPT_ALL_FUNCTIONS(FUNCTION_DECL)
+#undef FUNCTION_DECL
 };
 #endif

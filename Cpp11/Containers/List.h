@@ -16,7 +16,8 @@ template<typename T>
 class List{
 protected:
 	//类型
-	typedef bool (*condition)(const T &val);//条件函数,用于判断val是否满足condition
+	typedef function<bool(const T &val)> Condition;//条件函数,用于判断val是否满足condition
+	typedef function<bool(const T &a,const T &b)> SortFun;//排序条件函数,返回排序依据
 	//变量
 	ListNode<T> *head,*tail;//表头指针
 	SizeType amount;//列表中的项数
@@ -44,7 +45,7 @@ protected:
 		return n;
 	}
 	//获取满足条件con的首个节点
-	ListNode<T>* nodeCondition(condition con)const{
+	ListNode<T>* nodeCondition(Condition con)const{
 		auto n=head;
 		while(n){
 			if(con(n->data))break;
@@ -170,16 +171,6 @@ public:
 	//容量函数
 	inline SizeType size()const{return amount;}//元素数量
 
-	//获取迭代器
-	iterator getIterator(SizeType pos)const{
-		auto itr=begin();
-		for(SizeType i=0;i<pos;++i){
-			if(itr!=end())++itr;
-			else break;
-		}
-		return itr;
-	}
-
 	//查询数据
 	const T* data(SizeType pos)const{//返回pos位置的数据的地址
 		auto n=node(pos);
@@ -189,7 +180,7 @@ public:
 		auto n=node(pos);
 		return n?(&n->data):nullptr;
 	}
-	T* data(condition con){//返回满足con条件的首个数据
+	T* data(Condition con){//返回满足con条件的首个数据
 		auto n=node(con);
 		return n?(&n->data):nullptr;
 	}
@@ -261,7 +252,7 @@ public:
 		};
 	}
 	//删除数据(根据条件)
-	void remove_if(condition con){
+	void remove_if(Condition con){
 		auto node=head,next=node;
 		while(node){
 			next=node->next;
@@ -287,8 +278,17 @@ public:
 			}
 		}
 	}
+	//移动(根据位置),返回移动是否成功
+	bool movePrev(SizeType pos){
+		auto nd=node(pos);
+		return nd ? moveNodePrev(*nd) : false;
+	}
+	bool moveNext(SizeType pos){
+		auto nd=node(pos);
+		return nd ? moveNodeNext(*nd) : false;
+	}
 	//排序
-	void sort(bool (*compareFunc)(const T &a,const T &b)){
+	void sort(SortFun compareFunc){
 		auto n1=head,n2=head,nd=head;//nd为最值
 		for(;n1;n1=n1->next){
 			n2=n1->next;//两两比较

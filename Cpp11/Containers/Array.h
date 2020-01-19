@@ -5,12 +5,7 @@
 #include"DataBlock.h"
 
 #include<list>
-#include<functional>
-using namespace std;
 #include<string.h>
-
-//如果定义了该宏
-#define ARRAY_USE_ALLOC
 
 //数组,存储空间连续
 //和std::array不同的是,本类可以在存数据前先设定尺寸
@@ -18,7 +13,7 @@ template<typename T>
 struct Array{
 protected:
 	//类型
-	typedef bool (*condition)(const T &val);//条件函数,用于判断val是否满足condition
+	typedef function<bool(const T &val)> condition;//条件函数,用于判断val是否满足condition
 	//变量
 	T *dataPtr;//数据指针
 	SizeType length;//长度,占内存的T类型数据个数
@@ -46,18 +41,20 @@ public:
 
 	//存储空间
 	SizeType arraySize()const{return length;}//能存的元素个数
-	void setArraySize(SizeType size){//设置数组空间,注意:数组大小改变的话会清除内部的数据
+	void setArraySize(SizeType size,bool enlargeOnly=false){//设置数组空间,注意:数组大小改变的话会清除内部的数据
 		if(length==size)return;//无变化
-#ifdef ARRAY_USE_ALLOC
-		DataBlock block(dataPtr,length*sizeof(T));
-		block.memoryAllocate(size*sizeof(T));
-		dataPtr=reinterpret_cast<T*>(block.dataPointer);
-#else
-		deleteData();
-		dataPtr=new T[size];
-#endif
+		if(enlargeOnly && length>size)return;//扩容模式
+		//申请新空间,并从旧空间复制数据
+		auto newPtr=new T[size];
+		auto copyAmount=min(length,size);
+		for(SizeType i=0;i<copyAmount;++i){
+			newPtr[i]=dataPtr[i];
+		}
+		//清除旧空间,更新大小
+		delete []dataPtr;
+		dataPtr=newPtr;
 		length=size;
-		usedLength=0;
+		usedLength=min(usedLength,length);
 	}
 	//元素个数
 	SizeType size()const{return usedLength;}//当前存储的元素个数
@@ -82,10 +79,18 @@ public:
 		}
 		return nullptr;//没找到
 	}
-	int indexOf(const T &value,SizeType from=0){
+	int indexOf(const T &value,SizeType from=0)const{
 		if(from<usedLength){
 			for(auto i=from;i<usedLength;++i){
 				if(dataPtr[i]==value)return i;
+			}
+		}
+		return -1;
+	}
+	int indexOf(condition con,SizeType from=0)const{
+		if(from<usedLength){
+			for(auto i=from;i<usedLength;++i){
+				if(con(dataPtr[i]))return i;
 			}
 		}
 		return -1;
@@ -131,11 +136,7 @@ public:
 	void clear(){usedLength=0;}//清除,但不释放所占内存
 	void deleteData(){//删除数据,释放数组所占内存
 		if(dataPtr){
-#ifdef ARRAY_USE_ALLOC
-			free(dataPtr);
-#else
 			delete []dataPtr;
-#endif
 		}
 		dataPtr=nullptr;
 		usedLength=length=0;

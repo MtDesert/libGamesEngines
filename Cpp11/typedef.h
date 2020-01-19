@@ -33,4 +33,9 @@ typedef long double LongDouble;
 #include<stddef.h>
 typedef size_t SizeType;
 
+#include<string>
+#include<functional>
+using namespace std;
+typedef void (*WhenErrorString)(const string &errMsg);//错误回调函数指针,用于指向错误处理的回调函数,errMsg带有具体的错误描述
+
 #endif

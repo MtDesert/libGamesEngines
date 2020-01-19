@@ -13,5 +13,4 @@ public:
 	void sortBySuffix(bool ascending=true);//按后缀排序,默认为'.',主要支持扩展名排序
 	void splitString(const string &str,const string &splt,bool clearBeforeDo=true);//分离字符串str,分隔符为splt,保存在自身中
 };
-
 #endif

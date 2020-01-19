@@ -2,6 +2,9 @@
 #include<string.h>
 #include<stdio.h>
 
+#define WHEN_ERROR(str) if(whenError)whenError(str);
+#define WHEN_FILENAME_ERRNO WHEN_ERROR(filename+": "+strerror(errno))
+
 DataBlock::DataBlock(const void *ptr,SizeType length){set(ptr,length);}
 DataBlock::DataBlock(const DataBlock &dataBlock){*this=dataBlock;}
 DataBlock::~DataBlock(){}
@@ -16,7 +19,7 @@ bool DataBlock::openFileWrite(const string &filename,const string &mode)const{
 	return false;
 }
 
-DataBlock DataBlock::loadFile(const string &filename){
+DataBlock DataBlock::loadFile(const string &filename,WhenErrorString whenError){
 	DataBlock ret;
 	//打开文件
 	auto dataFile=::fopen(filename.data(),"rb");
@@ -28,9 +31,13 @@ DataBlock DataBlock::loadFile(const string &filename){
 			::fseek(dataFile,0,SEEK_SET);
 			if(::fread(dataPointer,size,1,dataFile)!=1);
 			ret.set(dataPointer,size);
+		}else{
+			WHEN_FILENAME_ERRNO
 		}
 		//读取完毕
 		::fclose(dataFile);
+	}else{
+		WHEN_FILENAME_ERRNO
 	}
 	return ret;
 }
@@ -90,7 +97,7 @@ string DataBlock::toString()const{
 	return dataPointer ? string((char*)dataPointer,dataLength):string();
 }
 
-void DataBlock::set(const void *ptr, SizeType length){
+void DataBlock::set(const void *ptr,SizeType length){
 	dataPointer=(decltype(dataPointer))ptr;
 	dataLength=length;
 }

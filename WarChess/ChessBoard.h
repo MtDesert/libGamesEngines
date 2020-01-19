@@ -66,5 +66,4 @@ public:
 		return getChessPieces(p.x,p.y,cptList);
 	}
 };
-
-#endif // CHESSBOARD_H
+#endif

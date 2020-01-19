@@ -2,8 +2,6 @@
 #define DATABLOCK_H
 
 #include"typedef.h"
-#include<string>
-using namespace std;
 
 //基础数据类型的get/set函数声明(基于字节操作),也可以用于枚举,返回是否get/set成功
 //Type是基础类型(枚举亦可),offset代表偏移量,用于获取不同位置的数据
@@ -90,7 +88,7 @@ public:
 	//打开/关闭文件
 	bool openFileWrite(const string &filename,const string &mode)const;//二进制只写方式调用fopen(),mode决定写入方式,返回是否成功
 	//保存/加载/附加文件
-	DataBlock loadFile(const string &filename);//从文件filename中读取所有数据到buffer中,返回是否成功(读大文件的时候很吃内存)
+	DataBlock loadFile(const string &filename,WhenErrorString whenError=nullptr);//从文件filename中读取所有数据到buffer中,返回是否成功(读大文件的时候很吃内存)
 	bool saveFile(const string &filename)const;//从内存中写入所有数据到文件中,返回是否成功
 	bool appendFile(const string &filename)const;//从内存中写入所有数据到文件中,从文件尾添加,返回是否成功
 	bool fileWrite(FILE *file)const;

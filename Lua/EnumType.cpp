@@ -1,32 +1,32 @@
 #include "EnumType.h"
 
-EnumType::EnumType():enumArray(nullptr),enumAmount(0){}
+EnumType::EnumType(){}
 EnumType::~EnumType(){clear();}
 
-void EnumType::setAmount(amountType amount){
-	clear();
-	enumArray=new string[amount];
-	if(enumArray)enumAmount=amount;
-}
-EnumType::amountType EnumType::getAmount()const{return enumAmount;}
-void EnumType::clear(){
-	delete []enumArray;
-	enumAmount=0;
-}
+void EnumType::setAmount(AmountType amount){enumValues.setArraySize(amount);}
+EnumType::AmountType EnumType::getAmount()const{return enumValues.arraySize();}
+void EnumType::clear(){enumValues.clear();}
 
-bool EnumType::setEnumName(amountType index,const string &name){
-	if(index>=enumAmount)return false;
-	enumArray[index]=name;
-	return true;
+bool EnumType::setEnumName(AmountType index,const char *name){
+	if(!name)return false;
+	auto data=enumValues.data(index);
+	if(data)*data=name;
+	return data;
 }
-bool EnumType::getEnumName(amountType index,string &name)const{
-	if(index>=enumAmount)return false;
-	name=enumArray[index];
-	return true;
+bool EnumType::setEnumName(AmountType index,const string &name){
+	auto data=enumValues.data(index);
+	if(data)*data=name;
+	return data;
 }
-bool EnumType::getEnumIndex(const string &name,amountType &index){
-	for(amountType i=0;i<enumAmount;++i){
-		if(enumArray[i]==name){
+bool EnumType::getEnumName(AmountType index,string &name)const{
+	auto data=enumValues.data(index);
+	if(data)name=*data;
+	return data;
+}
+bool EnumType::getEnumIndex(const string &name,AmountType &index){
+	for(AmountType i=0;i<enumValues.size();++i){
+		auto data=enumValues.data(i);
+		if(data && *data==name){
 			index=i;
 			return true;
 		}
