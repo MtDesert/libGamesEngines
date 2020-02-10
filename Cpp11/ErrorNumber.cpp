@@ -1,4 +1,5 @@
 #include "ErrorNumber.h"
+#include<stdio.h>
 #include<errno.h>
 
 #ifdef __MINGW32__
@@ -12,7 +13,7 @@ errorString[MACRO]=#chinese;
 #define MAX_STRING_AMOUNT 134
 static const char* errorString[MAX_STRING_AMOUNT];
 
-ErrorNumber::ErrorNumber(){
+void ErrorNumber::init(){
 	//error-base.h
 	ERROR_NUMBER_STRING(0,无错误)
 	ERROR_NUMBER_STRING(EPERM,操作不允许)
@@ -156,6 +157,6 @@ ErrorNumber::ErrorNumber(){
 }
 
 const char* ErrorNumber::getErrorString(int errorNumber){
-	if(errorNumber<MAX_STRING_AMOUNT)return errorString[errorNumber];
+	if(errorNumber>=0 && errorNumber<MAX_STRING_AMOUNT)return errorString[errorNumber];
 	else return "未定义的错误";
 }

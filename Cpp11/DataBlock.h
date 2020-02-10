@@ -86,15 +86,17 @@ public:
 	virtual ~DataBlock();
 
 	//打开/关闭文件
-	bool openFileWrite(const string &filename,const string &mode)const;//二进制只写方式调用fopen(),mode决定写入方式,返回是否成功
+	bool openFileWrite(const string &filename,const string &mode,WhenErrorString whenError=nullptr)const;//二进制只写方式调用fopen(),mode决定写入方式,返回是否成功
 	//保存/加载/附加文件
 	DataBlock loadFile(const string &filename,WhenErrorString whenError=nullptr);//从文件filename中读取所有数据到buffer中,返回是否成功(读大文件的时候很吃内存)
-	bool saveFile(const string &filename)const;//从内存中写入所有数据到文件中,返回是否成功
-	bool appendFile(const string &filename)const;//从内存中写入所有数据到文件中,从文件尾添加,返回是否成功
+	bool saveFile(const string &filename,WhenErrorString whenError=nullptr)const;//从内存中写入所有数据到文件中,返回是否成功
+	bool appendFile(const string &filename,WhenErrorString whenError=nullptr)const;//从内存中写入所有数据到文件中,从文件尾添加,返回是否成功
 	bool fileWrite(FILE *file)const;
 
+	//stdio.h的部分封装
+	static FILE* fileOpen(const string &filename,const string &mode,WhenErrorString whenError=nullptr);
 	//stdlib.h的部分封装
-	bool memoryAllocate(SizeType size,bool enlargeOnly=false);//malloc(),realloc(),enlargeOnly表示只扩充不减少
+	bool memoryAllocate(SizeType size,bool enlargeOnly=false,WhenErrorString whenError=nullptr);//malloc(),realloc(),enlargeOnly表示只扩充不减少
 	void memoryFree();//free()
 	//string.h的部分封装
 	void* memchr(int chr,SizeType num=0)const;

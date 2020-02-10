@@ -1,20 +1,21 @@
 #include"DataBlock.h"
-#include<string.h>
-#include<stdio.h>
+#include"define.h"
 
-#define WHEN_ERROR(str) if(whenError)whenError(str);
-#define WHEN_FILENAME_ERRNO WHEN_ERROR(filename+": "+strerror(errno))
+//断言宏,主要断言文件函数
+#define ASSERT_FILENAME(code) ASSERT_ERRNO(code,filename+": ");
 
 DataBlock::DataBlock(const void *ptr,SizeType length){set(ptr,length);}
 DataBlock::DataBlock(const DataBlock &dataBlock){*this=dataBlock;}
 DataBlock::~DataBlock(){}
 
-bool DataBlock::openFileWrite(const string &filename,const string &mode)const{
-	FILE *file=::fopen(filename.data(),mode.data());
+bool DataBlock::openFileWrite(const string &filename,const string &mode,WhenErrorString whenError)const{
+	auto file=fileOpen(filename.data(),mode.data(),whenError);
 	if(file){
-		fileWrite(file);
-		::fflush(file);
-		return ::fclose(file)==0;
+		ASSERT_FILENAME(::fwrite(dataPointer,dataLength,1,file)==1);
+		ASSERT_FILENAME(::fflush(file)==0);
+		auto ret=(::fclose(file)==0);
+		ASSERT_FILENAME(ret==0)
+		return ret;
 	}
 	return false;
 }
@@ -22,31 +23,34 @@ bool DataBlock::openFileWrite(const string &filename,const string &mode)const{
 DataBlock DataBlock::loadFile(const string &filename,WhenErrorString whenError){
 	DataBlock ret;
 	//打开文件
-	auto dataFile=::fopen(filename.data(),"rb");
-	if(dataFile){
-		::fseek(dataFile,0,SEEK_END);
-		SizeType size=ftell(dataFile);//获取文件大小
+	auto file=fileOpen(filename.data(),"rb",whenError);
+	if(file){
+		ASSERT_FILENAME(::fseek(file,0,SEEK_END)==0);
+		auto size=ftell(file);//获取文件大小
+		ASSERT_FILENAME(size!=-1)
 		//设定缓存大小(内存自动增长)
 		if(memoryAllocate(size,true)){//内存没问题,读取数据
-			::fseek(dataFile,0,SEEK_SET);
-			if(::fread(dataPointer,size,1,dataFile)!=1);
+			ASSERT_FILENAME(::fseek(file,0,SEEK_SET)==0);
+			ASSERT_FILENAME(::fread(dataPointer,size,1,file)==1);
 			ret.set(dataPointer,size);
-		}else{
-			WHEN_FILENAME_ERRNO
 		}
 		//读取完毕
-		::fclose(dataFile);
-	}else{
-		WHEN_FILENAME_ERRNO
+		ASSERT_FILENAME(::fclose(file)==0)
 	}
 	return ret;
 }
-bool DataBlock::saveFile(const string &filename)const{return openFileWrite(filename,"wb");}
-bool DataBlock::appendFile(const string &filename)const{return openFileWrite(filename,"ab");}
+bool DataBlock::saveFile(const string &filename,WhenErrorString whenError)const{return openFileWrite(filename,"wb",whenError);}
+bool DataBlock::appendFile(const string &filename,WhenErrorString whenError)const{return openFileWrite(filename,"ab",whenError);}
 bool DataBlock::fileWrite(FILE *file)const{return ::fwrite(dataPointer,dataLength,1,file);}
 
+FILE* DataBlock::fileOpen(const string &filename, const string &mode, WhenErrorString whenError){
+	auto file=fopen(filename.data(),mode.data());
+	ASSERT_FILENAME(file)
+	return file;
+}
+
 //stdlib.h
-bool DataBlock::memoryAllocate(SizeType size,bool enlargeOnly){
+bool DataBlock::memoryAllocate(SizeType size,bool enlargeOnly,WhenErrorString whenError){
 	if(dataLength==size)return true;//无变化
 	if(enlargeOnly && dataLength>size)return true;//容量充足
 	if(dataPointer){
@@ -57,6 +61,7 @@ bool DataBlock::memoryAllocate(SizeType size,bool enlargeOnly){
 		dataPointer=(uchar*)::malloc(size);
 	}
 	set_DataLength(dataPointer?size:0);
+	ASSERT_ERRNO(dataPointer,string("memoryAllocate: "))
 	return dataPointer;
 }
 void DataBlock::memoryFree(){
