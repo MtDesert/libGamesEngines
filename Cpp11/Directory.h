@@ -1,8 +1,8 @@
 #ifndef DIRECTORY_H
 #define DIRECTORY_H
 
-#include"typedef.h"
 #include"StringList.h"
+#include"Array.h"
 
 #include<dirent.h>
 #include<sys/stat.h>
@@ -13,8 +13,6 @@ struct DirectoryEntry:public dirent,public stat{
 	DirectoryEntry();
 	DirectoryEntry(const dirent &dirEnt);
 	~DirectoryEntry();
-
-	//bool operator==(const DirectoryEntry &directoryEntry)const;
 
 	decltype(d_ino) indexNode()const;//索引节点号
 	decltype(d_reclen) nameLength()const;//文件名长度
@@ -36,13 +34,14 @@ struct DirectoryEntry:public dirent,public stat{
 };
 
 //目录条目表,提供按特性来排序的功能
-class DirentList:public list<DirectoryEntry>{
+class DirentList:public Array<DirectoryEntry>{
 public:
 	enum SortBy{//排序,按照dirent结构体的属性来排
 		ByIndexNode,
 		ByRecLen,
 		ByType,
 		ByName,
+		ByTypeAndName,
 		AmountOf_SortBy
 	};
 	void sortBy(SortBy by);//开始排序
@@ -58,19 +57,6 @@ struct Directory{
 	void clear();//清除成员变量的值
 	string toString()const;//把目录转化成字符串的形式
 	//切换目录
-	bool changeDir(const string &dirName,bool readDir=false);//其实就相当于cd dirName命令,readDir为true的时候会读取目录并存入成员变量direntList中,不能保证目录一定能访问,请留意返回值
-	//读取目录内容
-	bool readDir();//读取目录内容,并存入成员变量direntList
-	bool readDir(StringList &stringList)const;//读取本目录下的所有条目存储在stringList里面
-	bool readDir(DirentList &entryList)const;//读取本目录下的所有条目存储在entryList里面
-
-	static bool readDir(const string &dirName,StringList &stringList);//读取目录dirName下的所有名字存入stringList,返回是否成功
-	static bool readDir(const string &dirName,DirentList &entryList);//读取目录dirName下的所有条目存入entryList,返回是否成功
-private:
-	void parseAndSaveDirName(const string &dirName);
-	static bool isDotStr(const string &str);
-	static bool isDotDotStr(const string &str);
-	static bool isDotEntry(const DirectoryEntry &entry);
-	static bool isDotDotEntry(const DirectoryEntry &entry);
+	bool changeDir(const string &path,WhenErrorString whenError=nullptr);//其实就相当于cd dirName命令,readDir为true的时候会读取目录并存入成员变量direntList中,不能保证目录一定能访问,请留意返回值
 };
 #endif

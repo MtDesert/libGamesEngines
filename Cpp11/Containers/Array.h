@@ -14,6 +14,7 @@ struct Array{
 protected:
 	//类型
 	typedef function<bool(const T &val)> condition;//条件函数,用于判断val是否满足condition
+	typedef function<bool(const T &a,const T &b)> SortFun;//排序条件函数,返回排序依据
 	//变量
 	T *dataPtr;//数据指针
 	SizeType length;//长度,占内存的T类型数据个数
@@ -79,7 +80,10 @@ public:
 		}
 		return nullptr;//没找到
 	}
-	int indexOf(const T &value,SizeType from=0)const{
+	T* firstData()const{return data(0);}
+	T* lastData()const{return data(size()-1);}
+	//数据位置
+	int indexOf(const T &value,SizeType from=0)const{//获取首个value值在表中的索引,找不到返回-1
 		if(from<usedLength){
 			for(auto i=from;i<usedLength;++i){
 				if(dataPtr[i]==value)return i;
@@ -87,7 +91,7 @@ public:
 		}
 		return -1;
 	}
-	int indexOf(condition con,SizeType from=0)const{
+	int indexOf(condition con,SizeType from=0)const{//获取首个满足条件con的值在表中的索引,找不到返回-1
 		if(from<usedLength){
 			for(auto i=from;i<usedLength;++i){
 				if(con(dataPtr[i]))return i;
@@ -112,27 +116,63 @@ public:
 	void push_front(const T &value){insert(0,value);}
 	void push_back(const T &value){insert(usedLength,value);}
 	//删除
-	void erase(SizeType pos){
+	void erase(SizeType pos){//按位置删除
 		if(!dataPtr || usedLength<=0)return;
 		for(SizeType i=pos+1;i<usedLength;++i){//数据前移
 			dataPtr[i-1]=dataPtr[i];
 		}
 		--usedLength;
 	}
-	void remove(const T &val){
+	void remove(const T &val){//按值删除,只删除一个
 		auto pos=indexOf(val);
 		if(pos>=0)erase(pos);
 	}
-	void remove_if(condition con){
-		SizeType pos=0;
+	void remove_if(condition con){//删除所有符合条件con的值
+		if(!dataPtr)return;
+		SizeType pos=0,remain=0;
 		while(pos<usedLength){
 			if(con(dataPtr[pos])){//符合删除条件
-				erase(pos);
-			}else{//不符合条件
-				++pos;
+			}else{//不符合条件,保留
+				dataPtr[remain]=dataPtr[pos];
+				++remain;
+			}
+			++pos;
+		}
+		usedLength=remain;
+	}
+	void unique(){//删除所有重复的值(参考std::list::unique)
+		SizeType len=0,a=0,b=0;
+		for(;a<usedLength;++a){
+			for(b=0;b<len;++b){
+				if(dataPtr[a]==dataPtr[b])break;//有重复
+			}
+			if(b==len){//无重复
+				dataPtr[len]=dataPtr[a];
+				++len;
+			}
+		}
+		usedLength=len;
+	}
+	//排序
+	void sort(SortFun compareFunc){
+		if(!dataPtr || !compareFunc)return;
+		SizeType posToExchange=0,sz=size(),a=0,b=0;
+		for(;a<sz;++a){
+			posToExchange=a;
+			for(b=a+1;b<sz;++b){
+				//比较,决定排序顺序
+				if(!compareFunc(dataPtr[posToExchange],dataPtr[b])){//两两比较
+					posToExchange=b;//更换最值
+				}
+			}
+			if(posToExchange!=a){//最值发生变化,则需要交换
+				T tmp=dataPtr[a];
+				dataPtr[a]=dataPtr[posToExchange];
+				dataPtr[posToExchange]=tmp;
 			}
 		}
 	}
+	//清除与释放
 	void clear(){usedLength=0;}//清除,但不释放所占内存
 	void deleteData(){//删除数据,释放数组所占内存
 		if(dataPtr){
@@ -177,10 +217,8 @@ struct Array2D{
 
 	virtual void fill(const T &value){}
 	//deal with list
-	void removePoints_NoInRange(list< Point2D<uint> > &pointList)const
-	{
-		for(auto itr=pointList.begin();itr!=pointList.end();)
-		{
+	void removePoints_NoInRange(list< Point2D<uint> > &pointList)const{
+		for(auto itr=pointList.begin();itr!=pointList.end();){
 			isInRange(*itr)?++itr:itr=pointList.erase(itr);
 		}
 	}
@@ -325,5 +363,4 @@ struct Array2D_LV2_Pointer:public Array2D<T>{
 protected:
 	T **data;
 };
-
 #endif

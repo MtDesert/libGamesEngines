@@ -28,6 +28,7 @@ struct LuaState{
 	bool getGlobalNumber(const string &name,double &value);
 	bool getGlobalInteger(const string &name,int &value);
 	bool getGlobalString(const string &name,string &value);
+	bool getGlobalFunction(const string &name);
 	//读栈顶变量
 	const char* getTopString();//返回值为接收变量
 	int getTopInteger();//返回值为接收变量
@@ -38,16 +39,17 @@ struct LuaState{
 	bool getGlobalTable(const string &name,function<bool()> callback=nullptr);//读取全局表,成功后调用readFunc来读取数据(针对元素基本确定的表)
 	int getTableLength(function<bool()> filterFunc=nullptr);//获取table的元素个数(filterFunc用于过滤)
 	bool getTableForEach(function<bool(int index)> forEachFunc=nullptr);
-	//读取表中变量(变量名,接收变量),返回是否成功
+	//读取表中变量(变量名name,接收变量value),返回是否成功
 	bool getTableBoolean(const string &name);//返回值为接收变量
 	int getTableInteger(const string &name);//返回值为接收变量
-	bool getTableBoolean(const string &name,bool &value);
+	bool getTableBoolean(const string &name, bool &value);
 	bool getTableNumber(const string &name,double &value);
 	bool getTableInteger(const string &name,int &value);
 	bool getTableString(const string &name,string &value);
-	bool getTableTable(const string &name,function<bool()> callback=nullptr);//获取当前table中名为name的table
+	bool getTableTable(const string &name,function<bool()> callback=nullptr);//获取当前table中名为name的table变量,获取成功时调用callback
 	//函数
-	void registerFunction(const char *name,lua_CFunction func);//注册函数
+	void registerFunction(const char *name,lua_CFunction func);//注册函数,把lua的名为name的函数和C函数func关联起来
+	LuaState& push(const string &para);//添加函数参数(字符串类型),返回对象本身
 	//清理
 	void clearStack();
 
@@ -57,5 +59,6 @@ struct LuaState{
 	WhenErrorString whenError;//错误信息回调函数
 private:
 	lua_State *luaState;//Lua的栈
+	int paraAmount;//参数数量,执行函数调用时用
 };
 #endif

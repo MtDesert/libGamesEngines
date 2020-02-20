@@ -1,15 +1,16 @@
-#include "Directory.h"
+#include"Directory.h"
+#include"define.h"
 
 #include<string.h>
 #include<time.h>
 
+//目录分隔符
+#define DIRECTORY_SEPERATOR "/"
+#define ASSERT_DIRECTORY(code) ASSERT_ERRNO(code,path+": ");
+
 DirectoryEntry::DirectoryEntry(){}
 DirectoryEntry::DirectoryEntry(const dirent &dirEnt):dirent(dirEnt){}
 DirectoryEntry::~DirectoryEntry(){}
-
-/*bool DirectoryEntry::operator==(const DirectoryEntry &directoryEntry)const{
-	return *this==directoryEntry;
-}*/
 
 decltype(dirent::d_ino) DirectoryEntry::indexNode()const{return d_ino;}
 decltype(dirent::d_reclen) DirectoryEntry::nameLength()const{return d_reclen;}
@@ -40,6 +41,7 @@ string DirectoryEntry::directoryTypename()const{
 
 string DirectoryEntry::name()const{return d_name;}
 string DirectoryEntry::strSize()const{
+	if(isDirectory())return"DIR";
 	char str[16],ch='B';
 	float sz(st_size);
 	if(sz>=1000){//转换成K为单位
@@ -63,8 +65,14 @@ string DirectoryEntry::strModifyDate()const{
 static bool compareIndexNode(const DirectoryEntry &entryA,const DirectoryEntry &entryB){return entryA.d_ino<entryB.d_ino;}
 static bool compareRecLen(const DirectoryEntry &entryA,const DirectoryEntry &entryB){return entryA.d_reclen<entryB.d_reclen;}
 static bool compareType(const DirectoryEntry &entryA,const DirectoryEntry &entryB){return entryA.d_type<entryB.d_type;}
-static bool compareName(const DirectoryEntry &entryA,const DirectoryEntry &entryB){
-	return strcmp(entryA.d_name,entryB.d_name)<0;
+static bool compareName(const DirectoryEntry &entryA,const DirectoryEntry &entryB){return strcmp(entryA.d_name,entryB.d_name)<0;}
+static bool compareTypeAndName(const DirectoryEntry &entryA,const DirectoryEntry &entryB){
+	//判断是否目录
+	bool aIsDir=entryA.isDirectory(),bIsDir=entryB.isDirectory();
+	if(aIsDir && !bIsDir)return true;
+	if(!aIsDir && bIsDir)return false;
+	//类型相同就按名字来排
+	return compareName(entryA,entryB);
 }
 #define DIRENTLIST_COMPARE(name) case By##name:sort(compare##name);break;
 void DirentList::sortBy(SortBy by){
@@ -73,6 +81,7 @@ void DirentList::sortBy(SortBy by){
 		DIRENTLIST_COMPARE(RecLen)
 		DIRENTLIST_COMPARE(Type)
 		DIRENTLIST_COMPARE(Name)
+		DIRENTLIST_COMPARE(TypeAndName)
 		default:;
 	}
 }
@@ -82,91 +91,56 @@ void Directory::clear(){
 	dirNames.clear();
 	direntList.clear();
 }
-string Directory::toString()const{
-	string ret;
-	if(dirNames.size()==0){
-		return ".";
-	}
-	for(auto name:dirNames){
-		ret+="/"+name;//Linux系列的风格,以后可以加上WINDOWS的风格
-	}
-	ret.erase(0,1);//去掉最开头的斜杠变成相对路径
-	return ret;
-}
-bool Directory::changeDir(const string &dirName,bool read){
-	bool ret=false;
-	dirNames.push_back(dirName);//组合出新的目录
-	if(read){
-		ret=readDir(toString(),direntList);
-	}else{
-		auto dir=opendir(toString().data());//尝试打开
-		ret=dir;
-		if(dir)closedir(dir);
-	}
-	dirNames.pop_back();//还原
-	if(ret){//目录可以访问,那么我们就保存结果
-		parseAndSaveDirName(dirName);
-	}
-	return ret;
-}
 
-bool Directory::readDir(){return readDir(direntList);}
-bool Directory::readDir(StringList &stringList)const{return readDir(toString(),stringList);}
-bool Directory::readDir(DirentList &entryList)const{return readDir(toString(),entryList);}
-
-bool Directory::isDotStr(const string &str){return str.compare(".")==0;}
-bool Directory::isDotDotStr(const string &str){return str.compare("..")==0;}
-bool Directory::isDotEntry(const DirectoryEntry &entry){return isDotStr(entry.d_name);}
-bool Directory::isDotDotEntry(const DirectoryEntry &entry){return isDotDotStr(entry.d_name);}
-
-bool Directory::readDir(const string &dirName,StringList &stringList){
-	DIR *dir=opendir(dirName.data());
-	if(!dir)return false;
-	//开始读取
-	stringList.clear();
-	dirent *entry=readdir(dir);
-	for(;entry!=nullptr;entry=readdir(dir)){
-		stringList.push_back(entry->d_name);
-	}
-	//移除.和..
-	stringList.remove_if(isDotStr);
-	//stringList.remove_if(isDotDotStr);
-	//完成
-	return closedir(dir)==0;
-}
-bool Directory::readDir(const string &dirName,DirentList &entryList){
-	DIR *dir=opendir(dirName.data());
-	if(!dir)return false;
-	//开始读取
-	entryList.clear();
-	dirent *entry=readdir(dir);
-	for(;entry!=nullptr;entry=readdir(dir)){
-		DirectoryEntry de(*entry);
-		::stat((dirName+"/"+entry->d_name).data(),&de);
-		entryList.push_back(de);
-	}
-	//移除.和..
-	entryList.remove_if(isDotEntry);
-	if(dirName=="."){
-		entryList.remove_if(isDotDotEntry);
-	}
-	//完成
-	return closedir(dir)==0;
-}
-
-void Directory::parseAndSaveDirName(const string &dirName){
-	StringList names;
-	names.splitString(dirName,"/");
-	for(auto item:names){//处理.和..的情况
-		if(item=="."){//.直接忽略
-		}else if(item==".."){//..可能要添加,可能要移除上级目录
-			if(dirNames.size() && dirNames.back()!=".."){
-				dirNames.pop_back();//弹出
-			}else{
-				dirNames.push_back(item);//item其实就是..
-			}
-		}else{//是目录名的情况下,直接添加
-			dirNames.push_back(item);
+//把路径转换成字符串列表
+static void path2stringList(const string &path,StringList &strList,bool clearBeforeConvert){
+	strList.splitString(path,DIRECTORY_SEPERATOR,clearBeforeConvert);
+	//处理.和..的情况
+	auto itr = strList.begin();
+	while(itr != strList.end()){
+		if(*itr=="." || *itr==""){itr=strList.erase(itr);}
+		else if(*itr==".."){
+			--itr;
+			itr=strList.erase(itr);//移除上级目录
+			itr=strList.erase(itr);//移除..
 		}
+		else ++itr;
 	}
+}
+//把字符串列表转换成路径
+static string stringList2path(const StringList &strList){
+	if(strList.size()==0){return ".";}
+	return strList.combineString(DIRECTORY_SEPERATOR);
+}
+
+string Directory::toString()const{return stringList2path(dirNames);}
+bool Directory::changeDir(const string &path,WhenErrorString whenError){
+	bool ret=false;
+	//生成新目录(不保证新目录一定能访问)
+	auto tmpList=dirNames;
+	path2stringList(path,tmpList,false);
+	auto fullpath=stringList2path(tmpList);
+	//开始切换目录
+	DIR *dir=opendir(fullpath.data());
+	ASSERT_DIRECTORY(dir)
+	if(dir){
+		//开始读取子目录文件
+		direntList.clear();
+		errno=0;
+		auto entry=readdir(dir);
+		for(;entry!=nullptr;entry=readdir(dir)){//得到entry信息
+			ASSERT_DIRECTORY(errno==0)//readdir
+			if(strcmp(entry->d_name,".")==0)continue;//过滤"."
+			if(strcmp(entry->d_name,"..")==0 && tmpList.size()<=0)continue;//根目录,过滤".."
+			DirectoryEntry de(*entry);
+			ASSERT_DIRECTORY(::stat((fullpath+"/"+entry->d_name).data(),&de)==0);//得到stat信息
+			direntList.push_back(de);
+		}
+		ASSERT_DIRECTORY(errno==0)//readdir
+		ASSERT_DIRECTORY(closedir(dir)==0);//关闭目录
+		//保存目录信息
+		dirNames=tmpList;
+		ret=true;
+	}
+	return ret;
 }

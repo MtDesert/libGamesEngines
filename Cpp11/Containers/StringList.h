@@ -11,6 +11,8 @@ public:
 	void sortByName(bool ascending=true);//按名字排序
 	void sortByLength(bool ascending=true);//按长度排序
 	void sortBySuffix(bool ascending=true);//按后缀排序,默认为'.',主要支持扩展名排序
+
 	void splitString(const string &str,const string &splt,bool clearBeforeDo=true);//分离字符串str,分隔符为splt,保存在自身中
+	string combineString(const string &splt="")const;//将自身的所有字符串合并成一个字符串,以splt分离
 };
 #endif

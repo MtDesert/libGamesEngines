@@ -31,3 +31,11 @@ void StringList::splitString(const string &str,const string &splt,bool clearBefo
 		start=fin + splt.length();
 	}while(fin!=string::npos);
 }
+string StringList::combineString(const string &splt)const{
+	string ret;
+	for(auto &str:*this){
+		if(ret.length())ret += splt;
+		ret += str;
+	}
+	return ret;
+}

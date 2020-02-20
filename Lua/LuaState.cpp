@@ -35,7 +35,7 @@ if(!ret){\
 	WHEN_ERROR(errStr);\
 }
 
-LuaState::LuaState():whenError(nullptr),luaState(luaL_newstate()){}
+LuaState::LuaState():whenError(nullptr),luaState(luaL_newstate()),paraAmount(0){}
 LuaState::~LuaState(){lua_close(luaState);}
 
 bool LuaState::loadFile(const string &filename){
@@ -43,7 +43,7 @@ bool LuaState::loadFile(const string &filename){
 	return true;
 }
 bool LuaState::protectCall(){
-	LUASTATE_EXECUTE(lua_pcall(luaState,0,LUA_MULTRET,0));
+	LUASTATE_EXECUTE(lua_pcall(luaState,paraAmount,LUA_MULTRET,0));
 	return true;
 }
 bool LuaState::doFile(const string &filename){
@@ -101,6 +101,12 @@ bool LuaState::getGlobalInteger(const string &name,int &value){
 }
 bool LuaState::getGlobalString(const string &name,string &value){
 	LUASTATE_GET_GLOBAL_TYPE(LUA_TSTRING,lua_tostring,"\""+name+"\" not a string")
+}
+bool LuaState::getGlobalFunction(const string &name){
+	bool ret;
+	ASSERT(lua_getglobal(luaState,name.data())==LUA_TFUNCTION,"\""+name+"\" not a function");
+	paraAmount=0;
+	return ret;
 }
 
 const char *LuaState::getTopString(){
@@ -185,7 +191,7 @@ int LuaState::getTableInteger(const string &name){
 	return ret;
 }
 
-bool LuaState::getTableBoolean(const string &name,bool &value){
+bool LuaState::getTableBoolean(const string &name, bool &value){
 	LUASTATE_GET_TABLE_TYPE(LUA_TBOOLEAN,lua_toboolean,"\""+name+"\" not a boolean")
 }
 bool LuaState::getTableNumber(const string &name,double &value){
@@ -203,14 +209,17 @@ bool LuaState::getTableTable(const string &name,function<bool()> callback){
 	bool ret=(lua_gettable(luaState,-2)==LUA_TTABLE);
 	if(ret){
 		if(callback)ret=callback();
-	}else{
-		WHEN_ERROR("\""+name+"\" not a table");
 	}
 	lua_pop(luaState,1);
 	return ret;
 }
 
 void LuaState::registerFunction(const char *name,lua_CFunction func){lua_register(luaState,name,func);}
+LuaState& LuaState::push(const string &para){
+	if(lua_pushstring(luaState,para.data()))++paraAmount;
+	return *this;
+}
+
 void LuaState::clearStack(){lua_pop(luaState,lua_gettop(luaState));}
 size_t LuaState::memorySize(){
 	auto kb=lua_gc(luaState,LUA_GCCOUNT,0);

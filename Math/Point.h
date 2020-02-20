@@ -19,6 +19,7 @@ struct Point2D{
 	Point2D(const Point2D &p):Point2D(p.x,p.y){}
 
 	void setXY(T x,T y){this->x=x;this->y=y;}
+	void setP(const Point2D<T> &p){setXY(p.x,p.y);}
 	//算术运算符
 	POINT_RETURN_P(Point2D,+)
 	POINT_RETURN_P(Point2D,-)
@@ -51,4 +52,16 @@ struct Point3D:public Point2D<T>{
 
 	void setXYZ(T x,T y,T z){setXY(x,y);this->z=z;}
 };
+
+#define POINT_OPERATOR_EXPRESSION(Type1,symbol,Type2,ReturnType)\
+ReturnType operator symbol(const Point2D<Type1> &p1,const Point2D<Type2> &p2);
+
+#define POINT_OPERATOR_2(Type1,symbol,Type2,ReturnType)\
+POINT_OPERATOR_EXPRESSION(Type1,symbol,Type2,ReturnType)\
+POINT_OPERATOR_EXPRESSION(Type2,symbol,Type1,ReturnType)
+
+POINT_OPERATOR_2(int,==,float,bool)
+POINT_OPERATOR_2(int,+,float,Point2D<int>)
+POINT_OPERATOR_2(int,-,float,Point2D<int>)
+
 #endif
