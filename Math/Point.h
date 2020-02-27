@@ -2,6 +2,7 @@
 #define POINT_H
 
 #include<cmath>
+#include"typedef.h"
 
 //二维点
 #define POINT_RETURN_P(PointType,symbol)\
@@ -63,5 +64,6 @@ POINT_OPERATOR_EXPRESSION(Type2,symbol,Type1,ReturnType)
 POINT_OPERATOR_2(int,==,float,bool)
 POINT_OPERATOR_2(int,+,float,Point2D<int>)
 POINT_OPERATOR_2(int,-,float,Point2D<int>)
+POINT_OPERATOR_2(float,+,SizeType,Point2D<float>)
 
 #endif

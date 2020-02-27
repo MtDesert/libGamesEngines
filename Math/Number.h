@@ -23,6 +23,8 @@ public:
 	static int divideRound(int devidend,int devisor);
 	//整数除法,向上取整
 	static int divideCeil(int devidend,int devisor);
+
+	static string toString(int num,int base=10);
 	//质数
 	list<ulonglong> primeNumbersList;//质数表
 	void makePrimeNumbersList(ulonglong range);//质数表,2~range为质数表范围

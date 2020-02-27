@@ -13,6 +13,21 @@ int Number::divideCeil(int devidend,int devisor){
 	DIVIDE_CONDITION(devidend%devisor)
 }
 #undef DIVIDE_CONDITION
+string Number::toString(int num,int base){
+	string ret;
+	if(base>=2 && base<=36){
+		auto devidend=num;
+		char buf[2]={0,0};
+		do{//被除数为0时停止
+			auto remain = devidend % base;//计算余数
+			buf[0] = base<=10 ? '0'+remain : 'A'+(remain-10);
+			ret.insert(0,buf);
+			//下一个
+			devidend/=base;
+		}while(devidend);
+	}
+	return ret;
+}
 
 void Number::makePrimeNumbersList(ulonglong range){
 	if(range<2){//表中无项
