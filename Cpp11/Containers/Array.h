@@ -194,30 +194,30 @@ struct Array2D{
 	//operator
 	Array2D& operator=(const Array2D<T> &another){newData(another);return *this;}
 	//init and clear
-	void newData(uint length,uint width,const T &val=T()){}
+	void newData(SizeType length,SizeType width,const T &val=T()){}
 	void newData(const Array2D<T> &another){}
 	void deleteData(){}
 	//size
-	uint getWidth()const{return width;}
-	uint getHeight()const{return height;}
-	uint getSize()const{return width*height;}
+	SizeType getWidth()const{return width;}
+	SizeType getHeight()const{return height;}
+	SizeType getSize()const{return width*height;}
 	//range
-	bool isXInRange(uint x)const{return x<width;}
-	bool isYInRange(uint y)const{return y<height;}
-	bool isInRange(uint x,uint y)const{return isXInRange(x)&&isYInRange(y);}
-	bool isInRange(const Point2D<uint> &p)const{return isInRange(p.x,p.y);}
+	bool isXInRange(SizeType x)const{return x<width;}
+	bool isYInRange(SizeType y)const{return y<height;}
+	bool isInRange(SizeType x,SizeType y)const{return isXInRange(x)&&isYInRange(y);}
+	bool isInRange(const Point2D<SizeType> &p)const{return isInRange(p.x,p.y);}
 	//locate
-	uint offset(uint x,uint y)const{return y*height+x;}
-	uint offset(const Point2D<uint> &p)const{return offset(p.x,p.y);}
+	SizeType offset(SizeType x,SizeType y)const{return y*height+x;}
+	SizeType offset(const Point2D<SizeType> &p)const{return offset(p.x,p.y);}
 	//read/write
-	virtual bool getValue(uint x,uint y,T& value)const{return false;}
-	bool getValue(const Point2D<uint> &p,T &value)const{return getValue(p.x,p.y,value);}
-	virtual bool setValue(uint x,uint y,const T &value){return false;}
-	bool setValue(const Point2D<uint> &p,const T &value){return setValue(p.x,p.y,value);}
+	virtual bool getValue(SizeType x,SizeType y,T& value)const{return false;}
+	bool getValue(const Point2D<SizeType> &p,T &value)const{return getValue(p.x,p.y,value);}
+	virtual bool setValue(SizeType x,SizeType y,const T &value){return false;}
+	bool setValue(const Point2D<SizeType> &p,const T &value){return setValue(p.x,p.y,value);}
 
 	virtual void fill(const T &value){}
 	//deal with list
-	void removePoints_NoInRange(list< Point2D<uint> > &pointList)const{
+	void removePoints_NoInRange(list< Point2D<SizeType> > &pointList)const{
 		for(auto itr=pointList.begin();itr!=pointList.end();){
 			isInRange(*itr)?++itr:itr=pointList.erase(itr);
 		}
@@ -228,14 +228,14 @@ struct Array2D{
 	 * @param seedPoint 开始填充的点
 	 * @param isMatch 用于判断两个点上的值是否匹配的函数
 	 */
-	void seedFill(list< Point2D<uint> > &pointList,const Point2D<uint> &seedPoint,std::function<bool(const T &a,const T &b)> &isMatch)const
+	void seedFill(list< Point2D<SizeType> > &pointList,const Point2D<SizeType> &seedPoint,std::function<bool(const T &a,const T &b)> &isMatch)const
 	{
 		pointList.clear();
 		if(!isInRange(seedPoint))return;
 		pointList.push_back(seedPoint);
 		//
-		Point2D<uint> around[4]={Point2D<uint>(-1,0),Point2D<uint>(1,0),Point2D<uint>(0,-1),Point2D<uint>(0,1)};
-		Point2D<uint> p;
+		Point2D<SizeType> around[4]={Point2D<SizeType>(-1,0),Point2D<SizeType>(1,0),Point2D<SizeType>(0,-1),Point2D<SizeType>(0,1)};
+		Point2D<SizeType> p;
 
 		auto itr=pointList.begin();
 		for(;itr!=pointList.end();++itr){
@@ -258,15 +258,15 @@ struct Array2D{
 		}
 	}
 protected:
-	uint width,height;
-	virtual T* pointer(uint x,uint y){return nullptr;}
+	SizeType width,height;
+	virtual T* pointer(SizeType x,SizeType y){return nullptr;}
 };
 
 template<typename T>
 struct Array2D_LV1_Pointer:public Array2D<T>{
 	Array2D_LV1_Pointer():data(nullptr){}
 	//init and clear
-	void newData(uint length,uint width,const T &val=T()){
+	void newData(SizeType length,SizeType width,const T &val=T()){
 		deleteData();
 		this->width=length;
 		this->height=width;
@@ -286,22 +286,22 @@ struct Array2D_LV1_Pointer:public Array2D<T>{
 		this->width=0;
 		this->height=0;
 	}
-	bool getValue(uint x,uint y,T& value)const{
+	bool getValue(SizeType x,SizeType y,T& value)const{
 		if(!this->isInRange(x,y))return false;
 		value=data[this->offset(x,y)];
 		return true;
 	}
-	bool setValue(uint x,uint y,const T &value){
+	bool setValue(SizeType x,SizeType y,const T &value){
 		if(!this->isInRange(x,y))return false;
 		data[this->offset(x,y)]=value;
 		return true;
 	}
 	void fill(const T &value){
-		uint size=this->getSize();
-		for(uint i=0;i<size;++i)data[i]=value;
+		SizeType size=this->getSize();
+		for(SizeType i=0;i<size;++i)data[i]=value;
 	}
 protected:
-	T* pointer(uint x, uint y){
+	T* pointer(SizeType x, SizeType y){
 		if(!this->isInRange(x,y))return nullptr;
 		return &data[this->offset(x,y)];
 	}
@@ -312,12 +312,12 @@ template<typename T>
 struct Array2D_LV2_Pointer:public Array2D<T>{
 	Array2D_LV2_Pointer():data(nullptr){}
 	//init and clear
-	void newData(uint length,uint width,const T &val=T()){
+	void newData(SizeType length,SizeType width,const T &val=T()){
 		deleteData();
 		this->width=length;
 		this->height=width;
 		data=new T*[this->width];
-		for(uint i=0;i<this->width;++i)data[i]=new T[this->height];
+		for(SizeType i=0;i<this->width;++i)data[i]=new T[this->height];
 		fill(val);
 	}
 	void newData(const Array2D_LV2_Pointer<T> &another){
@@ -325,7 +325,7 @@ struct Array2D_LV2_Pointer:public Array2D<T>{
 		this->width=another.width;
 		this->height=another.height;
 		data=new T*[this->width];
-		for(uint i=0;i<this->width;++i)
+		for(SizeType i=0;i<this->width;++i)
 		{
 			data[i]=new T[this->height];
 			memcpy(data[i],another.data[i],this->height*sizeof(T));
@@ -334,20 +334,20 @@ struct Array2D_LV2_Pointer:public Array2D<T>{
 	void deleteData(){
 		if(data)
 		{
-			for(uint i=0;i<this->width;++i)delete data[i];
+			for(SizeType i=0;i<this->width;++i)delete data[i];
 			delete data;
 		}
 		data=nullptr;
 		this->width=0;
 		this->height=0;
 	}
-	bool getValue(uint x,uint y,T& value)const
+	bool getValue(SizeType x,SizeType y,T& value)const
 	{
 		if(!this->isInRange(x,y))return false;
 		value=data[x][y];
 		return true;
 	}
-	bool setValue(uint x,uint y,const T &value)
+	bool setValue(SizeType x,SizeType y,const T &value)
 	{
 		if(!this->isInRange(x,y))return false;
 		data[x][y]=value;
@@ -355,9 +355,9 @@ struct Array2D_LV2_Pointer:public Array2D<T>{
 	}
 	void fill(const T &value)
 	{
-		for(uint x=0;x<this->width;++x)
+		for(SizeType x=0;x<this->width;++x)
 		{
-			for(uint y=0;y<this->height;++y)data[x][y]=value;
+			for(SizeType y=0;y<this->height;++y)data[x][y]=value;
 		}
 	}
 protected:

@@ -130,7 +130,7 @@ bool Directory::changeDir(const string &path,WhenErrorString whenError){
 		auto entry=readdir(dir);
 		for(;entry!=nullptr;entry=readdir(dir)){//得到entry信息
 			ASSERT_DIRECTORY(errno==0)//readdir
-			if(strcmp(entry->d_name,".")==0)continue;//过滤"."
+			//if(strcmp(entry->d_name,".")==0)continue;//过滤"."
 			if(strcmp(entry->d_name,"..")==0 && tmpList.size()<=0)continue;//根目录,过滤".."
 			DirectoryEntry de(*entry);
 			ASSERT_DIRECTORY(::stat((fullpath+DIRECTORY_SEPERATOR+entry->d_name).data(),&de)==0);//得到stat信息
