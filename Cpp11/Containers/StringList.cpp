@@ -27,8 +27,8 @@ void StringList::splitString(const string &str,const string &splt,bool clearBefo
 	SizeType start=0,fin=0;
 	do{
 		fin=str.find(splt,start);
-		push_back(str.substr(start,fin));
-		start=fin + splt.length();
+		push_back(fin != string::npos ? str.substr(start,fin-start) : str.substr(start));
+		start = fin + splt.length();
 	}while(fin!=string::npos);
 }
 string StringList::combineString(const string &splt)const{

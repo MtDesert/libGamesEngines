@@ -28,6 +28,16 @@ string Number::toString(int num,int base){
 	}
 	return ret;
 }
+string Number::double2String(double num){
+	char str[20];
+	sprintf(str,"%lf",num);
+	return str;
+}
+string Number::double2PercentString(double num){
+	char str[20];
+	sprintf(str,"%4.2f%%",num*100);
+	return str;
+}
 
 void Number::makePrimeNumbersList(ulonglong range){
 	if(range<2){//表中无项

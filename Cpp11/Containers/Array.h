@@ -67,12 +67,25 @@ public:
 		usedLength=size;
 	}
 	bool isFull()const{return usedLength>=length;}
+	void fill(const T &val){
+		if(!dataPtr)return;
+		for(SizeType i=0;i<usedLength;++i){
+			dataPtr[i]=val;
+		}
+	}
 	//访问数据
 	T* data(SizeType pos)const{//根据位置获取数据
 		if(dataPtr && pos<usedLength){
 			return &dataPtr[pos];
 		}
 		return nullptr;
+	}
+	bool setData(SizeType pos,const T &val){
+		if(dataPtr && pos < usedLength){
+			dataPtr[pos] = val;
+			return true;
+		}
+		return false;
 	}
 	T* data(condition con)const{//根据条件获取数据
 		for(SizeType i=0;i<usedLength;++i){
@@ -99,6 +112,7 @@ public:
 		}
 		return -1;
 	}
+	bool contain(const T &val)const{return indexOf(val)>=0;}//判断数组中是否包含数据val
 	//添加
 	void insert(SizeType pos,const T &value){
 		if(isFull()){
