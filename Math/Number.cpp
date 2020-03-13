@@ -39,6 +39,13 @@ string Number::double2PercentString(double num){
 	return str;
 }
 
+int Number::randomInt(int minimum,int maximum){
+	if(minimum==maximum)return minimum;
+	//开始计算
+	auto delta = maximum-minimum;
+	return minimum + rand()%delta;
+}
+
 void Number::makePrimeNumbersList(ulonglong range){
 	if(range<2){//表中无项
 		primeNumbersList.clear();

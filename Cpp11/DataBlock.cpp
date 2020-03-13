@@ -327,11 +327,11 @@ DATABLOCK_CPP_TO_ARRAY(16)
 DATABLOCK_CPP_TO_ARRAY(32)
 DATABLOCK_CPP_TO_ARRAY(64)
 
-/*void DataBlock::debug()const{
+void DataBlock::debug()const{
 	printf("DataBlock:%p %lu\n",dataPointer,dataLength);
 	if(!dataPointer)return;
 	for(SizeType i=0;i<dataLength;++i){
 		printf("%.2X ",dataPointer[i]);
 	}
 	printf("\n");
-}*/
+}

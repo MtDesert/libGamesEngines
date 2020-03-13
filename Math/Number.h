@@ -19,14 +19,15 @@ public:
 		return 0;
 	}
 
-	//整数除法,返回四舍五入结果
-	static int divideRound(int devidend,int devisor);
-	//整数除法,向上取整
-	static int divideCeil(int devidend,int devisor);
+	//整数除法(被除数,除数)
+	static int divideRound(int devidend,int devisor);//返回四舍五入结果
+	static int divideCeil(int devidend,int devisor);//向上取整数
 	//数字转字符串
 	static string toString(int num,int base=10);
 	static string double2String(double num);
 	static string double2PercentString(double num);
+	//随机数(游戏术语中有'乱数'之称)
+	static int randomInt(int minimum,int maximum);//返回随机整数(最小值<=返回值<最大值)
 	//质数
 	list<ulonglong> primeNumbersList;//质数表
 	void makePrimeNumbersList(ulonglong range);//质数表,2~range为质数表范围

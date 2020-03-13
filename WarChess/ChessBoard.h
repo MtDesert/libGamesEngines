@@ -3,7 +3,6 @@
 
 #include"ChessPiece.h"
 #include"Array.h"
-#include"List.h"
 
 /**棋盘是个容纳棋子的容器
 大多数棋盘是2D,故ChessBoard的基类定为二维数组,使用二级指针的目的是为了能创建超大棋盘(比如1000*1000)
@@ -13,7 +12,7 @@ ChessPieceType 使用ChessPiece的子类
 template<typename Lattice,typename ChessPieceType>
 class ChessBoard:public Array2D_LV2_Pointer<Lattice>{
 public:
-	List<ChessPieceType> chessPieces;//棋子表,在此表中的棋子可以显示在棋盘上
+	Array<ChessPieceType> chessPieces;//棋子表,在此表中的棋子可以显示在棋盘上
 	//构造函数
 	ChessBoard(){}
 	ChessBoard(uint width,uint height):Array2D_LV2_Pointer<Lattice>(width,height){}
@@ -32,7 +31,7 @@ public:
 	}
 	//放棋子(坐标,棋子),被引用的棋子坐标会被修改,返回是否成功
 	bool putChessPiece(const Point2D<uint> &p,ChessPieceType &cpt){return putChessPiece(p.x,p.y,cpt);}
-	
+
 	//移除棋子
 	bool removeChessPiece(uint x,uint y){
 		return true;

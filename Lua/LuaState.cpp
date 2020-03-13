@@ -1,4 +1,5 @@
 #include"LuaState.h"
+#include"define.h"
 
 //调试函数
 void luaStackDebug(lua_State *state){
@@ -20,19 +21,11 @@ void luaStackDebug(lua_State *state){
 	printf("--------\n");
 }
 
-#define WHEN_ERROR(str) if(whenError)whenError(str)
 //此宏用于code会返回LUA_OK的代码,返回非LUA_OK则会告诉上层出错了
 #define LUASTATE_EXECUTE(code)\
 if((code)!=LUA_OK){\
 	WHEN_ERROR(lua_tostring(luaState,-1));\
 	return false;\
-}
-
-//对code进行断言,断言失败则会返回错误信息
-#define ASSERT(code,errStr)\
-ret=(code);\
-if(!ret){\
-	WHEN_ERROR(errStr);\
 }
 
 LuaState::LuaState():whenError(nullptr),luaState(luaL_newstate()),paraAmount(0){}
@@ -103,8 +96,8 @@ bool LuaState::getGlobalString(const string &name,string &value){
 	LUASTATE_GET_GLOBAL_TYPE(LUA_TSTRING,lua_tostring,"\""+name+"\" not a string")
 }
 bool LuaState::getGlobalFunction(const string &name){
-	bool ret;
-	ASSERT(lua_getglobal(luaState,name.data())==LUA_TFUNCTION,"\""+name+"\" not a function");
+	bool ret=lua_getglobal(luaState,name.data())==LUA_TFUNCTION;
+	ASSERT(ret,"\""+name+"\" not a function");
 	paraAmount=0;
 	return ret;
 }
@@ -139,8 +132,8 @@ bool LuaState::readEnum(const string &enumName,EnumType &enumType){
 }
 bool LuaState::getGlobalTable(const string &name,function<bool()> callback){
 	//获取表
-	bool ret=false;
-	ASSERT(lua_getglobal(luaState,name.data())==LUA_TTABLE,"\""+name+"\" is not a table");
+	bool ret=lua_getglobal(luaState,name.data())==LUA_TTABLE;
+	ASSERT(ret,"\""+name+"\" is not a table");
 	if(ret && callback)ret=callback();
 	return ret;
 }
@@ -217,6 +210,11 @@ bool LuaState::getTableTable(const string &name,function<bool()> callback){
 void LuaState::registerFunction(const char *name,lua_CFunction func){lua_register(luaState,name,func);}
 LuaState& LuaState::push(const string &para){
 	if(lua_pushstring(luaState,para.data()))++paraAmount;
+	return *this;
+}
+LuaState& LuaState::push(int num){
+	lua_pushinteger(luaState,num);
+	++paraAmount;
 	return *this;
 }
 

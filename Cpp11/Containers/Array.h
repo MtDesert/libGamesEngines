@@ -141,6 +141,11 @@ public:
 		auto pos=indexOf(val);
 		if(pos>=0)erase(pos);
 	}
+	void remove(const T* ptr){//按指针删除
+		if(!dataPtr)return;
+		auto pos = ptr-dataPtr;
+		erase(pos);
+	}
 	void remove_if(condition con){//删除所有符合条件con的值
 		if(!dataPtr)return;
 		SizeType pos=0,remain=0;
@@ -273,7 +278,7 @@ struct Array2D{
 	}
 protected:
 	SizeType width,height;
-	virtual T* pointer(SizeType x,SizeType y){return nullptr;}
+	virtual T* pointer(SizeType x,SizeType y)const{return nullptr;}
 };
 
 template<typename T>
@@ -315,7 +320,7 @@ struct Array2D_LV1_Pointer:public Array2D<T>{
 		for(SizeType i=0;i<size;++i)data[i]=value;
 	}
 protected:
-	T* pointer(SizeType x, SizeType y){
+	virtual T* pointer(SizeType x, SizeType y)const{
 		if(!this->isInRange(x,y))return nullptr;
 		return &data[this->offset(x,y)];
 	}
@@ -339,15 +344,13 @@ struct Array2D_LV2_Pointer:public Array2D<T>{
 		this->width=another.width;
 		this->height=another.height;
 		data=new T*[this->width];
-		for(SizeType i=0;i<this->width;++i)
-		{
+		for(SizeType i=0;i<this->width;++i){
 			data[i]=new T[this->height];
 			memcpy(data[i],another.data[i],this->height*sizeof(T));
 		}
 	}
 	void deleteData(){
-		if(data)
-		{
+		if(data){
 			for(SizeType i=0;i<this->width;++i)delete data[i];
 			delete data;
 		}
@@ -355,26 +358,26 @@ struct Array2D_LV2_Pointer:public Array2D<T>{
 		this->width=0;
 		this->height=0;
 	}
-	bool getValue(SizeType x,SizeType y,T& value)const
-	{
+	bool getValue(SizeType x,SizeType y,T& value)const{
 		if(!this->isInRange(x,y))return false;
 		value=data[x][y];
 		return true;
 	}
-	bool setValue(SizeType x,SizeType y,const T &value)
-	{
+	bool setValue(SizeType x,SizeType y,const T &value){
 		if(!this->isInRange(x,y))return false;
 		data[x][y]=value;
 		return true;
 	}
-	void fill(const T &value)
-	{
-		for(SizeType x=0;x<this->width;++x)
-		{
+	void fill(const T &value){
+		for(SizeType x=0;x<this->width;++x){
 			for(SizeType y=0;y<this->height;++y)data[x][y]=value;
 		}
 	}
 protected:
+	virtual T* pointer(SizeType x,SizeType y)const{
+		if(!this->isInRange(x,y))return nullptr;
+		return &(data[x][y]);
+	}
 	T **data;
 };
 #endif

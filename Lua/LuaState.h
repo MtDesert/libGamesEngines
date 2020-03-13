@@ -50,6 +50,7 @@ struct LuaState{
 	//函数
 	void registerFunction(const char *name,lua_CFunction func);//注册函数,把lua的名为name的函数和C函数func关联起来
 	LuaState& push(const string &para);//添加函数参数(字符串类型),返回对象本身
+	LuaState& push(int num);//添加函数参数(整数类型),返回对象本身
 	//清理
 	void clearStack();
 
