@@ -15,35 +15,17 @@ DirectoryEntry::~DirectoryEntry(){}
 decltype(dirent::d_ino) DirectoryEntry::indexNode()const{return d_ino;}
 decltype(dirent::d_reclen) DirectoryEntry::nameLength()const{return d_reclen;}
 
-bool DirectoryEntry::isUnknown()const{return d_type==DT_UNKNOWN;}
-bool DirectoryEntry::isFIFO()const{return d_type==DT_FIFO;}
-bool DirectoryEntry::isCharacterDevice()const{return d_type==DT_CHR;}
-bool DirectoryEntry::isDirectory()const{return d_type==DT_DIR;}
-bool DirectoryEntry::isBlockDevice()const{return d_type==DT_BLK;}
-bool DirectoryEntry::isRegularFile()const{return d_type==DT_REG;}
-bool DirectoryEntry::isSymbolicLink()const{return d_type==DT_LNK;}
-bool DirectoryEntry::isSocket()const{return d_type==DT_SOCK;}
-
-#define DIRENT_CASE(name) case name:return #name;
-string DirectoryEntry::directoryTypename()const{
-	switch(d_type){
-		DIRENT_CASE(DT_UNKNOWN)
-		DIRENT_CASE(DT_FIFO)
-		DIRENT_CASE(DT_CHR)
-		DIRENT_CASE(DT_DIR)
-		DIRENT_CASE(DT_BLK)
-		DIRENT_CASE(DT_REG)
-		DIRENT_CASE(DT_LNK)
-		DIRENT_CASE(DT_SOCK)
-		default:return "????????";
-	}
-}
+bool DirectoryEntry::isFIFO()const{return S_ISFIFO(structStat.st_mode);}
+bool DirectoryEntry::isCharacterDevice()const{return S_ISCHR(structStat.st_mode);}
+bool DirectoryEntry::isDirectory()const{return S_ISDIR(structStat.st_mode);}
+bool DirectoryEntry::isBlockDevice()const{return S_ISBLK(structStat.st_mode);}
+bool DirectoryEntry::isRegularFile()const{return S_ISREG(structStat.st_mode);}
 
 string DirectoryEntry::name()const{return d_name;}
 string DirectoryEntry::strSize()const{
 	if(isDirectory())return"DIR";
 	char str[16],ch='B';
-	float sz(st_size);
+	float sz(structStat.st_size);
 	if(sz>=1000){//转换成K为单位
 		sz/=1000;
 		ch='K';
@@ -57,14 +39,14 @@ string DirectoryEntry::strSize()const{
 }
 string DirectoryEntry::strModifyDate()const{
 	char str[100];
-	strftime(str,100,"%x %X",localtime(&st_mtime));
+	strftime(str,100,"%x %X",localtime(&structStat.st_mtime));
 	return str;
 }
 
 //DirentList
 static bool compareIndexNode(const DirectoryEntry &entryA,const DirectoryEntry &entryB){return entryA.d_ino<entryB.d_ino;}
 static bool compareRecLen(const DirectoryEntry &entryA,const DirectoryEntry &entryB){return entryA.d_reclen<entryB.d_reclen;}
-static bool compareType(const DirectoryEntry &entryA,const DirectoryEntry &entryB){return entryA.d_type<entryB.d_type;}
+static bool compareType(const DirectoryEntry &entryA,const DirectoryEntry &entryB){return entryA.structStat.st_mode<entryB.structStat.st_mode;}
 static bool compareName(const DirectoryEntry &entryA,const DirectoryEntry &entryB){return strcmp(entryA.d_name,entryB.d_name)<0;}
 static bool compareTypeAndName(const DirectoryEntry &entryA,const DirectoryEntry &entryB){
 	//判断是否目录
@@ -133,7 +115,7 @@ bool Directory::changeDir(const string &path,WhenErrorString whenError){
 			//if(strcmp(entry->d_name,".")==0)continue;//过滤"."
 			if(strcmp(entry->d_name,"..")==0 && tmpList.size()<=0)continue;//根目录,过滤".."
 			DirectoryEntry de(*entry);
-			ASSERT_DIRECTORY(::stat((fullpath+DIRECTORY_SEPERATOR+entry->d_name).data(),&de)==0);//得到stat信息
+			ASSERT_DIRECTORY(::stat((fullpath+DIRECTORY_SEPERATOR+entry->d_name).data(),&de.structStat)==0);//得到stat信息
 			direntList.push_back(de);
 		}
 		ASSERT_DIRECTORY(errno==0)//readdir

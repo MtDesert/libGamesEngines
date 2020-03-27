@@ -2,11 +2,7 @@
 #include<stdio.h>
 
 Thread::Thread():threadFunction(NULL),threadArguments(NULL),errorNumber(0),whenThreadError(NULL){
-#ifdef __MINGW32__
-	threadID.p=NULL;threadID.x=0;
-#else
 	threadID=0;
-#endif
 }
 Thread::~Thread(){}
 
@@ -20,20 +16,12 @@ if(errorNumber){\
 void* Thread::threadStart(void *threadPtr){
 	auto thrd=reinterpret_cast<Thread*>(threadPtr);
 	thrd->threadFunction(thrd->threadArguments);//执行线程函数
-#ifdef __MINGW32__
-	thrd->threadID.p=nullptr;
-#else
 	thrd->threadID=0;
-#endif
 	return nullptr;
 }
 
 bool Thread::start(void* (*threadFunc)(void*),void *arguments){
-#ifdef __MINGW32__
-	if(threadID.p)return false;
-#else
 	if(threadID)return false;
-#endif
 	threadFunction=threadFunc;
 	threadArguments=arguments;
 	//启动线程

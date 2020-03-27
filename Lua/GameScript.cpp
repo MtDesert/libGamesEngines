@@ -1,4 +1,7 @@
 #include"GameScript.h"
+#ifdef __MINGW32__
+#include<windows.h>
+#endif
 
 GameScript* GameScript::gameScript=nullptr;
 
@@ -86,7 +89,11 @@ bool GameScript::executeSenarioScript(const string &filename){
 void GameScript::scriptWait(uint msec){
 	isScriptWaiting=true;
 	while(isScriptWaiting){
+#ifdef __MINGW32__
+		Sleep(1);
+#else
 		pthread_yield();
+#endif
 	}
 }
 void GameScript::scriptContinue(){isScriptWaiting=false;}
