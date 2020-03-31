@@ -172,6 +172,8 @@ public:
 		}
 		usedLength=len;
 	}
+	void pop_front(){erase(0);}
+	void pop_back(){erase(usedLength-1);}
 	//排序
 	void sort(SortFun compareFunc){
 		if(!dataPtr || !compareFunc)return;
