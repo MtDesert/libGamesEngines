@@ -113,6 +113,11 @@ public:
 		return -1;
 	}
 	bool contain(const T &val)const{return indexOf(val)>=0;}//判断数组中是否包含数据val
+	void forEach(function<void(T &val)> callback){
+		for(SizeType i=0;i<usedLength;++i){
+			callback(dataPtr[i]);
+		}
+	}
 	//添加
 	void insert(SizeType pos,const T &value){
 		if(isFull()){

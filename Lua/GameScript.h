@@ -7,6 +7,7 @@
 //脚本解读变量,根据需求可自行添加变量
 #define GAMESCRIPT_ALL_STRING_VAR(MACRO)\
 MACRO(scriptName)/*脚本内容*/\
+MACRO(backgroundName)/*背景名字*/\
 MACRO(strSay)/*说话内容*/\
 MACRO(strName)/*名字*/\
 MACRO(strHead)/*头像*/\
@@ -16,6 +17,7 @@ MACRO(strBody)/*身体形象*/
 #define GAMESCRIPT_ALL_FUNCTIONS(MACRO)\
 MACRO(loadScript)\
 MACRO(doScript)\
+MACRO(fadeInBackground)\
 MACRO(say)\
 MACRO(nameSay)\
 MACRO(headSay)\

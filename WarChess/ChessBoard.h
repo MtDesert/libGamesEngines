@@ -64,5 +64,19 @@ public:
 	SizeType getChessPieces(const Point2D<uint> &p,ChessPieceType &cptList)const{
 		return getChessPieces(p.x,p.y,cptList);
 	}
+	//格子操作
+	void forEachLattice(function<void(uint,uint,Lattice&)> callback){
+		if(!callback)return;
+		int w=this->getWidth(),h=this->getHeight();
+		Lattice *ltc=nullptr;
+		for(decltype(h) y=h-1;y>=0;--y){//一定要自上而下渲染
+			for(decltype(w) x=0;x<w;++x){
+				ltc=this->pointer(x,y);
+				if(ltc){
+					callback(x,y,*ltc);
+				}
+			}
+		}
+	}
 };
 #endif

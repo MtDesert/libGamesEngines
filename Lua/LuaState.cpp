@@ -183,8 +183,13 @@ int LuaState::getTableInteger(const string &name){
 	getTableInteger(name,ret);
 	return ret;
 }
+void* LuaState::getTableUserData(const string &name){
+	void* ret=nullptr;
+	getTableUserData(name,ret);
+	return ret;
+}
 
-bool LuaState::getTableBoolean(const string &name, bool &value){
+bool LuaState::getTableBoolean(const string &name,bool &value){
 	LUASTATE_GET_TABLE_TYPE(LUA_TBOOLEAN,lua_toboolean,"\""+name+"\" not a boolean")
 }
 bool LuaState::getTableNumber(const string &name,double &value){
@@ -195,6 +200,9 @@ bool LuaState::getTableInteger(const string &name,int &value){
 }
 bool LuaState::getTableString(const string &name,string &value){
 	LUASTATE_GET_TABLE_TYPE(LUA_TSTRING,lua_tostring,"\""+name+"\" not a string")
+}
+bool LuaState::getTableUserData(const string &name, void *&value){
+	LUASTATE_GET_TABLE_TYPE(LUA_TUSERDATA,lua_touserdata,"\""+name+"\" not a userdata")
 }
 bool LuaState::getTableTable(const string &name,function<bool()> callback){
 	if(!lua_istable(luaState,-1))return false;/*如果放入函数则会引发崩溃*/
@@ -216,6 +224,30 @@ LuaState& LuaState::push(int num){
 	lua_pushinteger(luaState,num);
 	++paraAmount;
 	return *this;
+}
+void LuaState::registerClass(const char *name,lua_CFunction constructorFunc){
+	clearStack();
+	lua_newtable(luaState);//用table来模拟类
+	addClassFunction("new",constructorFunc);
+	lua_setglobal(luaState,name);
+}
+void LuaState::addClassObjectSelf(void *self){
+	clearStack();
+	lua_newtable(luaState);//用table来模拟类对象
+	if(lua_pushstring(luaState,"self")){
+		lua_pushlightuserdata(luaState,self);
+		lua_settable(luaState,-3);
+	}else{
+		WHEN_ERROR("addClassObjectSelf() failed");
+	}
+}
+void LuaState::addClassFunction(const char *name,lua_CFunction func){
+	if(lua_pushstring(luaState,name)){
+		lua_pushcfunction(luaState,func);
+		lua_settable(luaState,-3);
+	}else{
+		WHEN_ERROR(string("registerClassFunction(\"")+name+"\")failed");
+	}
 }
 
 void LuaState::clearStack(){lua_pop(luaState,lua_gettop(luaState));}

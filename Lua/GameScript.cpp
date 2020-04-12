@@ -33,6 +33,12 @@ int GameScript::doOrLoad##Script(lua_State *state){\
 DO_OR_LOAD_SCRIPT(do)
 DO_OR_LOAD_SCRIPT(load)
 
+int GameScript::fadeInBackground(lua_State *state){
+	TO_STR(backgroundName,1)
+	//SCRIPT_WAIT()
+	//return 0;
+	return lua_gettop(state);
+}
 int GameScript::say(lua_State *state){
 	TO_STR(strSay,1)//说话内容
 	SCRIPT->strHead=nullptr;

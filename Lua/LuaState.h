@@ -42,15 +42,21 @@ struct LuaState{
 	//读取表中变量(变量名name,接收变量value),返回是否成功
 	bool getTableBoolean(const string &name);//返回值为接收变量
 	int getTableInteger(const string &name);//返回值为接收变量
+	void* getTableUserData(const string &name);
 	bool getTableBoolean(const string &name, bool &value);
 	bool getTableNumber(const string &name,double &value);
 	bool getTableInteger(const string &name,int &value);
 	bool getTableString(const string &name,string &value);
+	bool getTableUserData(const string &name,void* &value);
 	bool getTableTable(const string &name,function<bool()> callback=nullptr);//获取当前table中名为name的table变量,获取成功时调用callback
 	//函数
 	void registerFunction(const char *name,lua_CFunction func);//注册函数,把lua的名为name的函数和C函数func关联起来
 	LuaState& push(const string &para);//添加函数参数(字符串类型),返回对象本身
 	LuaState& push(int num);//添加函数参数(整数类型),返回对象本身
+	//类
+	void registerClass(const char *name,lua_CFunction constructorFunc);//注册名为name的类,及其相关的构造函数
+	void addClassObjectSelf(void *self);//添加self为lua调用时候的c++对象(生成对象时用)
+	void addClassFunction(const char *name,lua_CFunction func);//添加名为name的类函数(生成对象时用)
 	//清理
 	void clearStack();
 
