@@ -1,5 +1,7 @@
 #include"Number.h"
 
+IntRange::IntRange(int min,int max):minimun(min),maximun(max){}
+
 #define DIVIDE_CONDITION(condition) \
 if(devisor==0)return INT_MAX;\
 int ret=devidend/devisor;\

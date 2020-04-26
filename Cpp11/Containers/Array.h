@@ -118,6 +118,11 @@ public:
 			callback(dataPtr[i]);
 		}
 	}
+	void forEach(function<void(const T &val,SizeType index)> callback)const{
+		for(SizeType i=0;i<usedLength;++i){
+			callback(dataPtr[i],i);
+		}
+	}
 	//添加
 	void insert(SizeType pos,const T &value){
 		if(isFull()){

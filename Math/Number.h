@@ -60,4 +60,10 @@ public:
 		return greatestCommonDivisor(a,b)==1;
 	}
 };
+
+/*整数的取值范围*/
+struct IntRange{
+	IntRange(int min=0,int max=0);
+	int minimun,maximun;//最小值,最大值
+};
 #endif

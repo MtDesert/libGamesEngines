@@ -26,6 +26,7 @@ struct Point2D{
 	POINT_RETURN_P(Point2D,-)
 	POINT_RETURN_P(Point2D,*)
 	POINT_RETURN_P(Point2D,/)
+#undef POINT_RETURN_P
 	//关系运算符
 	bool operator==(const Point2D &p)const{return this->x==p.x&&this->y==p.y;}
 	bool operator!=(T val)const{return !(*this==val);}
@@ -39,7 +40,12 @@ struct Point2D{
 	}
 	double distance()const{return ::sqrt(distance2());}//直线距离
 };
+
 //三维点
+#define POINT_RETURN_P(PointType,symbol)\
+PointType operator symbol(T val)const{return PointType(this->x symbol val,this->y symbol val,z symbol val);}\
+PointType operator symbol(const PointType &p)const{return PointType(this->x symbol p.x,this->y symbol p.y,z symbol p.z);}
+
 template<typename T>
 struct Point3D:public Point2D<T>{
 	T z;
@@ -50,6 +56,11 @@ struct Point3D:public Point2D<T>{
 		this->z=z;
 	}
 	Point3D(const Point3D &p):Point3D(p.x,p.y,p.z){}
+	//算术运算符
+	POINT_RETURN_P(Point3D,+)
+	POINT_RETURN_P(Point3D,-)
+	POINT_RETURN_P(Point3D,*)
+	POINT_RETURN_P(Point3D,/)
 
 	void setXYZ(T x,T y,T z){setXY(x,y);this->z=z;}
 };
