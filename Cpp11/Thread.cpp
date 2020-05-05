@@ -37,3 +37,5 @@ bool Thread::detach(){
 	return true;
 }
 int Thread::join(){return pthread_join(threadID,NULL);}
+
+bool Thread::isRunning()const{return threadID;}

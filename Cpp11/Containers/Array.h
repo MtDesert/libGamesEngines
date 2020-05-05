@@ -36,6 +36,15 @@ public:
 		iterator& operator--(){--pos;return *this;}
 		iterator& operator++(){++pos;return *this;}
 	};
+	//运算符
+	Array<T>& operator=(const Array<T> &another){
+		clear();
+		setArraySize(another.size());
+		for(auto &dat:another){
+			push_back(dat);
+		}
+		return *this;
+	}
 	//迭代函数
 	iterator begin()const{return iterator(this,0);}
 	iterator end()const{return iterator(this,this->size());}
@@ -113,14 +122,25 @@ public:
 		return -1;
 	}
 	bool contain(const T &val)const{return indexOf(val)>=0;}//判断数组中是否包含数据val
-	void forEach(function<void(T &val)> callback){
+	//遍历
+	void forEach(function<void(T &val,SizeType index)> callback){
 		for(SizeType i=0;i<usedLength;++i){
-			callback(dataPtr[i]);
+			callback(dataPtr[i],i);
 		}
 	}
 	void forEach(function<void(const T &val,SizeType index)> callback)const{
 		for(SizeType i=0;i<usedLength;++i){
 			callback(dataPtr[i],i);
+		}
+	}
+	void forEach(function<void(T &val)> callback){
+		for(SizeType i=0;i<usedLength;++i){
+			callback(dataPtr[i]);
+		}
+	}
+	void forEach(function<void(const T &val)> callback)const{
+		for(SizeType i=0;i<usedLength;++i){
+			callback(dataPtr[i]);
 		}
 	}
 	//添加
@@ -225,9 +245,9 @@ struct Array2D{
 	//operator
 	Array2D& operator=(const Array2D<T> &another){newData(another);return *this;}
 	//init and clear
-	void newData(SizeType length,SizeType width,const T &val=T()){}
-	void newData(const Array2D<T> &another){}
-	void deleteData(){}
+	virtual void newData(SizeType length,SizeType width,const T &val=T()){}
+	virtual void newData(const Array2D<T> &another){}
+	virtual void deleteData(){}
 	//size
 	SizeType getWidth()const{return width;}
 	SizeType getHeight()const{return height;}
@@ -342,6 +362,12 @@ protected:
 template<typename T>
 struct Array2D_LV2_Pointer:public Array2D<T>{
 	Array2D_LV2_Pointer():data(nullptr){}
+
+	//运算符
+	Array2D_LV2_Pointer<T>& operator=(const Array2D_LV2_Pointer<T> &another){
+		newData(another);
+		return *this;
+	}
 	//init and clear
 	void newData(SizeType length,SizeType width,const T &val=T()){
 		deleteData();

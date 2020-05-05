@@ -25,6 +25,7 @@ public:
 
 	//状态
 	int errorNumber;//错误号
+	bool isRunning()const;//线程是否处于运行状态
 	//回调函数
 	function<void(Thread*)> whenThreadError;//出错时,如果需要读写本对象,请设置此函数
 };
