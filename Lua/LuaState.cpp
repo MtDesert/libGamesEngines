@@ -28,7 +28,9 @@ if((code)!=LUA_OK){\
 	return false;\
 }
 
-LuaState::LuaState():whenError(nullptr),luaState(luaL_newstate()),paraAmount(0){}
+LuaState::LuaState():whenError(nullptr),luaState(luaL_newstate()),paraAmount(0){
+	luaopen_base(luaState);//只允许使用基础功能,防止恶意代码通过系统调用
+}
 LuaState::~LuaState(){lua_close(luaState);}
 
 bool LuaState::loadFile(const string &filename){
@@ -41,6 +43,10 @@ bool LuaState::protectCall(){
 }
 bool LuaState::doFile(const string &filename){
 	LUASTATE_EXECUTE(luaL_dofile(luaState,filename.data()));
+	return true;
+}
+bool LuaState::doString(const string &str){
+	LUASTATE_EXECUTE(luaL_dostring(luaState,str.data()));
 	return true;
 }
 
@@ -65,7 +71,7 @@ void LuaState::setGlobalString(const string &name,const string &value){
 #define LUASTATE_GET_GLOBAL_TYPE(type,toTypeFunc,errMsg)\
 bool ret=lua_getglobal(luaState,name.data())==type;\
 if(ret){\
-	value=toTypeFunc(luaState,1);\
+	value=toTypeFunc(luaState,-1);\
 }else{\
 	WHEN_ERROR(errMsg);\
 }\
@@ -114,10 +120,30 @@ int LuaState::getTopInteger(){
 	getTopInteger(ret);
 	return ret;
 }
+bool LuaState::getTopBoolean(){
+	bool ret=false;
+	getTopBoolean(ret);
+	return ret;
+}
+
 bool LuaState::getTopInteger(int &value){
 	bool ret=lua_isinteger(luaState,-1);
 	if(ret){
 		value=lua_tointeger(luaState,-1);
+	}
+	return ret;
+}
+bool LuaState::getTopBoolean(bool &value){
+	bool ret=lua_isboolean(luaState,-1);
+	if(ret){
+		value=lua_toboolean(luaState,-1);
+	}
+	return ret;
+}
+void* LuaState::getTopUserData(){
+	void *ret=nullptr;
+	if(lua_isuserdata(luaState,-1)){
+		ret=lua_touserdata(luaState,-1);
 	}
 	return ret;
 }
@@ -222,6 +248,11 @@ LuaState& LuaState::push(const string &para){
 }
 LuaState& LuaState::push(int num){
 	lua_pushinteger(luaState,num);
+	++paraAmount;
+	return *this;
+}
+LuaState& LuaState::push(void *userData){
+	lua_pushlightuserdata(luaState,userData);
 	++paraAmount;
 	return *this;
 }

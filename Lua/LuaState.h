@@ -16,6 +16,7 @@ struct LuaState{
 	bool loadFile(const string &filename);//加载文件,不执行
 	bool protectCall();//保护方式执行
 	bool doFile(const string &filename);//加载并执行filename文件
+	bool doString(const string &str);//执行str所写的命令
 	//写全局变量(变量名,变量值),返回是否成功
 	void setGlobalBoolean(const string &name,bool value);
 	void setGlobalNumber(const string &name,double value);
@@ -29,10 +30,14 @@ struct LuaState{
 	bool getGlobalInteger(const string &name,int &value);
 	bool getGlobalString(const string &name,string &value);
 	bool getGlobalFunction(const string &name);
-	//读栈顶变量
-	const char* getTopString();//返回值为接收变量
-	int getTopInteger();//返回值为接收变量
+	//读栈顶变量(返回值为接收变量)
+	const char* getTopString();
+	int getTopInteger();
+	bool getTopBoolean();
+
 	bool getTopInteger(int &value);
+	bool getTopBoolean(bool &value);
+	void* getTopUserData();
 	//枚举
 	bool readEnum(const string &enumName,EnumType &enumType);//读取枚举类型enumName,存储到enumType中
 	//表操作
@@ -53,6 +58,7 @@ struct LuaState{
 	void registerFunction(const char *name,lua_CFunction func);//注册函数,把lua的名为name的函数和C函数func关联起来
 	LuaState& push(const string &para);//添加函数参数(字符串类型),返回对象本身
 	LuaState& push(int num);//添加函数参数(整数类型),返回对象本身
+	LuaState& push(void *userData);
 	//类
 	void registerClass(const char *name,lua_CFunction constructorFunc);//注册名为name的类,及其相关的构造函数
 	void addClassObjectSelf(void *self);//添加self为lua调用时候的c++对象(生成对象时用)
