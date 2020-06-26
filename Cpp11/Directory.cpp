@@ -37,11 +37,16 @@ string DirectoryEntry::strSize()const{
 	sprintf(str,"%.2f%c",sz,ch);
 	return str;
 }
-string DirectoryEntry::strModifyDate()const{
-	char str[100];
-	strftime(str,100,"%x %X",localtime(&structStat.st_mtime));
-	return str;
+
+#define ENTRY_TIME(Name,var) \
+string DirectoryEntry::str##Name##Time()const{\
+	char str[100];\
+	strftime(str,100,"%x %X",localtime(&structStat.var));\
+	return str;\
 }
+ENTRY_TIME(Access,st_atime)
+ENTRY_TIME(Modify,st_mtime)
+ENTRY_TIME(Change,st_ctime)
 
 //DirentList
 static bool compareIndexNode(const DirectoryEntry &entryA,const DirectoryEntry &entryB){return entryA.d_ino<entryB.d_ino;}

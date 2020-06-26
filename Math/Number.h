@@ -28,6 +28,7 @@ public:
 	static string double2PercentString(double num);
 	//随机数(游戏术语中有'乱数'之称)
 	static int randomInt(int minimum,int maximum);//返回随机整数(最小值<=返回值<最大值)
+	static float randomFloat(float minimum,float maximum);
 	//质数
 	list<ulonglong> primeNumbersList;//质数表
 	void makePrimeNumbersList(ulonglong range);//质数表,2~range为质数表范围

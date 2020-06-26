@@ -59,34 +59,57 @@ void IPAddress::setAddress(const string &str){setAddress(str.data());}
 char *IPAddress::toString()const{return inet_ntoa(address);}
 string IPAddress::toStdString()const{return toString();}
 
-//data block
 SocketDataBlock::SocketDataBlock(){readyReadWrite();}
-//SocketDataBlock类
 void SocketDataBlock::readyReadWrite(){rwSize=0;}
-#define BLOCK_ADD(Type)\
+
+#define BLOCK_RW(Type)\
 SocketDataBlock& SocketDataBlock::add(const Type &val){\
 	if(set_##Type(rwSize,val)){\
 		readWrote(sizeof(Type));\
 	}return *this;\
+}\
+SocketDataBlock& SocketDataBlock::read(Type &val){\
+	if(get_##Type(rwSize,val)){\
+		readWrote(sizeof(Type));\
+	}return *this;\
 }
-BLOCK_ADD(int8)
-BLOCK_ADD(int16)
-BLOCK_ADD(int32)
-BLOCK_ADD(int64)
 
-BLOCK_ADD(uint8)
-BLOCK_ADD(uint16)
-BLOCK_ADD(uint32)
-BLOCK_ADD(uint64)
+BLOCK_RW(int8)
+BLOCK_RW(int16)
+BLOCK_RW(int32)
+BLOCK_RW(long)
+BLOCK_RW(int64)
 
-BLOCK_ADD(wchar_t)
-BLOCK_ADD(char16_t)
-BLOCK_ADD(char32_t)
-BLOCK_ADD(float)
-BLOCK_ADD(double)
-#undef BLOCK_ADD
+BLOCK_RW(uint8)
+BLOCK_RW(uint16)
+BLOCK_RW(uint32)
+BLOCK_RW(ulong)
+BLOCK_RW(uint64)
+
+BLOCK_RW(wchar_t)
+BLOCK_RW(char16_t)
+BLOCK_RW(char32_t)
+BLOCK_RW(float)
+BLOCK_RW(double)
+#undef BLOCK_RW
+
+SocketDataBlock& SocketDataBlock::add(const DataBlock &data){
+	data.memcpyTo(&dataPointer[rwSize],dataLength-rwSize);
+	readWrote(data.dataLength);
+	return *this;
+}
 SocketDataBlock& SocketDataBlock::add(const string &val){
 	if(set_string(rwSize,val)){
+		readWrote(val.size()+1);
+	}return *this;
+}
+SocketDataBlock& SocketDataBlock::read(DataBlock &data){
+	data.memcpyFrom(&dataPointer[rwSize],dataLength-rwSize);
+	readWrote(data.dataLength);
+	return *this;
+}
+SocketDataBlock& SocketDataBlock::read(string &val){
+	if(get_string(rwSize,val)){
 		readWrote(val.size()+1);
 	}return *this;
 }
@@ -154,18 +177,21 @@ void Socket::commandLoop(){
 			case Command_Connect:{
 				auto code=::connect(SOCKET_CONNECT_ARGUMENTS);
 				errorNumber = ((code)==-1 ? ERR_NO :0);
-				if(errorNumber == EINPROGRESS || errorNumber == EAGAIN){//运行状态
-					connectStatus=Connecting;
-					PTHREAD_YIELD
-				}else{//完成状态
-					if(errorNumber){//完成,但失败
-						command=Command_Close;
-						connectStatus=Unconnected;
-						SOCKET_WHEN_CALLBACK(Error)
-					}else{//完成,成功
-						command=Command_None;
-						connectStatus=Connected;
-						SOCKET_WHEN_CALLBACK(Connected)
+				switch(errorNumber){
+					case EALREADY:case EINPROGRESS:case EAGAIN://连接中
+						connectStatus=Connecting;
+						PTHREAD_YIELD
+					break;
+					default:{
+						if(errorNumber){//完成,但失败
+							command=Command_Close;
+							connectStatus=Unconnected;
+							SOCKET_WHEN_CALLBACK(Error)
+						}else{//完成,成功
+							command=Command_None;
+							connectStatus=Connected;
+							SOCKET_WHEN_CALLBACK(Connected)
+						}
 					}
 				}
 			}break;
@@ -262,6 +288,7 @@ void Socket::send(const void *buffer,SizeType size){
 void Socket::send(const DataBlock &block){send(block.dataPointer,block.dataLength);}
 //关闭连接
 void Socket::close(){command=Command_Close;}
+void Socket::waitCloseFinish(){thread.join();}
 
 IPAddress Socket::getIPaddress()const{return IPAddress(socketAddress.sin_addr.s_addr);}
 uint16 Socket::getPort()const{return ntohs(socketAddress.sin_port);}

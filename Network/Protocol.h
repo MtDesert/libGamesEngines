@@ -4,6 +4,8 @@
 //游戏通讯协议
 //基本请求,根据需求添加更多请求
 #define CLIENT_BASE_REQUEST(MACRO)\
+MACRO(Update)\
+MACRO(Upgrade)\
 MACRO(SelectGame)\
 MACRO(Register)\
 MACRO(Login)\

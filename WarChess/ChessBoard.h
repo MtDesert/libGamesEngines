@@ -65,18 +65,23 @@ public:
 		return getChessPieces(p.x,p.y,cptList);
 	}
 	//格子操作
+#define CHESSBOARD_FOR_EACH_LATTICE \
+if(!callback)return;\
+int w=this->getWidth(),h=this->getHeight();\
+Lattice *ltc=nullptr;\
+for(decltype(h) y=h-1;y>=0;--y){/*一定要自上而下渲染*/\
+	for(decltype(w) x=0;x<w;++x){\
+		ltc=this->pointer(x,y);\
+		if(ltc){\
+			callback(x,y,*ltc);\
+		}\
+	}\
+}
 	void forEachLattice(function<void(uint,uint,Lattice&)> callback){
-		if(!callback)return;
-		int w=this->getWidth(),h=this->getHeight();
-		Lattice *ltc=nullptr;
-		for(decltype(h) y=h-1;y>=0;--y){//一定要自上而下渲染
-			for(decltype(w) x=0;x<w;++x){
-				ltc=this->pointer(x,y);
-				if(ltc){
-					callback(x,y,*ltc);
-				}
-			}
-		}
+		CHESSBOARD_FOR_EACH_LATTICE
+	}
+	void forEachLattice(function<void(uint,uint,const Lattice&)> callback)const{
+		CHESSBOARD_FOR_EACH_LATTICE
 	}
 };
 #endif

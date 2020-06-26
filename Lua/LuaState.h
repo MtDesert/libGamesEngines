@@ -9,7 +9,12 @@
 基本上每个方法的返回值都是bool类型,如果返回false则代表不成功,需要去查查errorString的内容
 */
 struct LuaState{
-	LuaState();
+	lua_State *luaState;//Lua的栈
+	bool needClose;//是否需要进行close操作,具体请看本类构造函数
+	int paraAmount;//参数数量,执行函数调用时用
+public:
+	LuaState();//创建默认的lua_State对象,可用于游戏中的配置文件读取,规则文件读取等
+	LuaState(lua_State *another);//创建用于操作another的对象,主要用于执行规则或剧情脚本时候的C++/Lua互相调用的操作
 	~LuaState();
 
 	//文件加载
@@ -22,6 +27,7 @@ struct LuaState{
 	void setGlobalNumber(const string &name,double value);
 	void setGlobalInteger(const string &name,int value);
 	void setGlobalString(const string &name,const string &value);
+	void setGlobalLightUserData(const string &name,void *data);
 	//读全局变量(变量名,接收变量),返回是否成功
 	bool getGlobalBoolean(const string &name);//返回值为接收变量
 	int getGlobalInteger(const string &name);//返回值为接收变量
@@ -29,7 +35,13 @@ struct LuaState{
 	bool getGlobalNumber(const string &name,double &value);
 	bool getGlobalInteger(const string &name,int &value);
 	bool getGlobalString(const string &name,string &value);
-	bool getGlobalFunction(const string &name);
+	bool getGlobalFunction(const string &name);//获取名为name的全局函数,成功后可以通过push来添加各种参数,准备就绪后即可调用protectCall
+	//读栈上的变量,返回是否成功
+	bool getBoolean(int index,bool &value);
+	bool getNumber(int index,double &value);
+	bool getInteger(int index,int &value);
+	bool getString(int index,string &value);
+	bool getLightUserData(int index,const void* &value);
 	//读栈顶变量(返回值为接收变量)
 	const char* getTopString();
 	int getTopInteger();
@@ -37,7 +49,6 @@ struct LuaState{
 
 	bool getTopInteger(int &value);
 	bool getTopBoolean(bool &value);
-	void* getTopUserData();
 	//枚举
 	bool readEnum(const string &enumName,EnumType &enumType);//读取枚举类型enumName,存储到enumType中
 	//表操作
@@ -52,6 +63,7 @@ struct LuaState{
 	bool getTableNumber(const string &name,double &value);
 	bool getTableInteger(const string &name,int &value);
 	bool getTableString(const string &name,string &value);
+	bool getTableFunction(const string &name);//获取表中名为name的函数,使用规则和getGlobalFunction基本一致
 	bool getTableUserData(const string &name,void* &value);
 	bool getTableTable(const string &name,function<bool()> callback=nullptr);//获取当前table中名为name的table变量,获取成功时调用callback
 	//函数
@@ -68,10 +80,10 @@ struct LuaState{
 
 	//全局状态
 	size_t memorySize();//lua目前的占用大小
+	void luaStackDebug(lua_State *state=nullptr)const;//查看state的堆栈情况,如果state为空则传入自身的luaState
 	//错误信息
 	WhenErrorString whenError;//错误信息回调函数
-private:
-	lua_State *luaState;//Lua的栈
-	int paraAmount;//参数数量,执行函数调用时用
 };
+
+void luaStackDebug(lua_State *state);
 #endif

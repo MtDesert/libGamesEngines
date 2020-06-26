@@ -4,6 +4,8 @@
 //调试函数
 void luaStackDebug(lua_State *state){
 	auto top=lua_gettop(state);
+	printf("--------start\n");
+	printf("state: %p\n",state);
 	printf("lua top: %d\n",top);
 	for(auto i=-1;i>=-top;--i){
 		auto type=lua_type(state,i);
@@ -18,7 +20,7 @@ void luaStackDebug(lua_State *state){
 		}
 		printf("\n");
 	}
-	printf("--------\n");
+	printf("--------end\n");
 }
 
 //此宏用于code会返回LUA_OK的代码,返回非LUA_OK则会告诉上层出错了
@@ -28,10 +30,14 @@ if((code)!=LUA_OK){\
 	return false;\
 }
 
-LuaState::LuaState():whenError(nullptr),luaState(luaL_newstate()),paraAmount(0){
+LuaState::LuaState():LuaState(luaL_newstate()){
+	needClose=true;
 	luaopen_base(luaState);//只允许使用基础功能,防止恶意代码通过系统调用
 }
-LuaState::~LuaState(){lua_close(luaState);}
+LuaState::LuaState(lua_State *another):luaState(another),needClose(false),paraAmount(0),whenError(nullptr){}
+LuaState::~LuaState(){
+	if(needClose)lua_close(luaState);
+}
 
 bool LuaState::loadFile(const string &filename){
 	LUASTATE_EXECUTE(luaL_loadfile(luaState,filename.data()));
@@ -67,6 +73,10 @@ void LuaState::setGlobalString(const string &name,const string &value){
 	lua_pushstring(luaState,value.data());
 	lua_setglobal(luaState,name.data());
 }
+void LuaState::setGlobalLightUserData(const string &name,void *data){
+	lua_pushlightuserdata(luaState,data);
+	lua_setglobal(luaState,name.data());
+}
 
 #define LUASTATE_GET_GLOBAL_TYPE(type,toTypeFunc,errMsg)\
 bool ret=lua_getglobal(luaState,name.data())==type;\
@@ -76,6 +86,15 @@ if(ret){\
 	WHEN_ERROR(errMsg);\
 }\
 lua_pop(luaState,1);\
+return ret;
+
+#define LUASTATE_GET_TYPE(type,toTypeFunc,errMsg)\
+bool ret=lua_type(luaState,index)==type;\
+if(ret){\
+	value=toTypeFunc(luaState,index);\
+}else{\
+	WHEN_ERROR(errMsg);\
+}\
 return ret;
 
 bool LuaState::getGlobalBoolean(const string &name){
@@ -108,6 +127,25 @@ bool LuaState::getGlobalFunction(const string &name){
 	return ret;
 }
 
+#include"Number.h"
+#define ERROR_STATEMEMT(para) "Index "+Number::toString(index)+" not a "#para
+
+bool LuaState::getBoolean(int index,bool &value){
+	LUASTATE_GET_TYPE(LUA_TBOOLEAN,lua_toboolean,ERROR_STATEMEMT(boolean))
+}
+bool LuaState::getNumber(int index,double &value){
+	LUASTATE_GET_TYPE(LUA_TNUMBER,lua_tonumber,ERROR_STATEMEMT(number))
+}
+bool LuaState::getInteger(int index,int &value){
+	LUASTATE_GET_TYPE(LUA_TNUMBER,lua_tointeger,ERROR_STATEMEMT(integer))
+}
+bool LuaState::getString(int index,string &value){
+	LUASTATE_GET_TYPE(LUA_TBOOLEAN,lua_tostring,ERROR_STATEMEMT(string))
+}
+bool LuaState::getLightUserData(int index,const void *&value){
+	LUASTATE_GET_TYPE(LUA_TLIGHTUSERDATA,lua_topointer,ERROR_STATEMEMT(pointer))
+}
+
 const char *LuaState::getTopString(){
 	const char* ret=nullptr;
 	if(lua_isstring(luaState,-1)){
@@ -137,13 +175,6 @@ bool LuaState::getTopBoolean(bool &value){
 	bool ret=lua_isboolean(luaState,-1);
 	if(ret){
 		value=lua_toboolean(luaState,-1);
-	}
-	return ret;
-}
-void* LuaState::getTopUserData(){
-	void *ret=nullptr;
-	if(lua_isuserdata(luaState,-1)){
-		ret=lua_touserdata(luaState,-1);
 	}
 	return ret;
 }
@@ -227,6 +258,14 @@ bool LuaState::getTableInteger(const string &name,int &value){
 bool LuaState::getTableString(const string &name,string &value){
 	LUASTATE_GET_TABLE_TYPE(LUA_TSTRING,lua_tostring,"\""+name+"\" not a string")
 }
+bool LuaState::getTableFunction(const string &name){
+	if(!lua_istable(luaState,-1))return false;/*如果放入函数则会引发崩溃*/\
+	lua_pushstring(luaState,name.data());\
+	bool ret=(lua_gettable(luaState,-2)==LUA_TFUNCTION);
+	ASSERT(ret,"\""+name+"\" not a function");
+	paraAmount=0;
+	return ret;
+}
 bool LuaState::getTableUserData(const string &name, void *&value){
 	LUASTATE_GET_TABLE_TYPE(LUA_TUSERDATA,lua_touserdata,"\""+name+"\" not a userdata")
 }
@@ -286,4 +325,8 @@ size_t LuaState::memorySize(){
 	auto kb=lua_gc(luaState,LUA_GCCOUNT,0);
 	auto b=lua_gc(luaState,LUA_GCCOUNTB,0);
 	return (kb<<10)+b;
+}
+void LuaState::luaStackDebug(lua_State *state)const{
+	if(!state)state=luaState;
+	::luaStackDebug(state);
 }

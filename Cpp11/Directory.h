@@ -28,7 +28,9 @@ struct DirectoryEntry:public dirent{
 	//字符串值(推导结果)
 	string name()const;//条目的名字
 	string strSize()const;//条目的大小(以B,K,M,G为单位,显示大概数值)
-	string strModifyDate()const;
+	string strAccessTime()const;//访问时间(字符串)
+	string strModifyTime()const;//修改时间(字符串)
+	string strChangeTime()const;//权限变更时间(字符串)
 };
 
 //目录条目表,提供按特性来排序的功能

@@ -37,24 +37,31 @@ public:
 	void readyReadWrite();//准备进行读写
 	inline void readWrote(int delta){rwSize+=delta;}//修改已经读写的数据量
 
-#define BLOCK_ADD(Type) SocketDataBlock& add(const Type &val);
-	BLOCK_ADD(int8)
-	BLOCK_ADD(int16)
-	BLOCK_ADD(int32)
-	BLOCK_ADD(int64)
+#define BLOCK_RW(Type)\
+	SocketDataBlock& add(const Type &val);\
+	SocketDataBlock& read(Type &val);
 
-	BLOCK_ADD(uint8)
-	BLOCK_ADD(uint16)
-	BLOCK_ADD(uint32)
-	BLOCK_ADD(uint64)
+	BLOCK_RW(int8)
+	BLOCK_RW(int16)
+	BLOCK_RW(int32)
+	BLOCK_RW(long)
+	BLOCK_RW(int64)
 
-	BLOCK_ADD(wchar_t)
-	BLOCK_ADD(char16_t)
-	BLOCK_ADD(char32_t)
-	BLOCK_ADD(float)
-	BLOCK_ADD(double)
-#undef BLOCK_ADD
-	SocketDataBlock& add(const string &val);
+	BLOCK_RW(uint8)
+	BLOCK_RW(uint16)
+	BLOCK_RW(uint32)
+	BLOCK_RW(ulong)
+	BLOCK_RW(uint64)
+
+	BLOCK_RW(wchar_t)
+	BLOCK_RW(char16_t)
+	BLOCK_RW(char32_t)
+	BLOCK_RW(float)
+	BLOCK_RW(double)
+
+	BLOCK_RW(string)
+	BLOCK_RW(DataBlock)
+#undef BLOCK_RW
 };
 
 //套接字,原意为"插座",主要用于主动和被动连接
@@ -113,6 +120,7 @@ public:
 	DataBlock recvData;//已收到的数据,请在whenSocketReceived中读取
 	//关闭连接
 	void close();
+	void waitCloseFinish();//等待关闭结束,可能阻塞
 
 	//状态
 	int errorNumber;//错误号,出错的原因保存在此

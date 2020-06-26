@@ -44,8 +44,12 @@ string Number::double2PercentString(double num){
 int Number::randomInt(int minimum,int maximum){
 	if(minimum==maximum)return minimum;
 	//开始计算
-	auto delta = maximum-minimum;
-	return minimum + rand()%delta;
+	return minimum + rand()%(maximum-minimum);
+}
+float Number::randomFloat(float minimum,float maximum){
+	if(minimum==maximum)return minimum;
+	//开始计算
+	return minimum + (float)rand()/RAND_MAX * (maximum-minimum);
 }
 
 void Number::makePrimeNumbersList(ulonglong range){
