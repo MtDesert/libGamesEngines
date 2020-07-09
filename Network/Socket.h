@@ -9,9 +9,9 @@
 #else
 	#include<sys/socket.h>
 	#include<netinet/in.h>
+	#include<sys/epoll.h>
 #endif
 
-#include"Thread.h"
 #include"DataBlock.h"
 
 //IP地址
@@ -62,6 +62,7 @@ public:
 	BLOCK_RW(string)
 	BLOCK_RW(DataBlock)
 #undef BLOCK_RW
+	SocketDataBlock& add(const char* val);
 };
 
 //套接字,原意为"插座",主要用于主动和被动连接
@@ -73,31 +74,11 @@ class Socket{
 	int createSocket();
 	void setSocketAddress(const IPAddress &ipAddress,uint16 port);
 
-	//pthread回调函数,用线程处理阻塞函数
-#define SOCKET_PTHREAD(name) \
-	static void* name(void *socket);\
-	void name();
-
-	SOCKET_PTHREAD(commandLoop)
-	SOCKET_PTHREAD(acceptLoop)
-#undef SOCKET_PTHREAD
-	static void whenThreadError(Thread *thread);
 	//变量
 	int descriptor;//socket描述符
 	sockaddr_in socketAddress;//套接字信息
-	Thread thread;//线程,连接监听等动作通过线程进行异步操作
-	//缓冲区
-	Socket *newAcceptedSocket;//新接收到的套接字,具体请看accept相关过程
-	DataBlock toSendData;//要发送的数据
-
-	//命令
-	enum Command{
-		Command_None,//无操作
-		Command_Connect,//连接命令
-		Command_Send,//发送数据
-		Command_Close//关闭连接
-	};
-	Command command;
+	//epoll
+	int epollFD;
 public:
 	Socket();
 	~Socket();
@@ -107,20 +88,23 @@ public:
 	void connect(const string &ipAddress,uint16 port);
 	void connect(const char *ipAddress,uint16 port);
 	void connect(uint32 ipAddress,uint16 port);
+	bool isConnected;//是否处于连接状态
 
 	//被动连接
 	void listenPort(uint16 port);//开始接受端口port连进来的连接
-	void waitListenFinish();//等待连接完成,可能阻塞
-	Socket* acceptedSocket()const;//获取刚连进来的套接字
+	void acceptLoop();//接受循环,服务端专用
+	Socket *newAcceptSocket;//新接入的socket
 
 	//收发数据
-	void send(const void *buffer,SizeType size);
-	void send(const DataBlock &block);
+	bool send(const void *buffer,SizeType size);
+	bool send(const DataBlock &block);
+
+	int epollWait();
+	void epollEvent(epoll_event &ev);
 	DataBlock sentData;//已发送的数据,请在whenSocketSent中读取
 	DataBlock recvData;//已收到的数据,请在whenSocketReceived中读取
 	//关闭连接
 	void close();
-	void waitCloseFinish();//等待关闭结束,可能阻塞
 
 	//状态
 	int errorNumber;//错误号,出错的原因保存在此
@@ -131,7 +115,6 @@ public:
 		 Connecting,//连接中
 		 Connected//已连接
 	};
-	ConnectStatus getConnectStatus()const;
 	//回调函数
 #define SOCKET_WHEN(name) \
 	void (*whenSocket##name)(Socket *socket);
@@ -141,9 +124,11 @@ public:
 	SOCKET_WHEN(Accepted)//被动连接成功
 	SOCKET_WHEN(Sent)//数据发送
 	SOCKET_WHEN(Received)//数据接收
+	SOCKET_WHEN(Disconnected)//连接断开
 #undef SOCKET_WHEN
 	void *userData;//用户数据,可在回调函数中获得
-private:
-	ConnectStatus connectStatus;
+
+	//轮询
+	static int addTimeSlice(uint msec);
 };
 #endif
