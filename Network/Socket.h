@@ -110,11 +110,7 @@ public:
 	int errorNumber;//错误号,出错的原因保存在此
 	IPAddress getIPaddress()const;
 	uint16 getPort()const;
-	enum ConnectStatus{//连接状态
-		 Unconnected,//未链接
-		 Connecting,//连接中
-		 Connected//已连接
-	};
+
 	//回调函数
 #define SOCKET_WHEN(name) \
 	void (*whenSocket##name)(Socket *socket);

@@ -210,9 +210,9 @@ void Socket::acceptLoop(){
 				newSocket->socketAddress=socketAddress;//套接地址
 				newSocket->isConnected=true;
 				//回调函数
-				newSocket->whenSocketSent=whenSocketSent;
-				newSocket->whenSocketReceived=whenSocketReceived;
-				newSocket->whenSocketDisconnected=whenSocketDisconnected;
+				//newSocket->whenSocketSent=whenSocketSent;
+				//newSocket->whenSocketReceived=whenSocketReceived;
+				//newSocket->whenSocketDisconnected=whenSocketDisconnected;
 				//触发Accepted事件
 				newAcceptSocket=newSocket;
 				SOCKET_WHEN_CALLBACK(Accepted)
