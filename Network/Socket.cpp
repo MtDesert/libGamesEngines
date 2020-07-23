@@ -47,13 +47,10 @@ IPAddress::IPAddress(uint32 addr){address.s_addr=addr;}
 IPAddress::IPAddress(const char *str){setAddress(str);}
 IPAddress::IPAddress(const string &str){setAddress(str);}
 
-#define SOCKET_WHEN(name) whenSocket##name(NULL)
+#define WHEN(name) whenSocket##name(NULL),
 Socket::Socket():descriptor(0),epollFD(0),isConnected(false),newAcceptSocket(NULL),errorNumber(0),
-	SOCKET_WHEN(Error),//错误处理
-	SOCKET_WHEN(Connected),//主动连接成功
-	SOCKET_WHEN(Accepted),//被动连接成功
-	SOCKET_WHEN(Sent),//数据发送
-	SOCKET_WHEN(Received),//数据接收
+	SOCKET_ALL_EVENTS(WHEN)
+#undef WHEN
 	userData(nullptr){}
 Socket::~Socket(){}
 
@@ -67,7 +64,7 @@ SocketDataBlock::SocketDataBlock(){readyReadWrite();}
 void SocketDataBlock::readyReadWrite(){rwSize=0;}
 
 #define BLOCK_RW(Type)\
-SocketDataBlock& SocketDataBlock::add(const Type &val){\
+SocketDataBlock& SocketDataBlock::write(const Type &val){\
 	if(set_##Type(rwSize,val)){\
 		readWrote(sizeof(Type));\
 	}return *this;\
@@ -97,12 +94,12 @@ BLOCK_RW(float)
 BLOCK_RW(double)
 #undef BLOCK_RW
 
-SocketDataBlock& SocketDataBlock::add(const DataBlock &data){
+SocketDataBlock& SocketDataBlock::write(const DataBlock &data){
 	data.memcpyTo(&dataPointer[rwSize],dataLength-rwSize);
 	readWrote(data.dataLength);
 	return *this;
 }
-SocketDataBlock& SocketDataBlock::add(const string &val){
+SocketDataBlock& SocketDataBlock::write(const string &val){
 	if(set_string(rwSize,val)){
 		readWrote(val.size());
 		dataPointer[rwSize]='\0';
@@ -119,7 +116,7 @@ SocketDataBlock& SocketDataBlock::read(string &val){
 		readWrote(val.size()+1);
 	}return *this;
 }
-SocketDataBlock& SocketDataBlock::add(const char *val){
+SocketDataBlock& SocketDataBlock::write(const char *val){
 	if(set_string(rwSize,val)){
 		readWrote(strlen(val));
 		dataPointer[rwSize]='\0';
@@ -141,7 +138,6 @@ void Socket::connect(const IPAddress &ipAddress,uint16 port){
 	//开始连接
 	auto ret=::connect(SOCKET_CONNECT_ARGUMENTS);
 	errorNumber=(ret==-1 ? ERR_NO : 0);//errorNumber很可能处于连接中的状态
-	printf("socket连接中\n");
 }
 
 #define SOCKET_CONNECT(type) \
@@ -199,20 +195,15 @@ void Socket::acceptLoop(){
 		auto eventAmount=epoll_wait(epollFD,eventArray,256,0);//等待事件发生
 		for(int i=0;i<eventAmount;++i){//开始处理所有事件
 			pEvent=&eventArray[i];
-			printEpoll(*pEvent);
 			//判断是客户端的socket还是服务端的socket
 			if(pEvent->data.ptr==this){//服务端监听用的socket
 				socklen_t addrLen=sizeof(socketAddress);
-				int fd=::accept(descriptor,(sockaddr*)&socketAddress,&addrLen);//接受连接
+				int fd=::accept4(descriptor,(sockaddr*)&socketAddress,&addrLen,SOCK_NONBLOCK);//接受连接
 				//新socket
 				auto newSocket=new Socket();
 				newSocket->descriptor=fd;//描述符
 				newSocket->socketAddress=socketAddress;//套接地址
 				newSocket->isConnected=true;
-				//回调函数
-				//newSocket->whenSocketSent=whenSocketSent;
-				//newSocket->whenSocketReceived=whenSocketReceived;
-				//newSocket->whenSocketDisconnected=whenSocketDisconnected;
 				//触发Accepted事件
 				newAcceptSocket=newSocket;
 				SOCKET_WHEN_CALLBACK(Accepted)
@@ -235,54 +226,80 @@ void Socket::acceptLoop(){
 	::close(epollFD);
 }
 
-//收发数据
-bool Socket::send(const void *buffer,SizeType size){
-	if(!isConnected)return isConnected;
-	//连接状态下才发送
-	int sndAmount=::send(descriptor,buffer,size,0);
-	if(sndAmount>=0){//发送数据
-		sentData.set(buffer,sndAmount);
-	}else if(sndAmount==-1){//出错
+bool Socket::send(){
+	//未连接
+	if(!isConnected)return false;
+	//不断尝试send,直到数据发完,或者缓冲区过满为止
+	int sendLen=0;
+	do{
+		SOCKET_WHEN_CALLBACK(Send)//用户先补充数据
+		if(sendData.hasData()){//有数据,开始发送
+			do{//循环发送
+				sendLen = ::send(descriptor,sendData.dataPointer,sendData.dataLength,0);//发送!
+				if(sendLen>0){//调整发送缓冲,再发送
+					sendData.set(&sendData.dataPointer[sendLen],sendData.dataLength-sendLen);
+				}
+			}while(sendLen>0 && sendData.hasData());
+			//发送完毕事件
+			if(!sendData.hasData()){
+				SOCKET_WHEN_CALLBACK(Sent)
+			}
+		}else break;//没有补充数据,发送结束
+		//printf("循环结束%d\n",sendLen);
+	}while(sendLen>0);
+	//发送完毕
+	if(sendLen==-1 && ERR_NO!=EAGAIN){//出错
 		errorNumber=ERR_NO;
 		SOCKET_WHEN_CALLBACK(Error)
 	}
 	return isConnected;
 }
-bool Socket::send(const DataBlock &block){return send(block.dataPointer,block.dataLength);}
+bool Socket::recv(){
+	int recvLen=0;
+	do{//循环收数据,读到无数据可读为止
+		SOCKET_WHEN_CALLBACK(Receive)
+		recvLen=::recv(descriptor,recvData.dataPointer,recvData.dataLength,0);
+		if(recvLen>0){//读取数据后,调整接收缓冲
+			recvData.set(&recvData.dataPointer[recvLen],recvData.dataLength-recvLen);
+			SOCKET_WHEN_CALLBACK(Received)//收到数据后,立刻交给用户处理
+		}
+	}while(recvLen>0);
+	//读取结束
+	if(recvLen==0){//连接断开
+		SOCKET_WHEN_CALLBACK(Disconnected)
+	}else if(recvLen==-1 && ERR_NO!=EAGAIN){//出错
+		errorNumber=ERR_NO;
+		SOCKET_WHEN_CALLBACK(Error)
+		return false;
+	}
+	return true;
+}
+
 int Socket::epollWait(){
 	struct epoll_event ev;
 	memset(&ev,0,sizeof(ev));
 	auto amount=epoll_wait(epollFD,&ev,1,0);
-	if(amount){
+	if(amount>0){
 		epollEvent(ev);
 	}
 	return amount;
 }
 void Socket::epollEvent(epoll_event &ev){
-	//开始处理事件
 	printEpoll(ev);
+	//开始处理事件
 	if(ev.events & EPOLLIN){//有数据进来了,可读
-		uint8 buffer[BUFSIZ];
-		auto recvLen=recv(descriptor,buffer,BUFSIZ,0);
-		if(recvLen>0){
-			recvData.set(buffer,recvLen);
-			SOCKET_WHEN_CALLBACK(Received)
-			recvData.set();
-		}else if(recvLen==-1){
-			errorNumber=ERR_NO;
-			SOCKET_WHEN_CALLBACK(Error);
-		}
+		recv();
 	}
 	if(ev.events & EPOLLPRI){
 		printf("socket(%p) exceptional condition!\n",this);
 	}
 	if(ev.events & EPOLLOUT){//有数据发出去了
-		if(isConnected){//已连接,触发发送事件
-			SOCKET_WHEN_CALLBACK(Sent)
-		}else{//未连接,改成连接状态
+		if(!isConnected){//连接状态
 			isConnected=true;
 			SOCKET_WHEN_CALLBACK(Connected)
 		}
+		//发送数据
+		send();
 	}
 	if(ev.events & EPOLLERR){
 		printf("socket(%p) error!\n",this);

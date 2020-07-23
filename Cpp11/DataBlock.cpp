@@ -107,6 +107,7 @@ void DataBlock::set(const void *ptr,SizeType length){
 	dataLength=length;
 }
 void DataBlock::set(const DataBlock &block){set(block.dataPointer,block.dataLength);}
+bool DataBlock::hasData()const{return dataPointer && dataLength>0;}
 
 DATABLOCK_TYPE_CPP(int8)
 DATABLOCK_TYPE_CPP(int16)

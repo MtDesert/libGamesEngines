@@ -38,7 +38,7 @@ public:
 	inline void readWrote(int delta){rwSize+=delta;}//修改已经读写的数据量
 
 #define BLOCK_RW(Type)\
-	SocketDataBlock& add(const Type &val);\
+	SocketDataBlock& write(const Type &val);\
 	SocketDataBlock& read(Type &val);
 
 	BLOCK_RW(int8)
@@ -62,8 +62,19 @@ public:
 	BLOCK_RW(string)
 	BLOCK_RW(DataBlock)
 #undef BLOCK_RW
-	SocketDataBlock& add(const char* val);
+	SocketDataBlock& write(const char* val);
 };
+
+//SOCKET的全部事件
+#define SOCKET_ALL_EVENTS(MACRO)\
+MACRO(Connected)/*连接成功*/\
+MACRO(Disconnected)/*连接断开*/\
+MACRO(Accepted)/*收到连接*/\
+MACRO(Send)/*要发送数据,需要用户补充数据*/\
+MACRO(Sent)/*数据发送完毕*/\
+MACRO(Receive)/*要接收数据,需要用户准备接收*/\
+MACRO(Received)/*接收数据完毕*/\
+MACRO(Error)/*出错*/\
 
 //套接字,原意为"插座",主要用于主动和被动连接
 //主动连接的方法为connect,需要提供目标IP地址和端口
@@ -96,12 +107,12 @@ public:
 	Socket *newAcceptSocket;//新接入的socket
 
 	//收发数据
-	bool send(const void *buffer,SizeType size);
-	bool send(const DataBlock &block);
+	bool send();
+	bool recv();
 
 	int epollWait();
 	void epollEvent(epoll_event &ev);
-	DataBlock sentData;//已发送的数据,请在whenSocketSent中读取
+	DataBlock sendData;//要发送的数据,请在whenSocketSend中读取
 	DataBlock recvData;//已收到的数据,请在whenSocketReceived中读取
 	//关闭连接
 	void close();
@@ -112,16 +123,9 @@ public:
 	uint16 getPort()const;
 
 	//回调函数
-#define SOCKET_WHEN(name) \
-	void (*whenSocket##name)(Socket *socket);
-
-	SOCKET_WHEN(Error)//错误处理
-	SOCKET_WHEN(Connected)//主动连接成功
-	SOCKET_WHEN(Accepted)//被动连接成功
-	SOCKET_WHEN(Sent)//数据发送
-	SOCKET_WHEN(Received)//数据接收
-	SOCKET_WHEN(Disconnected)//连接断开
-#undef SOCKET_WHEN
+#define WHEN(name) void (*whenSocket##name)(Socket *socket);
+	SOCKET_ALL_EVENTS(WHEN)
+#undef WHEN
 	void *userData;//用户数据,可在回调函数中获得
 
 	//轮询

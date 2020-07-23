@@ -118,6 +118,7 @@ public:
 	//设置数据块内容(请留意原来的指针是否用于申请内存)
 	void set(const void *ptr=nullptr,SizeType length=0);
 	void set(const DataBlock &block);
+	bool hasData()const;
 
 	//子数据块操作
 	DataBlock subDataBlock(SizeType offset,SizeType length)const;//根据offset和length获取特定位置的数据块,返回子数据块

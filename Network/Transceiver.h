@@ -1,13 +1,6 @@
 #ifndef TRANSCEIVER_H
 #define TRANSCEIVER_H
 
-//收发器主要事件
-#define TRANSCEIVER_EVENT(MACRO)\
-WHEN(Connected)\
-WHEN(Sent)\
-WHEN(Received)\
-WHEN(Disconnected)
-
 #include"Socket.h"
 //收发器,负责传输数据,包括各种简单报文,不定长报文,大文件等
 class Transceiver{
@@ -18,7 +11,9 @@ protected:
 	SizeType sentSize,sendFileSize;//发送大小/总大小
 	SizeType receivedSize,recvFileSize;//接收大小/总大小
 	//收发缓存
-	SocketDataBlock readBuffer,writeBuffer;
+	static const SizeType defaultHeaderSize;//默认包头大小
+	uint16 packetLength;//包体大小(不包括包头)
+	SocketDataBlock readBuffer,writeBuffer;//读写缓冲
 public:
 	Transceiver();
 	~Transceiver();
@@ -27,14 +22,19 @@ public:
 	int epollWait();
 	//套接字事件
 #define WHEN(name) static void whenSocket##name(Socket*);
-	TRANSCEIVER_EVENT(WHEN)
+	SOCKET_ALL_EVENTS(WHEN)
 #undef WHEN
+	//收发器事件
 	void (*whenTransceiverReceived)(Transceiver *transceiver);//接收完毕后调用此参数
-	//发送数据过程
+	void whenSend();//当需要发送时,自动填充数据
+	void whenSent();//当发送完毕时
+	void whenReceive();//需要接收时,准备好缓冲区
+	//收发数据过程
 	SocketDataBlock& readySend(const string &command="");//准备发送,并以指令command为准,可利用返回的数据块来添加数据
 	virtual bool sendData();//开始生成报文,发送数据
+	virtual bool receiveData();//开始接收数据,并检查数据完整度和触发事件
 	//发送文件过程
-	bool sendFile(const string &filename);//发送文件
+	bool sendFile(const char *filename);//发送文件
 	bool sendFileData();//发送文件数据,返回是否执行了发送过程(此函数在发送文件的过程中可能会被频繁调用)
 	bool finishSendFile();//发送文件结束
 	//接收文件过程
