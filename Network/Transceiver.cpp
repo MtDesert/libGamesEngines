@@ -2,13 +2,15 @@
 #include"ErrorNumber.h"
 #include<string.h>
 
+#define WHEN_CALLBACK(name) if(whenTransceiver##name)whenTransceiver##name(this);
+
 //发送缓冲的大小
 const SizeType Transceiver::defaultHeaderSize=sizeof(Transceiver::packetLength);
 #define RW_BUFFER_SIZE 65536
 
 Transceiver::Transceiver():socket(NULL),fileToSend(NULL),fileToRecv(NULL),
 sentSize(0),sendFileSize(0),receivedSize(0),recvFileSize(0),packetLength(0),
-whenTransceiverReceived(NULL){
+whenTransceiverReceived(NULL),whenTransceiverReceivedFile(NULL){
 	//申请缓存
 	if(readBuffer.dataLength<=0){
 		readBuffer.memoryAllocate(RW_BUFFER_SIZE);
@@ -22,53 +24,19 @@ Transceiver::~Transceiver(){
 	writeBuffer.memoryFree();
 }
 
-void Transceiver::setSocket(Socket &skt){
-	socket=&skt;
-	socket->userData=this;
-	//事件关联
-#define WHEN(name) socket->whenSocket##name=whenSocket##name;
-	SOCKET_ALL_EVENTS(WHEN)
-#undef WHEN
-}
-int Transceiver::epollWait(){return socket->epollWait();}
-
 //事件函数
 #define GET_TRANSCEIVER auto transceiver=reinterpret_cast<Transceiver*>(socket->userData);
-void Transceiver::whenSocketConnected(Socket *socket){//连接成功后,有数据则发送数据
-	printf("socket连接成功\n");
-	GET_TRANSCEIVER
-	transceiver->sendData();
+#define WHEN(name) \
+void Transceiver::whenSocket##name(Socket *socket){\
+	reinterpret_cast<Transceiver*>(socket->userData)->whenSocket##name();\
 }
-void Transceiver::whenSocketDisconnected(Socket *socket){
-	printf("socket断开连接\n");
-}
-void Transceiver::whenSocketAccepted(Socket *socket){
-	printf("socket收到连接\n");
-}
-void Transceiver::whenSocketSend(Socket *socket){//当数据发送成功后,持续发送剩余数据
-	//printf("socket要发送数据\n");
-	GET_TRANSCEIVER
-	transceiver->whenSend();
-}
-void Transceiver::whenSocketSent(Socket *socket){
-	//printf("socket数据发送完毕\n");
-	GET_TRANSCEIVER
-	transceiver->whenSent();
-}
-void Transceiver::whenSocketReceive(Socket *socket){
-	//printf("socket准备接收数据\n");
-	GET_TRANSCEIVER
-	transceiver->whenReceive();
-}
-void Transceiver::whenSocketReceived(Socket *socket){//当数据接收成功后
-	//printf("socket已接收数据\n");
-	GET_TRANSCEIVER
-	transceiver->receiveData();
-}
-void Transceiver::whenSocketError(Socket *socket){
-	printf("socket出错: %d %s\n",socket->errorNumber,ErrorNumber::getErrorString(socket->errorNumber));
-}
-void Transceiver::whenSend(){
+SOCKET_ALL_EVENTS(WHEN)
+#undef WHEN
+
+void Transceiver::whenSocketConnected(){}
+void Transceiver::whenSocketDisconnected(){}
+void Transceiver::whenSocketAccepted(){}
+void Transceiver::whenSocketSend(){
 	if(writeBuffer.rwSize<=0){//无数据,可以尝试填充文件数据
 		sendFileData();
 		if(writeBuffer.rwSize<=0)return;//依然没有数据,可以返回
@@ -81,17 +49,47 @@ void Transceiver::whenSend(){
 	//等待socket发送
 	socket->sendData.set(writeBuffer.dataPointer,writeBuffer.rwSize);
 }
-void Transceiver::whenSent(){
+void Transceiver::whenSocketSent(){
 	//统计已经发送的文件量
 	if(fileToSend){
 		sentSize=ftell(fileToSend);
 	}
 	writeBuffer.rwSize=0;//发送缓冲清空
 }
-void Transceiver::whenReceive(){
+void Transceiver::whenSocketReceive(){
 	auto &rb=readBuffer;
 	socket->recvData.set(&rb.dataPointer[rb.rwSize],rb.dataLength-rb.rwSize);//设置可接收数据的区域
 }
+void Transceiver::whenSocketReceived(){
+	//将数据写入缓冲
+	readBuffer.rwSize = readBuffer.dataLength -socket->recvData.dataLength;
+	if(readBuffer.get_uint16(0,packetLength)){//读取报头长度值
+		if(readBuffer.rwSize < defaultHeaderSize + packetLength)return;//检查报文是否接收完毕,没接收玩则要等到接收完毕
+	}else return;//报头都没接收完....
+
+	//处理报文
+	auto rwSize=readBuffer.rwSize;
+	WHEN_CALLBACK(Received)//用户自行处理数据
+	//处理完毕,处理后续数据
+	auto remain = rwSize - defaultHeaderSize - packetLength;
+	if(remain>0){
+		readBuffer.memcpyFrom(&readBuffer.dataPointer[defaultHeaderSize+packetLength],remain);
+	}
+	readBuffer.rwSize=remain;
+}
+void Transceiver::whenSocketError(){
+	printf("socket error: %d %s\n",socket->errorNumber,ErrorNumber::getErrorString(socket->errorNumber));
+}
+
+void Transceiver::setSocket(Socket &skt){
+	socket=&skt;
+	socket->userData=this;
+	//事件关联
+#define WHEN(name) socket->whenSocket##name=whenSocket##name;
+	SOCKET_ALL_EVENTS(WHEN)
+#undef WHEN
+}
+int Transceiver::epollWait(){return socket->epollWait();}
 
 SocketDataBlock& Transceiver::readySend(const string &command){
 	writeBuffer.rwSize=0;//清空
@@ -103,26 +101,8 @@ SocketDataBlock& Transceiver::readySend(const string &command){
 }
 
 bool Transceiver::sendData(){
-	whenSend();//准备好缓冲区数据
+	whenSocketSend();//准备好缓冲区数据
 	return socket->send();
-}
-bool Transceiver::receiveData(){
-	//将数据写入缓冲
-	readBuffer.rwSize = readBuffer.dataLength -socket->recvData.dataLength;
-	if(readBuffer.get_uint16(0,packetLength)){//读取报头长度值
-		if(readBuffer.rwSize < defaultHeaderSize + packetLength)return false;//检查报文是否接收完毕,没接收玩则要等到接收完毕
-	}else return false;//报头都没接收完....
-
-	//处理报文
-	auto rwSize=readBuffer.rwSize;
-	if(whenTransceiverReceived)whenTransceiverReceived(this);//用户自行处理数据
-	//处理完毕,处理后续数据
-	auto remain = rwSize - defaultHeaderSize - packetLength;
-	if(remain>0){
-		readBuffer.memcpyFrom(&readBuffer.dataPointer[defaultHeaderSize+packetLength],remain);
-	}
-	readBuffer.rwSize=remain;
-	return true;
 }
 //发送文件模块
 bool Transceiver::sendFile(const char *filename){
@@ -138,12 +118,12 @@ bool Transceiver::sendFile(const char *filename){
 	}
 	return fileToSend;
 }
-#include<unistd.h>
+
 bool Transceiver::sendFileData(){
 	if(!fileToSend)return false;
 	auto sizeToSend = sendFileSize - sentSize;
 	if(sizeToSend>0){//没发完,继续发
-		readySend("DATA");
+		readySend("FILE");
 		//判断发送量
 		sizeToSend = min(sizeToSend,writeBuffer.dataLength - writeBuffer.rwSize);//限制一次发送的总量
 		sizeToSend *= fread(&writeBuffer.dataPointer[writeBuffer.rwSize],sizeToSend,1,fileToSend);//从文件读取数据
@@ -192,6 +172,7 @@ bool Transceiver::finishReceiveFile(){
 		int a=fflush(fileToRecv);//写入剩余数据
 		int b=fclose(fileToRecv);//关闭文件
 		fileToRecv=NULL;
+		WHEN_CALLBACK(ReceivedFile)//事件-文件接收完毕
 		return a==0 && b==0;//都没问题
 	}
 	return false;
