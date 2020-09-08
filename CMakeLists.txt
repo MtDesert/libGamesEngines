@@ -6,6 +6,7 @@ set(ENGINE_DIR
 	. #当前目录
 	Cpp11 Cpp11/Containers #C++11模块,主要调用系统函数
 	Lua #Lua读取游戏配置的模块,用于解读Lua数据并存入C++内存中
+	Algorithm #算法模块,主要放入游戏中可能用到的各种算法
 	Network #网络模块,有可能会封装系统模块或者第三方库
 	Math #数学模块,定义数学上常用的概念,可能包含一些常用算法
 	WarChess #战棋模块,战棋游戏专用

@@ -266,48 +266,25 @@ struct Array2D{
 	virtual bool setValue(SizeType x,SizeType y,const T &value){return false;}
 	bool setValue(const Point2D<SizeType> &p,const T &value){return setValue(p.x,p.y,value);}
 
-	virtual void fill(const T &value){}
-	//deal with list
-	void removePoints_NoInRange(list< Point2D<SizeType> > &pointList)const{
-		for(auto itr=pointList.begin();itr!=pointList.end();){
-			isInRange(*itr)?++itr:itr=pointList.erase(itr);
-		}
-	}
-	/**
-	 * @brief seedFill 种子填充算法
-	 * @param pointList 保存输出结果
-	 * @param seedPoint 开始填充的点
-	 * @param isMatch 用于判断两个点上的值是否匹配的函数
-	 */
-	void seedFill(list< Point2D<SizeType> > &pointList,const Point2D<SizeType> &seedPoint,std::function<bool(const T &a,const T &b)> &isMatch)const
-	{
-		pointList.clear();
-		if(!isInRange(seedPoint))return;
-		pointList.push_back(seedPoint);
-		//
-		Point2D<SizeType> around[4]={Point2D<SizeType>(-1,0),Point2D<SizeType>(1,0),Point2D<SizeType>(0,-1),Point2D<SizeType>(0,1)};
-		Point2D<SizeType> p;
+#define ARRAY_FOREACH \
+if(!callback)return;\
+int w=this->getWidth(),h=this->getHeight();\
+T *val=nullptr;\
+for(decltype(h) y=h-1;y>=0;--y){\
+	for(decltype(w) x=0;x<w;++x){\
+		val=this->pointer(x,y);\
+		if(val)callback(x,y,*val);\
+	}\
+}
 
-		auto itr=pointList.begin();
-		for(;itr!=pointList.end();++itr){
-			for(int i=0;i<4;++i){
-				p=(*itr)+around[i];
-				//compare whether p & around[i] matched
-				if(!isInRange(p))continue;
-				const T *a=pointer(itr->x,itr->y);
-				const T *b=pointer(p.x,p.y);
-				if(!a || !b || !isMatch(*a,*b))continue;
-				//filter(scan back to find whether repeated)
-				auto backItr=pointList.rbegin();
-				for(;backItr!=pointList.rend();++backItr){
-					if(*backItr==p)break;
-				}
-				if(backItr!=pointList.rend())continue;
-				//ok, new point
-				pointList.push_back(p);
-			}
-		}
+	void forEach(function<void(SizeType x,SizeType y,T &value)> callback){
+		ARRAY_FOREACH
 	}
+	void forEach(function<void(SizeType x,SizeType y,const T &value)> callback)const{
+		ARRAY_FOREACH
+	}
+
+	virtual void fill(const T &value){}
 protected:
 	SizeType width,height;
 	virtual T* pointer(SizeType x,SizeType y)const{return nullptr;}
