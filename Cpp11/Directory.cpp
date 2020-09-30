@@ -131,3 +131,33 @@ bool Directory::changeDir(const string &path,WhenErrorString whenError){
 	}
 	return ret;
 }
+bool Directory::exist(const string &name){
+	auto dir=opendir(name.data());
+	if(dir){
+		closedir(dir);
+		return true;
+	}
+	return false;
+}
+bool Directory::makeDirectory(const string &name){return mkdir(name.data(),S_IRWXU)==0;}
+bool Directory::scan(const string &path,function<void(const string&)> dirCallback,function<void(const string&)> fileCallback){
+	Directory dir;
+	if(dir.changeDir(path)){
+		string name;
+		for(auto &entry:dir.direntList){//处理所有path下的文件
+			//过滤
+			name=entry.name();
+			if(name=="."||name=="..")continue;
+			//生成路径名
+			name=dir.toString()+DIRECTORY_SEPERATOR+name;
+			if(entry.isRegularFile()){//常规文件,处理之
+				if(fileCallback)fileCallback(name);
+			}else if(entry.isDirectory()){//目录,继续扫描
+				scan(name,dirCallback,fileCallback);
+			}
+		}
+	}else{
+		printf("!!!!\n");
+	}
+	return true;
+}

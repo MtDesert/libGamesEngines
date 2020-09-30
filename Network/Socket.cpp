@@ -28,12 +28,13 @@ static bool wsaStartedUp=false;
 
 #define SOCKET_CONNECT_ARGUMENTS \
 descriptor,(const sockaddr*)&socketAddress,sizeof(socketAddress)
-
+//设置回调函数的情况下,调用特定回调函数
 #define SOCKET_WHEN_CALLBACK(name)\
 if(whenSocket##name)whenSocket##name(this);
-
-#define SOCKET_WHEN_CALLBACK_P(name)\
-if(pSocket->whenSocket##name)pSocket->whenSocket##name(pSocket);
+//出错时,设置错误号并调用回调函数
+#define SOCKET_WHEN_ERROR \
+errorNumber=ERR_NO;\
+SOCKET_WHEN_CALLBACK(Error)
 
 //检查错误,如果有错误则直接调用错误处理函数并返回
 #define SOCKET_CHECK_ERROR(code) \
@@ -48,7 +49,7 @@ IPAddress::IPAddress(const char *str){setAddress(str);}
 IPAddress::IPAddress(const string &str){setAddress(str);}
 
 #define WHEN(name) whenSocket##name(NULL),
-Socket::Socket():descriptor(0),epollFD(0),isConnected(false),newAcceptSocket(NULL),errorNumber(0),
+Socket::Socket():descriptor(0),epollFD(0),newAcceptSocket(NULL),errorNumber(0),
 	SOCKET_ALL_EVENTS(WHEN)
 #undef WHEN
 	userData(nullptr){}
@@ -128,16 +129,18 @@ void Socket::connect(const IPAddress &ipAddress,uint16 port){
 	SOCKET_CHECK_ERROR(createSocket())//创建socket描述符
 	setSocketAddress(ipAddress,port);//设置目标ip和端口
 	//接入epoll
-	if(epollFD<=0)epollFD=epoll_create(1);
-	SOCKET_CHECK_ERROR(epollFD)
-	struct epoll_event ev;
-	memset(&ev,0,sizeof(ev));
-	ev.events=EPOLLIN|EPOLLOUT|EPOLLET;
-	ev.data.ptr=this;
-	SOCKET_CHECK_ERROR(epoll_ctl(epollFD,EPOLL_CTL_ADD,descriptor,&ev));
+	if(epollFD<=0){
+		epollFD=epoll_create(1);
+		SOCKET_CHECK_ERROR(epollFD)
+		struct epoll_event ev;
+		memset(&ev,0,sizeof(ev));
+		ev.events=EPOLLIN|EPOLLOUT|EPOLLET;
+		ev.data.ptr=this;
+		SOCKET_CHECK_ERROR(epoll_ctl(epollFD,EPOLL_CTL_ADD,descriptor,&ev));
+	}
 	//开始连接
 	auto ret=::connect(SOCKET_CONNECT_ARGUMENTS);
-	errorNumber=(ret==-1 ? ERR_NO : 0);//errorNumber很可能处于连接中的状态
+	errorNumber=(ret==-1 ? ERR_NO : 0);//errorNumber很可能处于连接中的状态EAGAIN
 }
 
 #define SOCKET_CONNECT(type) \
@@ -147,6 +150,11 @@ SOCKET_CONNECT(const string&)
 SOCKET_CONNECT(const char*)
 SOCKET_CONNECT(uint32)
 #undef SOCKET_CONNECT
+bool Socket::isConnected()const{
+	char ch;
+	int ret=::recv(descriptor,&ch,1,MSG_PEEK);
+	return ret!=-1 && ERR_NO!=EAGAIN;
+}
 
 void Socket::listenPort(uint16 port){
 	SOCKET_CHECK_ERROR(createSocket())
@@ -203,7 +211,6 @@ void Socket::acceptLoop(){
 				auto newSocket=new Socket();
 				newSocket->descriptor=fd;//描述符
 				newSocket->socketAddress=socketAddress;//套接地址
-				newSocket->isConnected=true;
 				//触发Accepted事件
 				newAcceptSocket=newSocket;
 				SOCKET_WHEN_CALLBACK(Accepted)
@@ -228,7 +235,7 @@ void Socket::acceptLoop(){
 
 bool Socket::send(){
 	//未连接
-	if(!isConnected)return false;
+	if(!isConnected())return false;
 	//不断尝试send,直到数据发完,或者缓冲区过满为止
 	int sendLen=0;
 	do{
@@ -245,19 +252,17 @@ bool Socket::send(){
 				SOCKET_WHEN_CALLBACK(Sent)
 			}
 		}else break;//没有补充数据,发送结束
-		//printf("循环结束%d\n",sendLen);
 	}while(sendLen>0);
 	//发送完毕
 	if(sendLen==-1 && ERR_NO!=EAGAIN){//出错
-		errorNumber=ERR_NO;
-		SOCKET_WHEN_CALLBACK(Error)
+		SOCKET_WHEN_ERROR
 	}
-	return isConnected;
+	return isConnected();
 }
 bool Socket::recv(){
 	int recvLen=0;
 	do{//循环收数据,读到无数据可读为止
-		SOCKET_WHEN_CALLBACK(Receive)
+		SOCKET_WHEN_CALLBACK(Receive)//先做好接收准备
 		recvLen=::recv(descriptor,recvData.dataPointer,recvData.dataLength,0);
 		if(recvLen>0){//读取数据后,调整接收缓冲
 			recvData.set(&recvData.dataPointer[recvLen],recvData.dataLength-recvLen);
@@ -267,9 +272,9 @@ bool Socket::recv(){
 	//读取结束
 	if(recvLen==0){//连接断开
 		SOCKET_WHEN_CALLBACK(Disconnected)
+		return false;
 	}else if(recvLen==-1 && ERR_NO!=EAGAIN){//出错
-		errorNumber=ERR_NO;
-		SOCKET_WHEN_CALLBACK(Error)
+		SOCKET_WHEN_ERROR
 		return false;
 	}
 	return true;
@@ -284,52 +289,49 @@ int Socket::epollWait(){
 	}
 	return amount;
 }
+#define HAS_ERROR ev.events&EPOLLERR
 void Socket::epollEvent(epoll_event &ev){
 	printEpoll(ev);
 	//开始处理事件
+	bool noErrHappen=true;
 	if(ev.events & EPOLLIN){//有数据进来了,可读
-		recv();
+		noErrHappen=recv();//系统的recv函数可以监测到对方断开的情况
 	}
 	if(ev.events & EPOLLPRI){
 		printf("socket(%p) exceptional condition!\n",this);
 	}
 	if(ev.events & EPOLLOUT){//有数据发出去了
-		if(!isConnected){//连接状态
-			isConnected=true;
-			SOCKET_WHEN_CALLBACK(Connected)
+		if(noErrHappen){
+			if(ev.events==EPOLLOUT){
+				SOCKET_WHEN_CALLBACK(Connected)
+			}
+			send();
 		}
-		//发送数据
-		send();
 	}
-	if(ev.events & EPOLLERR){
-		printf("socket(%p) error!\n",this);
-		SOCKET_WHEN_CALLBACK(Error)
+	if(HAS_ERROR){
+		SOCKET_WHEN_ERROR
 	}
 	if(ev.events & EPOLLHUP){
 		printf("socket(%p) hang up!\n",this);
+		SOCKET_WHEN_ERROR
 	}
 	//不常见的事件
-	/*if(ev.events & EPOLLRDNORM){printf("socket(%p) read normal!\n");}
-	if(ev.events & EPOLLRDBAND){printf("socket(%p) read band\n");}
-	if(ev.events & EPOLLWRNORM){printf("socket(%p) write normal\n");}
-	if(ev.events & EPOLLWRBAND){printf("socket(%p) write band\n");}
-	if(ev.events & EPOLLMSG){printf("socket(%p) message\n");}*/
+	if(ev.events & EPOLLRDNORM){printf("socket(%p) read normal!\n",this);}
+	if(ev.events & EPOLLRDBAND){printf("socket(%p) read band\n",this);}
+	if(ev.events & EPOLLWRNORM){printf("socket(%p) write normal\n",this);}
+	if(ev.events & EPOLLWRBAND){printf("socket(%p) write band\n",this);}
+	if(ev.events & EPOLLMSG){printf("socket(%p) message\n",this);}
 }
 //关闭连接
 void Socket::close(){
+	bool discon=isConnected();
 	if(::close(descriptor)==0){
-		SOCKET_WHEN_CALLBACK(Disconnected)
+		if(discon)SOCKET_WHEN_CALLBACK(Disconnected)//防止多次触发
 	}else{
-		errorNumber=ERR_NO;
-		SOCKET_WHEN_CALLBACK(Error)
+		SOCKET_WHEN_ERROR
 	}
 	descriptor=0;
 }
 
 IPAddress Socket::getIPaddress()const{return IPAddress(socketAddress.sin_addr.s_addr);}
 uint16 Socket::getPort()const{return ntohs(socketAddress.sin_port);}
-
-//轮询
-int Socket::addTimeSlice(uint msec){
-	return 0;
-}

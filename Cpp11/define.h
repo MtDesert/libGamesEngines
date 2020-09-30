@@ -8,16 +8,17 @@
 //报错宏,以字符串str报错(通过whenError回调函数)
 #define WHEN_ERROR(str) if(whenError)whenError(str);
 
-//报错宏,当代码code值为假时,以errorString报错
-#define WHEN_CODE_ERROR(code,errorString)\
-if(!(code)){\
-	WHEN_ERROR(errorString)\
-}
-
 //断言宏,如果code为假,则以errorString报错
 #define ASSERT(code,errorString)\
 if(!(code)){\
 	WHEN_ERROR(errorString)\
+}
+
+//断言宏,和ASSERT一样,但是会在报错后返回false
+#define ASSERT_RETURN(code,errorString)\
+if(!(code)){\
+	WHEN_ERROR(errorString)\
+	return false;\
 }
 
 //断言宏,如果code为假,则以errno报错

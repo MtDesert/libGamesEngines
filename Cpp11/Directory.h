@@ -58,5 +58,10 @@ struct Directory{
 	string toString()const;//把目录转化成字符串的形式
 	//切换目录
 	bool changeDir(const string &path,WhenErrorString whenError=nullptr);//其实就相当于cd dirName命令,readDir为true的时候会读取目录并存入成员变量direntList中,不能保证目录一定能访问,请留意返回值
+	//目录操作
+	static bool exist(const string &name);//判断目录name是否存在
+	static bool makeDirectory(const string &name);//创建名为name的目录
+	//递归扫描
+	static bool scan(const string &path,function<void(const string&)> dirCallback,function<void(const string&)> fileCallback);
 };
 #endif

@@ -99,7 +99,7 @@ public:
 	void connect(const string &ipAddress,uint16 port);
 	void connect(const char *ipAddress,uint16 port);
 	void connect(uint32 ipAddress,uint16 port);
-	bool isConnected;//是否处于连接状态
+	bool isConnected()const;//是否处于连接状态
 
 	//被动连接
 	void listenPort(uint16 port);//开始接受端口port连进来的连接
@@ -127,8 +127,5 @@ public:
 	SOCKET_ALL_EVENTS(WHEN)
 #undef WHEN
 	void *userData;//用户数据,可在回调函数中获得
-
-	//轮询
-	static int addTimeSlice(uint msec);
 };
 #endif

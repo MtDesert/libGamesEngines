@@ -33,9 +33,9 @@ void Transceiver::whenSocket##name(Socket *socket){\
 SOCKET_ALL_EVENTS(WHEN)
 #undef WHEN
 
-void Transceiver::whenSocketConnected(){}
-void Transceiver::whenSocketDisconnected(){}
-void Transceiver::whenSocketAccepted(){}
+void Transceiver::whenSocketConnected(){printf("收发器-已连接\n");}
+void Transceiver::whenSocketDisconnected(){printf("收发器-已断开连接\n");}
+void Transceiver::whenSocketAccepted(){printf("收发器-接受连接\n");}
 void Transceiver::whenSocketSend(){
 	if(writeBuffer.rwSize<=0){//无数据,可以尝试填充文件数据
 		sendFileData();
@@ -77,9 +77,7 @@ void Transceiver::whenSocketReceived(){
 	}
 	readBuffer.rwSize=remain;
 }
-void Transceiver::whenSocketError(){
-	printf("socket error: %d %s\n",socket->errorNumber,ErrorNumber::getErrorString(socket->errorNumber));
-}
+void Transceiver::whenSocketError(){WHEN_CALLBACK(Error)}
 
 void Transceiver::setSocket(Socket &skt){
 	socket=&skt;

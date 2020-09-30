@@ -145,12 +145,11 @@ public:
 	}
 	//添加
 	void insert(SizeType pos,const T &value){
+		//根据空间调整容器大小
 		if(isFull()){
-			setArraySize(length+1);
-			usedLength=length;
-		}else{
-			++usedLength;
+			setArraySize(length ? length*2 : 1,true);
 		}
+		++usedLength;
 		//数据后移(多次复制)
 		for(SizeType i=usedLength-1;i>pos;--i){
 			dataPtr[i]=dataPtr[i-1];

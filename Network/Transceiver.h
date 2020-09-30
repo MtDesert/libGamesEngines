@@ -5,7 +5,8 @@
 
 #define TRANSCEIVER_ALL_EVENTS(MACRO) \
 MACRO(Received)/*收到数据*/\
-MACRO(ReceivedFile)/*文件接收完毕*/
+MACRO(ReceivedFile)/*文件接收完毕*/\
+MACRO(Error)/*出错*/
 
 //收发器,负责传输数据,包括各种简单报文,不定长报文,大文件等
 class Transceiver{
@@ -14,7 +15,7 @@ protected:
 	//套接字事件
 #define WHEN(name) \
 	static void whenSocket##name(Socket*);\
-	void whenSocket##name();
+	virtual void whenSocket##name();
 	SOCKET_ALL_EVENTS(WHEN)
 #undef WHEN
 	//文件收发
@@ -27,7 +28,7 @@ protected:
 	SocketDataBlock readBuffer,writeBuffer;//读写缓冲
 public:
 	Transceiver();
-	~Transceiver();
+	virtual ~Transceiver();
 
 	void setSocket(Socket &skt);
 	int epollWait();
