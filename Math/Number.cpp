@@ -14,6 +14,10 @@ int Number::divideRound(int devidend,int devisor){
 int Number::divideCeil(int devidend,int devisor){
 	DIVIDE_CONDITION(devidend%devisor)
 }
+int Number::divideFloor(int devidend,int devisor){
+	if(devisor==0)return INT_MAX;
+	return devidend/devisor;
+}
 #undef DIVIDE_CONDITION
 string Number::toString(int num,int base){
 	string ret;

@@ -10,7 +10,7 @@ struct ChessPiece{
 	//棋子属性
 	CorpType corpType;//兵种
 	Color color;//颜色
-	Point2D<int16> coordinate;
+	Point2D<int16> coordinate;//坐标
 	//构造函数
 	ChessPiece(){}
 	ChessPiece(const CorpType &ct,const Color &clr,const decltype(coordinate) &p):corpType(ct),color(clr),coordinate(p){}

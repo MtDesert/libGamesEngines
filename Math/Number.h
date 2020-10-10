@@ -22,6 +22,7 @@ public:
 	//整数除法(被除数,除数)
 	static int divideRound(int devidend,int devisor);//返回四舍五入结果
 	static int divideCeil(int devidend,int devisor);//向上取整数
+	static int divideFloor(int devidend,int devisor);//向上取整数
 	//数字转字符串
 	static string toString(int num,int base=10);
 	static string double2String(double num);
