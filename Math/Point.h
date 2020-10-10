@@ -62,7 +62,7 @@ struct Point3D:public Point2D<T>{
 	POINT_RETURN_P(Point3D,*)
 	POINT_RETURN_P(Point3D,/)
 
-	void setXYZ(T x,T y,T z){setXY(x,y);this->z=z;}
+	void setXYZ(T x,T y,T z){this->setXY(x,y);this->z=z;}
 };
 
 #define POINT_OPERATOR_EXPRESSION(Type1,symbol,Type2,ReturnType)\
