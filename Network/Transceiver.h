@@ -31,7 +31,7 @@ public:
 	virtual ~Transceiver();
 
 	void setSocket(Socket &skt);
-	int epollWait();
+	int addTimeSlice();
 	//收发器事件
 #define WHEN(name) void (*whenTransceiver##name)(Transceiver *transceiver);
 	TRANSCEIVER_ALL_EVENTS(WHEN)

@@ -1,5 +1,4 @@
 #include"Socket.h"
-#include<sys/epoll.h>
 #include<unistd.h>
 #include<errno.h>
 #include<string.h>
@@ -7,8 +6,6 @@
 #ifdef __MINGW32__ //MinGW编译环境
 #include<ws2tcpip.h>
 #define SOCK_NONBLOCK 0
-#define EWOULDBLOCK WSAEWOULDBLOCK
-#define EINPROGRESS WSAEWOULDBLOCK
 #define ERR_NO WSAGetLastError()
 #define PTHREAD_YIELD
 #define SOCKET_SHUTDOWN ::close(descriptor);
@@ -129,6 +126,7 @@ void Socket::connect(const IPAddress &ipAddress,uint16 port){
 	SOCKET_CHECK_ERROR(createSocket())//创建socket描述符
 	setSocketAddress(ipAddress,port);//设置目标ip和端口
 	//接入epoll
+#ifndef __MINGW32__
 	if(epollFD<=0){
 		epollFD=epoll_create(1);
 		SOCKET_CHECK_ERROR(epollFD)
@@ -138,6 +136,7 @@ void Socket::connect(const IPAddress &ipAddress,uint16 port){
 		ev.data.ptr=this;
 		SOCKET_CHECK_ERROR(epoll_ctl(epollFD,EPOLL_CTL_ADD,descriptor,&ev));
 	}
+#endif
 	//开始连接
 	auto ret=::connect(SOCKET_CONNECT_ARGUMENTS);
 	errorNumber=(ret==-1 ? ERR_NO : 0);//errorNumber很可能处于连接中的状态EAGAIN
@@ -184,10 +183,7 @@ void Socket::setSocketAddress(const IPAddress &ipAddress,uint16 port){
 	socketAddress.sin_addr=ipAddress.address;
 	socketAddress.sin_port=htons(port);
 }
-
-void printEpoll(epoll_event &ev){
-	printf("events: %.8X fd==%d ptr==%p u32==%u u64==%lu\n",ev.events,ev.data.fd,ev.data.ptr,ev.data.u32,ev.data.u64);
-}
+#ifndef __MINGW32__
 void Socket::acceptLoop(){
 	//启用epoll
 	auto epollFD=epoll_create(65536);
@@ -225,73 +221,15 @@ void Socket::acceptLoop(){
 			}
 		}
 		if(!eventAmount){
-			pthread_yield();//让出CPU
+			PTHREAD_YIELD;//让出CPU
 		}
 	}
 	//close
 	printf("关闭epoll\n");
 	::close(epollFD);
 }
-
-bool Socket::send(){
-	//未连接
-	if(!isConnected())return false;
-	//不断尝试send,直到数据发完,或者缓冲区过满为止
-	int sendLen=0;
-	do{
-		SOCKET_WHEN_CALLBACK(Send)//用户先补充数据
-		if(sendData.hasData()){//有数据,开始发送
-			do{//循环发送
-				sendLen = ::send(descriptor,sendData.dataPointer,sendData.dataLength,0);//发送!
-				if(sendLen>0){//调整发送缓冲,再发送
-					sendData.set(&sendData.dataPointer[sendLen],sendData.dataLength-sendLen);
-				}
-			}while(sendLen>0 && sendData.hasData());
-			//发送完毕事件
-			if(!sendData.hasData()){
-				SOCKET_WHEN_CALLBACK(Sent)
-			}
-		}else break;//没有补充数据,发送结束
-	}while(sendLen>0);
-	//发送完毕
-	if(sendLen==-1 && ERR_NO!=EAGAIN){//出错
-		SOCKET_WHEN_ERROR
-	}
-	return isConnected();
-}
-bool Socket::recv(){
-	int recvLen=0;
-	do{//循环收数据,读到无数据可读为止
-		SOCKET_WHEN_CALLBACK(Receive)//先做好接收准备
-		recvLen=::recv(descriptor,recvData.dataPointer,recvData.dataLength,0);
-		if(recvLen>0){//读取数据后,调整接收缓冲
-			recvData.set(&recvData.dataPointer[recvLen],recvData.dataLength-recvLen);
-			SOCKET_WHEN_CALLBACK(Received)//收到数据后,立刻交给用户处理
-		}
-	}while(recvLen>0);
-	//读取结束
-	if(recvLen==0){//连接断开
-		SOCKET_WHEN_CALLBACK(Disconnected)
-		return false;
-	}else if(recvLen==-1 && ERR_NO!=EAGAIN){//出错
-		SOCKET_WHEN_ERROR
-		return false;
-	}
-	return true;
-}
-
-int Socket::epollWait(){
-	struct epoll_event ev;
-	memset(&ev,0,sizeof(ev));
-	auto amount=epoll_wait(epollFD,&ev,1,0);
-	if(amount>0){
-		epollEvent(ev);
-	}
-	return amount;
-}
 #define HAS_ERROR ev.events&EPOLLERR
 void Socket::epollEvent(epoll_event &ev){
-	printEpoll(ev);
 	//开始处理事件
 	bool noErrHappen=true;
 	if(ev.events & EPOLLIN){//有数据进来了,可读
@@ -321,6 +259,71 @@ void Socket::epollEvent(epoll_event &ev){
 	if(ev.events & EPOLLWRNORM){printf("socket(%p) write normal\n",this);}
 	if(ev.events & EPOLLWRBAND){printf("socket(%p) write band\n",this);}
 	if(ev.events & EPOLLMSG){printf("socket(%p) message\n",this);}
+}
+#endif
+
+bool Socket::send(){
+	//未连接
+	if(!isConnected())return false;
+	//不断尝试send,直到数据发完,或者缓冲区过满为止
+	int sendLen=0;
+	do{
+		SOCKET_WHEN_CALLBACK(Send)//用户先补充数据
+		if(sendData.hasData()){//有数据,开始发送
+			do{//循环发送
+				sendLen = ::send(descriptor,(const char*)sendData.dataPointer,sendData.dataLength,0);//发送!
+				if(sendLen>0){//调整发送缓冲,再发送
+					sendData.set(&sendData.dataPointer[sendLen],sendData.dataLength-sendLen);
+				}
+			}while(sendLen>0 && sendData.hasData());
+			//发送完毕事件
+			if(!sendData.hasData()){
+				SOCKET_WHEN_CALLBACK(Sent)
+			}
+		}else break;//没有补充数据,发送结束
+	}while(sendLen>0);
+	//发送完毕
+	if(sendLen==-1 && ERR_NO!=EAGAIN){//出错
+		SOCKET_WHEN_ERROR
+	}
+	return isConnected();
+}
+bool Socket::recv(){
+	int recvLen=0;
+	do{//循环收数据,读到无数据可读为止
+		SOCKET_WHEN_CALLBACK(Receive)//先做好接收准备
+		recvLen=::recv(descriptor,(char*)recvData.dataPointer,recvData.dataLength,0);
+		if(recvLen>0){//读取数据后,调整接收缓冲
+			recvData.set(&recvData.dataPointer[recvLen],recvData.dataLength-recvLen);
+			SOCKET_WHEN_CALLBACK(Received)//收到数据后,立刻交给用户处理
+		}
+	}while(recvLen>0);
+	//读取结束
+	if(recvLen==0){//连接断开
+		SOCKET_WHEN_CALLBACK(Disconnected)
+		return false;
+	}else if(recvLen==-1 && ERR_NO!=EAGAIN){//出错
+		SOCKET_WHEN_ERROR
+		return false;
+	}
+	return true;
+}
+
+int Socket::addTimeSlice(){
+#ifdef __MINGW32__//针对Windows,没有epoll
+	//需要优化
+	recv();
+	send();
+	return 0;
+#else//Linux系列,使用epoll
+	struct epoll_event ev;
+	memset(&ev,0,sizeof(ev));
+	auto amount=epoll_wait(epollFD,&ev,1,0);
+	if(amount>0){
+		epollEvent(ev);
+	}
+	return amount;
+#endif
 }
 //关闭连接
 void Socket::close(){

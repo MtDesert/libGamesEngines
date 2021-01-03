@@ -4,7 +4,6 @@
 
 #ifdef __MINGW32__
 #define ENOTBLK 15
-#define ETXTBSY 26
 #endif
 
 #define ERROR_NUMBER_STRING(MACRO,chinese) \

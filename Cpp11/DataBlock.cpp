@@ -54,10 +54,8 @@ bool DataBlock::memoryAllocate(SizeType size,bool enlargeOnly,WhenErrorString wh
 	if(dataLength==size)return true;//无变化
 	if(enlargeOnly && dataLength>size)return true;//容量充足
 	if(dataPointer){
-		//printf("realloc(%p,%lu)\n",dataPointer,size);
 		dataPointer=(uchar*)::realloc(dataPointer,size);
 	}else{
-		//printf("malloc(%lu)\n",size);
 		dataPointer=(uchar*)::malloc(size);
 	}
 	set_DataLength(dataPointer?size:0);
@@ -329,14 +327,3 @@ DATABLOCK_CPP_TO_ARRAY(8)
 DATABLOCK_CPP_TO_ARRAY(16)
 DATABLOCK_CPP_TO_ARRAY(32)
 DATABLOCK_CPP_TO_ARRAY(64)
-
-void DataBlock::debug(SizeType size)const{
-	printf("DataBlock:%p %lu\n",dataPointer,dataLength);
-	if(!dataPointer)return;
-	auto len=(size ? size : dataLength);
-	if(len>dataLength)len=dataLength;
-	for(SizeType i=0;i<len;++i){
-		printf("%.2X ",dataPointer[i]);
-	}
-	printf("\n");
-}

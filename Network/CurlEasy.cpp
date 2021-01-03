@@ -3,6 +3,7 @@
 #include<stdio.h>
 #include<unistd.h>
 #include<sys/stat.h>
+#include<errno.h>
 
 CurlEasy::CurlEasy(){curl=curl_easy_init();}
 CurlEasy::~CurlEasy(){curl_easy_cleanup(curl);}
@@ -48,15 +49,6 @@ int CurlEasy::downloadFile(const string &url, const string &filename,int minSize
 	//关闭文件
 	fflush(file);
 	fclose(file);
-	//确认大小
-	struct stat st;
-	if(::stat(filename.data(),&st)==0){
-		if(st.st_size<=minSize){
-			printf("%s文件大小为%ld,删除\n",filename.data(),st.st_size);
-			remove(filename.data());
-			return -1;
-		}
-	}
 	return errno;
 }
 
@@ -72,9 +64,7 @@ int CurlEasy::parseHtml(const string &filename){
 	while(fgets(buffer,BUFFER_SIZE,file)){//逐行处理
 		buffer[BUFFER_SIZE-1]='\0';//hack
 		++line;
-		//printf("scanning %d\n",line);
 		parseHtmlLine(buffer);
-		//usleep(100000);
 	}
 	//关闭
 	fclose(file);

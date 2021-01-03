@@ -139,7 +139,13 @@ bool Directory::exist(const string &name){
 	}
 	return false;
 }
-bool Directory::makeDirectory(const string &name){return mkdir(name.data(),S_IRWXU)==0;}
+bool Directory::makeDirectory(const string &name){
+#ifdef __MINGW32__
+	return mkdir(name.data())==0;
+#else
+	return mkdir(name.data(),S_IRWXU)==0;
+#endif
+}
 bool Directory::scan(const string &path,function<void(const string&)> dirCallback,function<void(const string&)> fileCallback){
 	Directory dir;
 	if(dir.changeDir(path)){

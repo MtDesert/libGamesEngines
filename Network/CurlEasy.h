@@ -1,7 +1,7 @@
 #ifndef CURLEASY_H
 #define CURLEASY_H
 
-#include<curl/curl.h>
+#include"curl/curl.h"
 #include<string>
 #include<list>
 using namespace std;

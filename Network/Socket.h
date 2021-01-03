@@ -110,8 +110,10 @@ public:
 	bool send();
 	bool recv();
 
-	int epollWait();
+	int addTimeSlice();//增加时间片,由操作系统频繁调用
+#ifndef __MINGW32__
 	void epollEvent(epoll_event &ev);
+#endif
 	DataBlock sendData;//要发送的数据,请在whenSocketSend中读取
 	DataBlock recvData;//已收到的数据,请在whenSocketReceived中读取
 	//关闭连接

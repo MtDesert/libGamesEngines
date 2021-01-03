@@ -20,6 +20,8 @@ public:
 	//文件加载
 	bool loadFile(const string &filename);//加载文件,不执行
 	bool protectCall();//保护方式执行
+	bool resume();//以线程方式启动
+	bool yield();//暂停执行
 	bool doFile(const string &filename);//加载并执行filename文件
 	bool doString(const string &str);//执行str所写的命令
 	//写全局变量(变量名,变量值),返回是否成功
@@ -55,16 +57,19 @@ public:
 	bool getGlobalTable(const string &name,function<bool()> callback=nullptr);//读取全局表,成功后调用readFunc来读取数据(针对元素基本确定的表)
 	int getTableLength(function<bool()> filterFunc=nullptr);//获取table的元素个数(filterFunc用于过滤)
 	bool getTableForEach(function<bool(int index)> forEachFunc=nullptr);
-	//读取表中变量(变量名name,接收变量value),返回是否成功
-	bool getTableBoolean(const string &name);//返回值为接收变量
-	int getTableInteger(const string &name);//返回值为接收变量
+	//读取表中变量(变量名name),返回值为接收变量
+	bool getTableBoolean(const string &name);
+	int getTableInteger(const string &name);
 	void* getTableUserData(const string &name);
+	void* getTableLightUserData(const string &name);
+	//读取表中变量(变量名name,接收变量value),返回是否成功
 	bool getTableBoolean(const string &name, bool &value);
 	bool getTableNumber(const string &name,double &value);
 	bool getTableInteger(const string &name,int &value);
 	bool getTableString(const string &name,string &value);
 	bool getTableFunction(const string &name);//获取表中名为name的函数,使用规则和getGlobalFunction基本一致
 	bool getTableUserData(const string &name,void* &value);
+	bool getTableLightUserData(const string &name,void* &value);
 	bool getTableTable(const string &name,function<bool()> callback=nullptr);//获取当前table中名为name的table变量,获取成功时调用callback
 	//函数
 	void registerFunction(const char *name,lua_CFunction func);//注册函数,把lua的名为name的函数和C函数func关联起来
@@ -75,8 +80,9 @@ public:
 	void registerClass(const char *name,lua_CFunction constructorFunc);//注册名为name的类,及其相关的构造函数
 	void addClassObjectSelf(void *self);//添加self为lua调用时候的c++对象(生成对象时用)
 	void addClassFunction(const char *name,lua_CFunction func);//添加名为name的类函数(生成对象时用)
+	void* getClassObjectSelf(int index);//获取栈上index处的table中的self指针
 	//清理
-	void clearStack();
+	void clearStack(int remain=0);//清理堆栈,remain表示只保留多少个数据在栈上
 
 	//全局状态
 	size_t memorySize();//lua目前的占用大小

@@ -207,7 +207,6 @@ public:
 	DATABLOCK_TO_ARRAY(32)
 	DATABLOCK_TO_ARRAY(64)
 #undef DATABLOCK_TO_ARRAY
-	void debug(SizeType size=0)const;
 
 	/** @brief dataPointer 指向内存数据的指针,指向数据块的首字节
 	这个指针可以任意改变,只要你知道你在干什么.和操作普通指针一样,访问野指针可能会造成程序崩溃

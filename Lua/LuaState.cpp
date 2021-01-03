@@ -47,6 +47,18 @@ bool LuaState::protectCall(){
 	LUASTATE_EXECUTE(lua_pcall(luaState,paraAmount,LUA_MULTRET,0));
 	return true;
 }
+bool LuaState::resume(){
+	auto ret=lua_resume(luaState,NULL,0);
+	if(ret==LUA_YIELD)ret=LUA_OK;//这俩返回值是正常的
+	LUASTATE_EXECUTE(ret);
+	return true;
+}
+bool LuaState::yield(){
+	auto b=lua_isyieldable(luaState);
+	if(b)lua_yield(luaState,0);
+	//不会执行到这里,调用lua_yield后,LuaState::resume()的lua_resume()会执行结束并返回
+	return b;
+}
 bool LuaState::doFile(const string &filename){
 	LUASTATE_EXECUTE(luaL_dofile(luaState,filename.data()));
 	return true;
@@ -245,6 +257,11 @@ void* LuaState::getTableUserData(const string &name){
 	getTableUserData(name,ret);
 	return ret;
 }
+void* LuaState::getTableLightUserData(const string &name){
+	void* ret=nullptr;
+	getTableLightUserData(name,ret);
+	return ret;
+}
 
 bool LuaState::getTableBoolean(const string &name,bool &value){
 	LUASTATE_GET_TABLE_TYPE(LUA_TBOOLEAN,lua_toboolean,"\""+name+"\" not a boolean")
@@ -268,6 +285,9 @@ bool LuaState::getTableFunction(const string &name){
 }
 bool LuaState::getTableUserData(const string &name, void *&value){
 	LUASTATE_GET_TABLE_TYPE(LUA_TUSERDATA,lua_touserdata,"\""+name+"\" not a userdata")
+}
+bool LuaState::getTableLightUserData(const string &name, void *&value){
+	LUASTATE_GET_TABLE_TYPE(LUA_TLIGHTUSERDATA,lua_touserdata,"\""+name+"\" not a lightuserdata")
 }
 bool LuaState::getTableTable(const string &name,function<bool()> callback){
 	if(!lua_istable(luaState,-1))return false;/*如果放入函数则会引发崩溃*/
@@ -319,8 +339,25 @@ void LuaState::addClassFunction(const char *name,lua_CFunction func){
 		WHEN_ERROR(string("registerClassFunction(\"")+name+"\")failed");
 	}
 }
+void* LuaState::getClassObjectSelf(int index){
+	if(!lua_istable(luaState,index))return nullptr;//首先必须是table
+	lua_pushstring(luaState,"self");//只取self变量
+	if(lua_gettable(luaState,index)==LUA_TLIGHTUSERDATA){//确保该变量是由C++传进来的
+		void* self=lua_touserdata(luaState,-1);
+		lua_pop(luaState,1);
+		return self;
+	}
+	return nullptr;
+}
 
-void LuaState::clearStack(){lua_pop(luaState,lua_gettop(luaState));}
+void LuaState::clearStack(int remain){
+	auto top=lua_gettop(luaState);
+	if(remain>top)return;//不需要清除
+	else if(remain<top){
+		top-=remain;//根据保留数确定要弹出的数量
+	}
+	lua_pop(luaState,top);
+}
 size_t LuaState::memorySize(){
 	auto kb=lua_gc(luaState,LUA_GCCOUNT,0);
 	auto b=lua_gc(luaState,LUA_GCCOUNTB,0);

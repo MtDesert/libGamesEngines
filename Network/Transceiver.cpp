@@ -87,7 +87,7 @@ void Transceiver::setSocket(Socket &skt){
 	SOCKET_ALL_EVENTS(WHEN)
 #undef WHEN
 }
-int Transceiver::epollWait(){return socket->epollWait();}
+int Transceiver::addTimeSlice(){return socket->addTimeSlice();}
 
 SocketDataBlock& Transceiver::readySend(const string &command){
 	writeBuffer.rwSize=0;//清空
