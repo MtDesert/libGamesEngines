@@ -17,69 +17,43 @@ foreach(name ../lua/src)
 	include_directories(${name})
 endforeach()
 
-if(${TARGET_SYSTEM_NAME} STREQUAL Android)
-	include_directories(${NDK_ROOT}/sysroot/usr/include/GLES)
-elseif(${TARGET_SYSTEM_NAME} STREQUAL Windows)
-else()
-	include_directories(/usr/include/GL)
-endif()
-
 #默认库(包括源码编译的第三方库)
 set(LIBS_LIST curl lua z)
-if(${TARGET_SYSTEM_NAME} STREQUAL Windows)
-	set(LIBS_LIST ${LIBS_LIST} ws2_32 iconv pthread opengl32)
-else()
-	set(LIBS_LIST ${LIBS_LIST} GLESv1_CM)
-endif()
 
 #编译过程
-if(INCLUDE_DIR_ONLY)
+if(INCLUDE_DIR_ONLY) #仅包含头文件,不编译
 	if(GAME_NAME)
 		includeAll(../lib${GAME_NAME}/Game/ ${GAME_DIR})
 	endif()
 	includeAll(../libGamesEngines/ ${ENGINE_DIR})
-elseif(GAME_NAME)#编译依赖本引擎的游戏库
-	if(COMPILE_TOOLS)
-		message(编译工具集合${GAME_NAME})
-		project(${GAME_NAME}Tools)
-		#读取工程文件
-		include(../lib${GAME_NAME}/CMakeLists.txt)#读取游戏的CMakeLists.txt
-		srcIncludeAll(../lib${GAME_NAME}/Tools/ ${TOOLS_DIR})
-		includeAll(../lib${GAME_NAME}/Game/ ${GAME_DIR})
-		includeAll(./ ${ENGINE_DIR})
-		#设定输出目录
-		set(LIBRARY_OUTPUT_PATH ${LIBRARY_OUTPUT_PATH}/tools)
-		set(EXECUTABLE_OUTPUT_PATH ${LIBRARY_OUTPUT_PATH})
-		message(${LIBRARY_OUTPUT_PATH})
-		message(${EXECUTABLE_OUTPUT_PATH})
-		#库输出
-		add_library(${PROJECT_NAME} SHARED ${SRC_LIST})
-		target_link_libraries(${PROJECT_NAME} GamesEngines ${LIBS_LIST})
-		#输出工具集
-		aux_source_directory(../lib${GAME_NAME}/Tools/executable EXE_LIST)
-		foreach(exePath ${EXE_LIST})
-			string(REPLACE ../lib${GAME_NAME}/Tools/executable/ "" exeName ${exePath})#去掉路径
-			string(REPLACE .cpp "" exeName ${exeName})#去掉扩展名,得到程序名
-			#程序输出
-			add_executable(${exeName} ${exePath})
-			target_link_libraries(${exeName} ${PROJECT_NAME} ${GAME_NAME} GamesEngines ${LIBS_LIST})
-		endforeach()
-	else()
-		message(编译游戏库${GAME_NAME})
-		project(${GAME_NAME})
-		#读取工程文件
-		include(../lib${GAME_NAME}/CMakeLists.txt)#读取游戏的CMakeLists.txt
-		srcIncludeAll(../lib${GAME_NAME}/Game/ ${GAME_DIR})
-		includeAll(./ ${ENGINE_DIR})
-		#库输出
-		add_library(${PROJECT_NAME} SHARED ${SRC_LIST})
-		target_link_libraries(${PROJECT_NAME} GamesEngines ${LIBS_LIST})
-	endif()
-else()#编译本引擎库
+else() #编译库
 	message(编译引擎库)
 	project(GamesEngines)
-	srcIncludeAll(./ ${ENGINE_DIR})
-	#库输出
-	add_library(${PROJECT_NAME} SHARED ${SRC_LIST})
+	#基础引擎
+	srcIncludeAll(engineSrcs ./ ${ENGINE_DIR})
+	add_library(${PROJECT_NAME} SHARED ${engineSrcs})
 	target_link_libraries(${PROJECT_NAME} ${LIBS_LIST})
+	#特定游戏库
+	if(GAME_NAME)
+		include(../lib${GAME_NAME}/CMakeLists.txt)#读取游戏的CMakeLists.txt
+		srcIncludeAll(gameSrcs ../lib${GAME_NAME}/Game/ ${GAME_DIR})
+		add_library(${GAME_NAME} SHARED ${gameSrcs})
+		target_link_libraries(${GAME_NAME} ${PROJECT_NAME} ${LIBS_LIST})
+		#编译工具库
+		if(COMPILE_TOOLS)
+			srcIncludeAll(toolsSrcs ../lib${GAME_NAME}/Tools/ ${TOOLS_DIR})
+			#库输出
+			add_library(${GAME_NAME}Tools SHARED ${toolsSrcs})
+			target_link_libraries(${GAME_NAME}Tools ${GAME_NAME} GamesEngines ${LIBS_LIST})
+			#输出工具集
+			aux_source_directory(../lib${GAME_NAME}/Tools/executable exeList)
+			foreach(exePath ${exeList})
+				string(REPLACE ../lib${GAME_NAME}/Tools/executable/ "" exeName ${exePath})#去掉路径
+				string(REPLACE .cpp "" exeName ${exeName})#去掉扩展名,得到程序名
+				#程序输出
+				add_executable(${exeName} ${exePath})
+				target_link_libraries(${exeName} ${GAME_NAME}Tools ${GAME_NAME} GamesEngines ${LIBS_LIST})
+			endforeach()
+		endif()
+	endif()
 endif()

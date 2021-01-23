@@ -41,7 +41,7 @@ string DirectoryEntry::strSize()const{
 #define ENTRY_TIME(Name,var) \
 string DirectoryEntry::str##Name##Time()const{\
 	char str[100];\
-	strftime(str,100,"%F %X",localtime(&structStat.var));\
+	strftime(str,100,"%Y-%m-%d %X",localtime(&structStat.var));\
 	return str;\
 }
 ENTRY_TIME(Access,st_atime)

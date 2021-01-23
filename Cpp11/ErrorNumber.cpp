@@ -9,8 +9,12 @@
 #define ERROR_NUMBER_STRING(MACRO,chinese) \
 errorString[MACRO]=#chinese;
 
+#ifdef __MINGW32__
+#define MAX_STRING_AMOUNT 140
+#else
 #define MAX_STRING_AMOUNT 134
-static const char* errorString[MAX_STRING_AMOUNT];
+#endif
+static const char* errorString[MAX_STRING_AMOUNT]={NULL};
 
 void ErrorNumber::init(){
 	//error-base.h

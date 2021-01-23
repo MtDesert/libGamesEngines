@@ -2,8 +2,8 @@
 #define SOCKET_H
 
 #ifdef __MINGW32__
-	//必须得有如下判定,否则编译的时候会报非常无聊的错误
-	#ifndef _WINSOCK_H
+	//必须得有如下判定,否则编译的时候会报非常无聊的警告
+	#ifndef _WINSOCKAPI_
 		#include<winsock2.h>
 	#endif
 #else
