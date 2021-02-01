@@ -65,6 +65,7 @@ struct Point3D:public Point2D<T>{
 	void setXYZ(T x,T y,T z){this->setXY(x,y);this->z=z;}
 };
 
+//运算符
 #define POINT_OPERATOR_EXPRESSION(Type1,symbol,Type2,ReturnType)\
 ReturnType operator symbol(const Point2D<Type1> &p1,const Point2D<Type2> &p2);
 

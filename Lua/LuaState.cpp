@@ -1,26 +1,27 @@
 #include"LuaState.h"
+#include"PrintF.h"
 #include"define.h"
 
 //调试函数
 void luaStackDebug(lua_State *state){
 	auto top=lua_gettop(state);
-	printf("--------start\n");
-	printf("state: %p\n",state);
-	printf("lua top: %d\n",top);
+	PRINT_INFO("--------lua栈开始\n");
+	PRINT_INFO("state: %p\n",state);
+	PRINT_INFO("栈元素个数: %d\n",top);
 	for(auto i=-1;i>=-top;--i){
 		auto type=lua_type(state,i);
-		printf("%d(%s): ",i,lua_typename(state,type));
+		PRINT_INFO("%d(%s): ",i,lua_typename(state,type));
 		switch(type){
-			case LUA_TNUMBER:printf("%lf",lua_tonumber(state,i));
+			case LUA_TNUMBER:PRINT_INFO("%lf",lua_tonumber(state,i));
 			break;
-			case LUA_TSTRING:printf("%s",lua_tostring(state,i));
+			case LUA_TSTRING:PRINT_INFO("%s",lua_tostring(state,i));
 			break;
 			case LUA_TTABLE:
 			break;
 		}
-		printf("\n");
+		PRINT_INFO("\n");
 	}
-	printf("--------end\n");
+	PRINT_INFO("--------lua栈结束\n");
 }
 
 //此宏用于code会返回LUA_OK的代码,返回非LUA_OK则会告诉上层出错了

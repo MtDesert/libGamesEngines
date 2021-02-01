@@ -1,4 +1,5 @@
 #include"Transceiver.h"
+#include"PrintF.h"
 #include"ErrorNumber.h"
 #include<string.h>
 
@@ -33,9 +34,9 @@ void Transceiver::whenSocket##name(Socket *socket){\
 SOCKET_ALL_EVENTS(WHEN)
 #undef WHEN
 
-void Transceiver::whenSocketConnected(){printf("收发器-已连接\n");}
-void Transceiver::whenSocketDisconnected(){printf("收发器-已断开连接\n");}
-void Transceiver::whenSocketAccepted(){printf("收发器-接受连接\n");}
+void Transceiver::whenSocketConnected(){PRINT_OK("收发器-已连接\n");}
+void Transceiver::whenSocketDisconnected(){PRINT_WARN("收发器-已断开连接\n");}
+void Transceiver::whenSocketAccepted(){PRINT_OK("收发器-接受连接\n");}
 void Transceiver::whenSocketSend(){
 	if(writeBuffer.rwSize<=0){//无数据,可以尝试填充文件数据
 		sendFileData();

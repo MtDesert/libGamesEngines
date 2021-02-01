@@ -1,4 +1,5 @@
 #include"Socket.h"
+#include"PrintF.h"
 #include<unistd.h>
 #include<errno.h>
 #include<string.h>
@@ -225,7 +226,7 @@ void Socket::acceptLoop(){
 		}
 	}
 	//close
-	printf("关闭epoll\n");
+	PRINT_WARN("关闭epoll")
 	::close(epollFD);
 }
 #define HAS_ERROR ev.events&EPOLLERR
@@ -236,7 +237,7 @@ void Socket::epollEvent(epoll_event &ev){
 		noErrHappen=recv();//系统的recv函数可以监测到对方断开的情况
 	}
 	if(ev.events & EPOLLPRI){
-		printf("socket(%p) exceptional condition!\n",this);
+		PRINT_WARN("socket(%p)出现特殊情况!",this);
 	}
 	if(ev.events & EPOLLOUT){//有数据发出去了
 		if(noErrHappen){
@@ -250,15 +251,15 @@ void Socket::epollEvent(epoll_event &ev){
 		SOCKET_WHEN_ERROR
 	}
 	if(ev.events & EPOLLHUP){
-		printf("socket(%p) hang up!\n",this);
+		PRINT_WARN("socket(%p)挂起!\n",this);
 		SOCKET_WHEN_ERROR
 	}
 	//不常见的事件
-	if(ev.events & EPOLLRDNORM){printf("socket(%p) read normal!\n",this);}
-	if(ev.events & EPOLLRDBAND){printf("socket(%p) read band\n",this);}
-	if(ev.events & EPOLLWRNORM){printf("socket(%p) write normal\n",this);}
-	if(ev.events & EPOLLWRBAND){printf("socket(%p) write band\n",this);}
-	if(ev.events & EPOLLMSG){printf("socket(%p) message\n",this);}
+	if(ev.events & EPOLLRDNORM){PRINT_WARN("socket(%p)读普通数据!\n",this);}
+	if(ev.events & EPOLLRDBAND){PRINT_WARN("socket(%p)读带数据!\n",this);}
+	if(ev.events & EPOLLWRNORM){PRINT_WARN("socket(%p)写普通数据!\n",this);}
+	if(ev.events & EPOLLWRBAND){PRINT_WARN("socket(%p)写带数据\n",this);}
+	if(ev.events & EPOLLMSG){PRINT_WARN("socket(%p)消息\n",this);}
 }
 #endif
 

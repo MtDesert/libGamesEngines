@@ -1,8 +1,14 @@
 #include "Thread.h"
 #include<stdio.h>
 
+#ifdef __i386
+#define CLEAR_PID threadID.p=NULL;
+#else
+#define CLEAR_PID threadID=0;
+#endif
+
 Thread::Thread():threadFunction(NULL),threadArguments(NULL),errorNumber(0),whenThreadError(NULL){
-	threadID=0;
+	CLEAR_PID;
 }
 Thread::~Thread(){}
 
@@ -16,12 +22,12 @@ if(errorNumber){\
 void* Thread::threadStart(void *threadPtr){
 	auto thrd=reinterpret_cast<Thread*>(threadPtr);
 	thrd->threadFunction(thrd->threadArguments);//执行线程函数
-	thrd->threadID=0;
+	thrd->CLEAR_PID;
 	return nullptr;
 }
 
 bool Thread::start(void* (*threadFunc)(void*),void *arguments){
-	if(threadID)return false;
+	if(isRunning())return false;
 	threadFunction=threadFunc;
 	threadArguments=arguments;
 	//启动线程
@@ -38,4 +44,10 @@ bool Thread::detach(){
 }
 int Thread::join(){return pthread_join(threadID,NULL);}
 
-bool Thread::isRunning()const{return threadID;}
+bool Thread::isRunning()const{
+#ifdef __i386
+	return threadID.p;
+#else
+	return threadID;
+#endif
+}

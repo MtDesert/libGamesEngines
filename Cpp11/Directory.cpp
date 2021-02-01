@@ -1,4 +1,5 @@
 #include"Directory.h"
+#include"PrintF.h"
 #include"define.h"
 
 #include<string.h>
@@ -163,7 +164,7 @@ bool Directory::scan(const string &path,function<void(const string&)> dirCallbac
 			}
 		}
 	}else{
-		printf("!!!!\n");
+		PRINT_ERROR("目录切换失败")
 	}
 	return true;
 }
