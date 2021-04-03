@@ -8,7 +8,7 @@
 #include<ws2tcpip.h>
 #define SOCK_NONBLOCK 0
 #define ERR_NO WSAGetLastError()
-#define PTHREAD_YIELD
+#define PTHREAD_YIELD Sleep(1);
 #define SOCKET_SHUTDOWN ::close(descriptor);
 static WSADATA wsaData;
 static bool wsaStartedUp=false;
@@ -184,7 +184,29 @@ void Socket::setSocketAddress(const IPAddress &ipAddress,uint16 port){
 	socketAddress.sin_addr=ipAddress.address;
 	socketAddress.sin_port=htons(port);
 }
-#ifndef __MINGW32__
+#ifdef __MINGW32__
+void Socket::acceptLoop(){
+	socklen_t addrLen=sizeof(socketAddress);
+	bool gameOver=false;
+	while(!gameOver){
+		int fd=::accept(descriptor,(sockaddr*)&socketAddress,&addrLen);//接受连接
+		if(fd<=0){
+			PTHREAD_YIELD
+			continue;
+		}
+		//新socket
+		auto newSocket=new Socket();
+		newSocket->descriptor=fd;//描述符
+		newSocket->socketAddress=socketAddress;//套接地址
+		//触发Accepted事件
+		newAcceptSocket=newSocket;
+		SOCKET_WHEN_CALLBACK(Accepted)
+		newAcceptSocket=NULL;
+	}
+	//close
+	PRINT_WARN("关闭epoll")
+}
+#else
 void Socket::acceptLoop(){
 	//启用epoll
 	auto epollFD=epoll_create(65536);

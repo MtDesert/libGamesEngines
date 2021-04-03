@@ -2,15 +2,18 @@
 #define NUMBER_H
 
 #include"typedef.h"
+
+#include<list>
+using namespace std;
 #include<math.h>
 #include<stdlib.h>
 #include<limits.h>
-#include<list>
-using namespace std;
 
 //这是数字特征判定用的类
 class Number{
 public:
+	static const float PI;//圆周率
+	static const float PI_2;//PI*2
 	//数的符号
 	template<typename T>
 	static T sgn(T num){

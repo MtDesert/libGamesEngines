@@ -104,5 +104,4 @@ struct Fraction{
 	T numerator;//分子
 	T denominator;//分母
 };
-
 #endif //FRACTION_H

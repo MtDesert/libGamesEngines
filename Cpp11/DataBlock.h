@@ -107,8 +107,11 @@ public:
 	void* memmoveTo(void *dest,SizeType num)const;//memmove()
 	void* memmoveFrom(void *src,SizeType num);//memmove()
 	void* memset(int val,SizeType len=0);
-	//string类相关
-	string toString()const;
+	//字符串相关
+	string toString()const;//转换成字符串
+	char* findStr(const char *str)const;//查找字符串,返回字符串的位置,找不到返回NULL
+	bool startWithStr(const char *str)const;//是否以str为开头
+	bool endWithStr(const char *str)const;//是否以str为结尾
 
 	//数据分析
 	/** @brief parseData 自行分析,子类可以重写此函数,主要目的是根据分析结果重新调整数据,比如调整能识别的数据长度,或调整子类的其他成员变量

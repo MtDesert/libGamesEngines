@@ -3,8 +3,8 @@
 
 #include"Point.h"
 
-template<typename T>
 //2维矩形
+template<typename T>
 struct Rectangle2D{
 	Rectangle2D(){}
 	Rectangle2D(const Point2D<T> &p0,const Point2D<T> &p1):p0(p0),p1(p1){}
@@ -68,5 +68,15 @@ inline Point2D<T> name()const{return Point2D<T>(x,y);}
 	}
 	//成员变量
 	Point2D<T> p0,p1;//p0和p1是对角关系
+};
+//3维矩形
+template<typename T>
+struct Rectangle3D{
+	//成员变量
+	Point3D<T> p0,p1;//p0和p1是对角关系
+	//构造,析构函数
+	Rectangle3D(){}
+	Rectangle3D(const Point3D<T> &p0,const Point3D<T> &p1):p0(p0),p1(p1){}
+	Rectangle3D(const T &x0,const T &y0,const T &z0,const T &x1,const T &y1,const T &z1):p0(x0,y0,z0),p1(x1,y1,z1){}
 };
 #endif

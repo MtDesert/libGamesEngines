@@ -18,5 +18,4 @@ public:
 		return this->insert(List<T>::size(),newData);
 	}
 };
-
 #endif // SET_H

@@ -1,10 +1,7 @@
-ifeq ($(Game),true)
-	name=Engines
-else ifeq ($(Client),true)
-	name=Client
-else ifeq ($(Server),true)
-	name=Server
-else ifeq ($(Tools),true)
-	name=Tools
+#提取后缀
+gameProjectPath=$(subst lib$(GAME_NAME)/,,$(projectPath))
+#判断需要包含的Makefile
+ifeq ($(gameProjectPath),Game)
+	gameProjectPath=Engines
 endif
-include ../libGames$(name)/Makefile
+include ../libGames$(gameProjectPath)/Makefile

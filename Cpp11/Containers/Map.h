@@ -25,5 +25,4 @@ public:
 		return kv?&kv->data.value:nullptr;
 	}
 };
-
 #endif // MAP_H

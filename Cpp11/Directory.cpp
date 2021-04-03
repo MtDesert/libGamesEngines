@@ -160,6 +160,7 @@ bool Directory::scan(const string &path,function<void(const string&)> dirCallbac
 			if(entry.isRegularFile()){//常规文件,处理之
 				if(fileCallback)fileCallback(name);
 			}else if(entry.isDirectory()){//目录,继续扫描
+				if(dirCallback)dirCallback(name);
 				scan(name,dirCallback,fileCallback);
 			}
 		}

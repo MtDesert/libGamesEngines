@@ -1,5 +1,7 @@
 #include"Number.h"
 
+const float Number::PI=3.141592653,Number::PI_2=Number::PI*2;//圆周率
+
 IntRange::IntRange(int min,int max):minimun(min),maximun(max){}
 
 #define DIVIDE_CONDITION(condition) \

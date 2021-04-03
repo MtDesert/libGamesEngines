@@ -1,23 +1,18 @@
 #ifndef TRIANGLE_H
 #define TRIANGLE_H
 
-#include"Point.h"
-#include"Line.h"
+#include"Polygon.h"
 
 #define TRIANGLE2D_LENGTHS double a=length0();double b=length1();double c=length2();
 #define TRIANGLE2D_LENGTHS_SQUARE double aa=a*a;double bb=b*b;double cc=c*c;
 
-//三角形,可以在2维和3维中使用
+//2维三角形
 template<typename T>
-struct Triangle2D{
-	//线
-	Line2D<T> line0()const{return Line2D<T>(p0,p1);}
-	Line2D<T> line1()const{return Line2D<T>(p1,p2);}
-	Line2D<T> line2()const{return Line2D<T>(p2,p0);}
+struct Triangle2D:public Polygon2D<T,3>{
 	//边长的平方
-	T length0_2()const{return (p1-p0).distance2();}
-	T length1_2()const{return (p2-p1).distance2();}
-	T length2_2()const{return (p0-p2).distance2();}
+	T length0_2()const{return (this->vertex[1]-this->vertex[0]).distance2();}
+	T length1_2()const{return (this->vertex[2]-this->vertex[1]).distance2();}
+	T length2_2()const{return (this->vertex[0]-this->vertex[2]).distance2();}
 	//边长
 	double length0()const{return sqrt(length0_2());}
 	double length1()const{return sqrt(length1_2());}
@@ -54,8 +49,9 @@ struct Triangle2D{
 		TRIANGLE2D_LENGTHS
 		return a==b&&b==c;
 	}
-	//成员变量
-	Point2D<T> p0,p1,p2;
 };
+//3维三角形
+template<typename T>
+struct Triangle3D:public Polygon3D<T,3>{};
 
-#endif // TRIANGLE_H
+#endif//TRIANGLE_H

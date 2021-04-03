@@ -2,14 +2,18 @@
 #define LINE_H
 
 #include"Point.h"
-
-//线,T表示数据类型(int,uint,float等)
+//线类型,用于解决线问题,T为点类型
 template<typename T>
-struct Line2D{
-	//构造/析构函数
-	Line2D(const Point2D<T> &p0=Point2D<T>(),const Point2D<T> &p1=Point2D<T>()):p0(p0),p1(p1){}
+struct Line{
 	//成员变量
-	Point2D<T> p0,p1;
+	T p0,p1;//线段的两端
+	//构造/析构函数
+	Line(const T &p0=T(),const T &p1=T()):p0(p0),p1(p1){}
 };
+
+template<typename T>//2维线
+struct Line2D:public Line<Point2D<T> >{};
+template<typename T>//3维线
+struct Line3D:public Line<Point3D<T> >{};
 
 #endif

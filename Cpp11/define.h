@@ -11,6 +11,7 @@
 //断言宏,如果code为假,则以errorString报错
 #define ASSERT(code,errorString)\
 if(!(code)){\
+	printf("报错位置%s:%d\n",__FILE__,__LINE__);\
 	WHEN_ERROR(errorString)\
 }
 

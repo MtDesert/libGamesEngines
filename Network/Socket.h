@@ -4,6 +4,7 @@
 #ifdef __MINGW32__
 	//必须得有如下判定,否则编译的时候会报非常无聊的警告
 	#ifndef _WINSOCKAPI_
+		#define NOGDI//防止Polygen出现重名
 		#include<winsock2.h>
 	#endif
 #else
@@ -111,7 +112,8 @@ public:
 	bool recv();
 
 	int addTimeSlice();//增加时间片,由操作系统频繁调用
-#ifndef __MINGW32__
+#ifdef __MINGW32__
+#else
 	void epollEvent(epoll_event &ev);
 #endif
 	DataBlock sendData;//要发送的数据,请在whenSocketSend中读取

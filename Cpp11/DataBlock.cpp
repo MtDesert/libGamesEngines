@@ -11,10 +11,12 @@ DataBlock::~DataBlock(){}
 bool DataBlock::openFileWrite(const string &filename,const string &mode,WhenErrorString whenError)const{
 	auto file=fileOpen(filename.data(),mode.data(),whenError);
 	if(file){
-		ASSERT_FILENAME(::fwrite(dataPointer,dataLength,1,file)==1);
+		if(hasData()){
+			ASSERT_FILENAME(::fwrite(dataPointer,dataLength,1,file)==1);
+		}
 		ASSERT_FILENAME(::fflush(file)==0);
 		auto ret=(::fclose(file)==0);
-		ASSERT_FILENAME(ret==0)
+		ASSERT_FILENAME(ret)
 		return ret;
 	}
 	return false;
@@ -98,6 +100,22 @@ void* DataBlock::memset(int val,SizeType len){return ::memset(dataPointer,val,le
 
 string DataBlock::toString()const{
 	return dataPointer ? string((char*)dataPointer,dataLength):string();
+}
+char* DataBlock::findStr(const char *str)const{
+	auto len=strlen(str);
+	for(SizeType i=0;i<dataLength;++i){
+		if(i+len>dataLength)break;
+		if(::memcmp(&dataPointer[i],str,len)==0)return (char*)&dataPointer[i];
+	}
+	return NULL;
+}
+bool DataBlock::startWithStr(const char *str)const{
+	auto len=strlen(str);
+	return len<=dataLength ? ::memcmp(dataPointer,str,len)==0 : false;
+}
+bool DataBlock::endWithStr(const char *str)const{
+	auto len=strlen(str);
+	return len<=dataLength ? ::memcmp(&dataPointer[dataLength-len],str,len)==0 : false;
 }
 
 void DataBlock::set(const void *ptr,SizeType length){
