@@ -364,19 +364,6 @@ void FilePNG_code::makeChunk(const string &textCode){
 	FilePNG_Chunk::makeChunk(textCode.size(),"code");
 }
 
-DATABLOCK_CUSTOM_TYPE_CPP(FilePNG_gAMA,Gama,uint32,8,false)
-
-DATABLOCK_CUSTOM_TYPE_CPP(FilePNG_cHRM,WhitePointX,uint32,8,false)
-DATABLOCK_CUSTOM_TYPE_CPP(FilePNG_cHRM,WhitePointY,uint32,8,false)
-DATABLOCK_CUSTOM_TYPE_CPP(FilePNG_cHRM,RedX,uint32,8,false)
-DATABLOCK_CUSTOM_TYPE_CPP(FilePNG_cHRM,RedY,uint32,8,false)
-DATABLOCK_CUSTOM_TYPE_CPP(FilePNG_cHRM,GreenX,uint32,8,false)
-DATABLOCK_CUSTOM_TYPE_CPP(FilePNG_cHRM,GreenY,uint32,8,false)
-DATABLOCK_CUSTOM_TYPE_CPP(FilePNG_cHRM,BlueX,uint32,8,false)
-DATABLOCK_CUSTOM_TYPE_CPP(FilePNG_cHRM,BlueY,uint32,8,false)
-
-DATABLOCK_CUSTOM_TYPE_CPP(FilePNG_sRGB,RenderingIntent,uint8,8,false)
-
 #define FILEPNG_CPP_PUTCHUNK(chunkType)\
 	if(name==#chunkType){\
 	pChunk=new FilePNG_##chunkType;\

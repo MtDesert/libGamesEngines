@@ -3,7 +3,7 @@ engineName:=GamesEngines
 engineDir:=lib$(engineName)
 engineSrcDir:=Cpp11 Cpp11/Containers Zipper Lua Math Network Images Images/FileStructs Images/ColorSpaces WarChess
 engineIncDir:=../zlib ../lua/src ../curl/include
-userLibs+=lua curl
+userLibs+=lua
 sysLibs+=z pthread
 ifeq ($(DEST_PLATFORM),$(findstring $(DEST_PLATFORM),MinGW Windows))
 	sysLibs+=ws2_32

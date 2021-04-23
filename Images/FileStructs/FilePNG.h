@@ -140,66 +140,6 @@ struct FilePNG_IDAT:public FilePNG_Chunk{//图像数据本体
 struct FilePNG_IEND:public FilePNG_Chunk{//图像结束
 	void makeChunk();
 };
-
-/**
- * @brief Ancillary chunks:tRNS,
- * gAMA,cHRM,sRGB,iCCP
- * tEXt,zTXt,ITXt
- * bKGD,pHYs,sBIT,sPLT,hIST,tIME
- */
-
-//Color Space Information
-struct FilePNG_gAMA:public FilePNG_Chunk{//Image Gama
-	DATABLOCK_CUSTOM_TYPE(Gama,uint)
-};
-struct FilePNG_cHRM:public FilePNG_Chunk{//Primary chromaticities
-	DATABLOCK_CUSTOM_TYPE(WhitePointX,uint)
-	DATABLOCK_CUSTOM_TYPE(WhitePointY,uint)
-	DATABLOCK_CUSTOM_TYPE(RedX,uint)
-	DATABLOCK_CUSTOM_TYPE(RedY,uint)
-	DATABLOCK_CUSTOM_TYPE(GreenX,uint)
-	DATABLOCK_CUSTOM_TYPE(GreenY,uint)
-	DATABLOCK_CUSTOM_TYPE(BlueX,uint)
-	DATABLOCK_CUSTOM_TYPE(BlueY,uint)
-};
-struct FilePNG_sRGB:public FilePNG_Chunk{//Standard RGB color space
-	DATABLOCK_CUSTOM_TYPE(RenderingIntent,uint8)
-	enum RenderingIntent{
-		Perceptual,
-		RelativeColorimetric,
-		Saturation,
-		AbsoluteColorimetric,
-	};
-};
-struct FilePNG_iCCP:public FilePNG_Chunk{//International Color Consortium profile
-	string profileName()const;//1-79 bytes(character string),Null separator(1 byte)at the end of the string
-	DATABLOCK_CUSTOM_TYPE(CompressionMethod,uint8)
-	//   Compression method: 1 byte
-	//   Compressed profile: n bytes
-};
-
-//Textual information
-struct FilePNG_tEXt:public FilePNG_Chunk{//Textual data
-};
-struct FilePNG_zTXt:public FilePNG_Chunk{//Compressed textual data
-};
-struct FilePNG_ITXt:public FilePNG_Chunk{//International textual data
-};
-
-//Miscellaneous information
-struct FilePNG_bKGD:public FilePNG_Chunk{//Background color
-};
-struct FilePNG_pHYs:public FilePNG_Chunk{//Physical pixel dimensions
-};
-struct FilePNG_sBIT:public FilePNG_Chunk{//Significant bits
-};
-struct FilePNG_sPLT:public FilePNG_Chunk{//Suggested palette
-};
-struct FilePNG_hIST:public FilePNG_Chunk{//Palette histogram
-};
-struct FilePNG_tIME:public FilePNG_Chunk{//Image last-modification time
-};
-
 //自定义结构
 /**PNG代码,可在PNG结构中插入特定的代码
 对于代码规范目前没有统一的标准,主要依靠宿主程序解读
